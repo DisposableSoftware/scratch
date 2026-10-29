@@ -52,4 +52,9 @@ struct SystemGatewayTests {
 
         #expect(events == [.outputLost], "got \(events)")
     }
+
+    @Test func theSimulatorIsNotOnCellular() {
+        // The simulator shares the Mac's network, which is never cellular, so Wi-Fi quality applies.
+        #expect(PathMonitorNetworkGateway().currentNetwork == .wifi)
+    }
 }

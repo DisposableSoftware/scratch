@@ -2,12 +2,18 @@
 # Checks the app's Swift sources against the rules in spec/architecture.md that a script can see.
 # Prints file:line: [rule] message for each violation, and exits 1 if there are any.
 # String literals and comments are blanked before matching, so neither trips nor hides a rule.
-# Usage: scripts/arch-lint.sh [SOURCE_DIR]   (defaults to Scratch)
+# With a tests directory (ScratchTests by default for the app), also checks ARCH-16: every
+# UseCase, Router and RoutingUseCase is named in a test, and a test file that builds a UseCase
+# builds no real Gateway.
+# Usage: scripts/arch-lint.sh [SOURCE_DIR [TESTS_DIR]]   (defaults to Scratch ScratchTests)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 src=${1:-Scratch}
 src=${src%/}
+tests=${2:-}
+[ -n "$tests" ] || [ "$src" != Scratch ] || tests=ScratchTests
+tests=${tests%/}
 LAYERS=" App Container Gateways UseCases State Models Routing UI "
 # The layers whose types a layer must not name. Container/ and App/ may name anything (App's own
 # types are policed separately). UI/ may name the Has* protocols and AllUseCases from Container/.
@@ -27,33 +33,36 @@ A="(^|$NOT_ID)"    # start of an identifier
 found=$(mktemp "${TMPDIR:-/tmp}/arch-lint.XXXXXX")
 trap 'rm -f "$found"' EXIT
 
-# "layer<TAB>file<TAB>line<TAB>code" for every line of every Swift file, with string literals
-# emptied and comments removed (including multi-line strings and block comments).
-index=$(find "$src" -name '*.swift' | sort | while read -r f; do
-  rel=${f#"$src"/}
-  layer=${rel%%/*}
-  [ "$layer" = "$rel" ] && layer=-
-  awk -v l="$layer" -v f="$f" '
-    { out = ""; i = 1; n = length($0); s = $0
-      while (i <= n) {
-        c = substr(s, i, 1); two = substr(s, i, 2); three = substr(s, i, 3)
-        if (mode == "block") { if (two == "*/") { mode = ""; i += 2 } else i++; continue }
-        if (mode == "multi") { if (three == "\"\"\"") { mode = ""; out = out "\"\""; i += 3 } else i++; continue }
-        if (mode == "str") {
-          if (c == "\\") i += 2
-          else if (c == "\"") { mode = ""; out = out "\""; i++ }
-          else i++
-          continue
+# "layer<TAB>file<TAB>line<TAB>code" for every line of every Swift file under a directory, with
+# string literals emptied and comments removed (including multi-line strings and block comments).
+strip_swift() {
+  find "$1" -name '*.swift' | sort | while IFS= read -r f; do
+    rel=${f#"$1"/}
+    layer=${rel%%/*}
+    [ "$layer" = "$rel" ] && layer=-
+    awk -v l="$layer" -v f="$f" '
+      { out = ""; i = 1; n = length($0); s = $0
+        while (i <= n) {
+          c = substr(s, i, 1); two = substr(s, i, 2); three = substr(s, i, 3)
+          if (mode == "block") { if (two == "*/") { mode = ""; i += 2 } else i++; continue }
+          if (mode == "multi") { if (three == "\"\"\"") { mode = ""; out = out "\"\""; i += 3 } else i++; continue }
+          if (mode == "str") {
+            if (c == "\\") i += 2
+            else if (c == "\"") { mode = ""; out = out "\""; i++ }
+            else i++
+            continue
+          }
+          if (two == "//") break
+          if (two == "/*") { mode = "block"; i += 2; continue }
+          if (three == "\"\"\"") { mode = "multi"; out = out "\"\""; i += 3; continue }
+          if (c == "\"") { mode = "str"; out = out "\""; i++; continue }
+          out = out c; i++
         }
-        if (two == "//") break
-        if (two == "/*") { mode = "block"; i += 2; continue }
-        if (three == "\"\"\"") { mode = "multi"; out = out "\"\""; i += 3; continue }
-        if (c == "\"") { mode = "str"; out = out "\""; i++; continue }
-        out = out c; i++
-      }
-      if (mode == "str") mode = ""
-      print l "\t" f "\t" FNR "\t" out }' "$f"
-done)
+        if (mode == "str") mode = ""
+        print l "\t" f "\t" FNR "\t" out }' "$f"
+  done
+}
+index=$(strip_swift "$src")
 [ -n "$index" ] || { echo "arch-lint: no Swift files under $src" >&2; exit 1; }
 
 # Lines of the index in the given layers ("A B C"), or outside them with -v.
@@ -218,6 +227,29 @@ if [ -n "${observed_files// /}" ]; then
 fi
 echo "$index" | code_has "(@Observable$B|import[ \t]+Observation$B)" |
   report observable_style "uses Observation; ARCH-10 uses ObservableObject and @Published" | emit
+
+# ARCH-16: every UseCase, Router, RoutingUseCase and Gateway is built in some test, and a test
+# file that builds a UseCase builds no real Gateway and touches no real store or network, directly
+# or through the Container.
+built() { echo "(^|[^A-Za-z0-9_])$1([.]init)?[(]|:[ \t]*$1[ \t]*=[ \t]*[.]init[(]"; }
+if [ -n "$tests" ] && [ -d "$tests" ]; then
+  test_code=$(strip_swift "$tests")
+  echo "$decls" | awk -F'\t' '$4 != "protocol" && $4 != "typealias" && ($5 ~ /^Default.*UseCase$/ || $5 ~ /Router$/ || $5 ~ /RoutingUseCase$/ || ($1 == "Gateways" && $5 ~ /Gateway$/))' |
+    while IFS=$'\t' read -r _ file line _ name; do
+      echo "$test_code" | code_has "$(built "$name")" | grep -q . ||
+        echo "$file:$line: [tests_exist] no test builds $name"
+    done | emit
+  real=$(echo "$decls" | awk -F'\t' '$1 == "Gateways" && $4 != "protocol" && $4 != "typealias" && ($5 ~ /Gateway$/ || $5 == "SubsonicClient") { print $5 }')
+  usecases=$(echo "$decls" | awk -F'\t' '$4 != "protocol" && $5 ~ /^Default.*UseCase$/ { print $5 }')
+  if [ -n "$usecases" ]; then
+    echo "$test_code" | code_has "$(built "($(names_re "$usecases"))")" | cut -f2 | sort -u |
+      while IFS= read -r f; do
+        echo "$test_code" | awk -F'\t' -v f="$f" '$2 == f' |
+          code_has "$(built "($(names_re "$real")|TestContainer[.]build|AppContainer[.]build)")|URLSession[.]shared|UserDefaults[.]standard|SecItem[A-Za-z]+[(]" |
+          report usecase_tests_isolated "a file that tests a UseCase reaches a real Gateway, store or network; use mocks, and test Gateways in their own files"
+      done | emit
+  fi
+fi
 
 if [ -s "$found" ]; then
   sort -u "$found" >&2

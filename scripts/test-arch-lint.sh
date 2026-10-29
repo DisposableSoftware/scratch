@@ -97,9 +97,9 @@ final class Nav: Coordinator {}
 EOF
 }
 
-passes() { "$root/scripts/arch-lint.sh" "$src" >"$work/$T.out" 2>&1 || die "arch-lint failed:"$'\n'"$(cat "$work/$T.out")"; }
+passes() { "$root/scripts/arch-lint.sh" "$src" ${testdir:+"$testdir"} >"$work/$T.out" 2>&1 || die "arch-lint failed:"$'\n'"$(cat "$work/$T.out")"; }
 fails_with() {
-  if "$root/scripts/arch-lint.sh" "$src" >"$work/$T.out" 2>&1; then die "arch-lint passed; expected [$1]"; fi
+  if "$root/scripts/arch-lint.sh" "$src" ${testdir:+"$testdir"} >"$work/$T.out" 2>&1; then die "arch-lint passed; expected [$1]"; fi
   grep -qF "[$1]" "$work/$T.out" || die "arch-lint output lacks [$1]:"$'\n'"$(cat "$work/$T.out")"
   [ -z "${2:-}" ] || grep -qF -- "$2" "$work/$T.out" || die "arch-lint output lacks '$2':"$'\n'"$(cat "$work/$T.out")"
 }
@@ -158,12 +158,30 @@ private_storage_is_fine() { base; printf 'import Combine\nfinal class QueueState
 actor_state() { base; echo 'actor QueueState {}' | put State/QueueState.swift; fails_with observable_style "is an actor"; }
 viewmodel_extra_dependency() { base; printf 'import Combine\nfinal class ExtraViewModel: ViewModel {\n    typealias UseCases = HasLibraryUseCase\n    let useCases: UseCases\n    init(useCases: UseCases, gatewayish: Int) { self.useCases = useCases }\n}\n' | put UI/ExtraViewModel.swift; fails_with viewmodel_usecases "init must end with useCases"; }
 viewmodel_screen_value_is_fine() { base; printf 'import Combine\nfinal class DetailViewModel: ViewModel {\n    typealias UseCases = HasLibraryUseCase\n    let useCases: UseCases\n    let track: Track\n    init(track: Track, useCases: UseCases) { self.track = track; self.useCases = useCases }\n    func handleAction(_ action: Int) async -> SideEffect { .none }\n}\n' | put UI/DetailViewModel.swift; passes; }
+# ARCH-16, with a tests directory beside the fixture.
+tests_for_base() {
+  testdir="$work/$T-tests"
+  mkdir -p "$testdir"
+  printf 'func t1() { _ = DefaultLibraryUseCase(gateway: Mock(), state: LibraryState()) }\n' >"$testdir/LibraryUseCaseTests.swift"
+  printf 'func t2() { _ = AppRouter() }\nfunc t3() { _ = DefaultAppRoutingUseCase(router: AppRouter(), coordinator: Spy()) }\n' >"$testdir/RoutingTests.swift"
+  printf 'func t4() { _ = RemoteTrackGateway() }\n' >"$testdir/TrackGatewayTests.swift"
+}
+tested_tree_passes() { base; tests_for_base; passes; }
+untested_usecase() { base; tests_for_base; rm "$testdir/LibraryUseCaseTests.swift"; fails_with tests_exist DefaultLibraryUseCase; }
+untested_router() { base; tests_for_base; printf 'func t3() { _ = DefaultAppRoutingUseCase(router: r, coordinator: Spy()) }\n' >"$testdir/RoutingTests.swift"; fails_with tests_exist AppRouter; }
+untested_gateway() { base; tests_for_base; rm "$testdir/TrackGatewayTests.swift"; fails_with tests_exist RemoteTrackGateway; }
+named_but_not_built() { base; tests_for_base; printf 'func t1() { _ = DefaultLibraryUseCase.self; _ = "DefaultLibraryUseCase(" }\n/* DefaultLibraryUseCase( */\n' >"$testdir/LibraryUseCaseTests.swift"; fails_with tests_exist DefaultLibraryUseCase; }
+usecase_test_builds_gateway_with_init() { base; tests_for_base; printf 'func t1() {\n    let g: RemoteTrackGateway = .init()\n    _ = DefaultLibraryUseCase.init(gateway: g, state: LibraryState())\n}\n' >"$testdir/LibraryUseCaseTests.swift"; fails_with usecase_tests_isolated LibraryUseCaseTests.swift:2; }
+usecase_test_uses_container() { base; tests_for_base; printf 'func t1() { _ = DefaultLibraryUseCase(gateway: Mock(), state: LibraryState()); _ = TestContainer.build() }\n' >"$testdir/LibraryUseCaseTests.swift"; fails_with usecase_tests_isolated; }
+usecase_test_uses_defaults() { base; tests_for_base; printf 'func t1() { _ = DefaultLibraryUseCase(gateway: Mock(), state: LibraryState()); UserDefaults.standard.set(1, forKey: "k") }\n' >"$testdir/LibraryUseCaseTests.swift"; fails_with usecase_tests_isolated; }
+url_in_test_string_hides_nothing() { base; tests_for_base; printf 'func t1() { _ = DefaultLibraryUseCase(gateway: Mock(), state: LibraryState()); _ = "http://x"; _ = RemoteTrackGateway() }\n' >"$testdir/LibraryUseCaseTests.swift"; fails_with usecase_tests_isolated; }
+usecase_test_builds_gateway() { base; tests_for_base; printf 'func t1() { _ = DefaultLibraryUseCase(gateway: RemoteTrackGateway(), state: LibraryState()) }\n' >"$testdir/LibraryUseCaseTests.swift"; fails_with usecase_tests_isolated LibraryUseCaseTests.swift; }
 block_comments_ignored() { base; printf '/* ViewModel\n   Coordinator */\nstruct Fine {}\n' | put UseCases/Fine.swift; passes; }
 
 if [ $# -gt 0 ]; then tests=("$@"); else
   tests=()
   while read -r _ _ f; do
-    case $f in base | put | die | passes | fails_with) ;; *) tests+=("$f") ;; esac
+    case $f in base | put | die | passes | fails_with | tests_for_base) ;; *) tests+=("$f") ;; esac
   done < <(declare -F)
 fi
 

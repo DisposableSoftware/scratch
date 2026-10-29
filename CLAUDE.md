@@ -121,7 +121,7 @@ scripts/manual/live-connect.sh  SRV-3/SRV-5 against a real server; credentials f
 Scratch/Info.plist        background audio, arbitrary loads (merged with generated keys)
 ScratchTests/             Swift Testing suites; Support/ holds mocks, StubURLProtocol, TestContainer   ARCH-16
 ScratchTests/LiveServerTests  skipped unless live-connect.sh passes a server in
-scripts/arch-lint.sh      the architecture rules a script can check                     ARCH-1…10, 12–15
+scripts/arch-lint.sh      the architecture rules a script can check, app and tests      ARCH-1…10, 12–16
 scripts/test-arch-lint.sh tests for arch-lint
 scripts/check.sh          the single gate: spec lint, tooling tests, project checks     TOOL-10
 scripts/spec-lint.sh      spec format and roadmap consistency                            TOOL-1…5

@@ -4,7 +4,7 @@ struct AppRouter {
     let sessionState: SessionState
 
     func nextStep(from current: AppStep, with data: AppFlowData) -> AppStep? {
-        let signedIn = sessionState.account != nil
+        let signedIn = sessionState.server != nil
         switch current {
         case .launch:
             return signedIn ? .library : .setup

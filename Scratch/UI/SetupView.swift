@@ -28,6 +28,25 @@ struct SetupView: View {
                 } header: {
                     Text("Account")
                 }
+                Section {
+                    Button {
+                        viewModel.submitAction(.connect)
+                    } label: {
+                        HStack {
+                            Text("Connect")
+                            if viewModel.isConnecting {
+                                Spacer()
+                                ProgressView()
+                            }
+                        }
+                    }
+                    .disabled(viewModel.isConnecting)
+                } footer: {
+                    if let message = viewModel.errorMessage {
+                        Text(message)
+                            .foregroundStyle(.red)
+                    }
+                }
             }
             .navigationTitle("Scratch")
         }

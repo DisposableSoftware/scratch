@@ -9,5 +9,15 @@ protocol HasAppRoutingUseCase {
     var appRouting: AppRoutingUseCase { get }
 }
 
+protocol HasConnectUseCase {
+    var connectUseCase: ConnectUseCase { get }
+}
+
+protocol HasSessionUseCase {
+    var sessionUseCase: SessionUseCase { get }
+}
+
 typealias AllUseCases = HasCoordinator
     & HasAppRoutingUseCase
+    & HasConnectUseCase
+    & HasSessionUseCase

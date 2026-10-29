@@ -91,12 +91,18 @@ Scratch/App/              host: ScratchApp, AppCoordinator + RootPresenter, Root
 Scratch/Container/        AppContainer, Has* protocols                                   ARCH-9, ARCH-14
 Scratch/Routing/          AppStep + AppFlowData, AppRouter (pure)                       ARCH-11, SRV-1
 Scratch/UI/               ViewModel, Coordinator + NavigationDestination, NavigationRoute + RoutingViewModel   ARCH-8, ARCH-10, ARCH-12, ARCH-13
-Scratch/UI/               AppRoutingUseCase + ViewFactory, AppViewFactory, SetupView(Model), LibraryView     ARCH-11, SRV-1
+Scratch/UI/               AppRoutingUseCase + ViewFactory, AppViewFactory, SetupView(Model), LibraryView     ARCH-11, SRV-1, SRV-3
 Scratch/State/            SessionState (the signed-in ServerAccount)                    SRV-1
 Scratch/Models/           ServerAddress (URL parsing), SubsonicCredentials (salt+token)  SRV-2, SRV-4
 Scratch/Gateways/         SubsonicRequest: every server URL, signed                      PROD-3, SRV-4
+Scratch/Gateways/         NetworkSession (+ same-origin redirects), SubsonicClient (envelope → ServerError)  SRV-3
+Scratch/Gateways/         RemoteServerGateway (ping), KeychainCredentialGateway          SRV-3, SRV-5
+Scratch/UseCases/         ConnectUseCase, SessionUseCase (restore at launch)             SRV-3, SRV-5
+Scratch/Models/           AppEnvironment (.live storage), ServerError/ConnectError/StorageError
+scripts/manual/live-connect.sh  SRV-3/SRV-5 against a real server; credentials from the environment only
 Scratch/Info.plist        background audio, arbitrary loads (merged with generated keys)
-ScratchTests/             Swift Testing suites; Support/ holds spies and mocks           ARCH-16
+ScratchTests/             Swift Testing suites; Support/ holds mocks, StubURLProtocol, TestContainer   ARCH-16
+ScratchTests/LiveServerTests  skipped unless live-connect.sh passes a server in
 scripts/arch-lint.sh      the architecture rules a script can check                     ARCH-1…10, 12–15
 scripts/test-arch-lint.sh tests for arch-lint
 scripts/check.sh          the single gate: spec lint, tooling tests, project checks     TOOL-10

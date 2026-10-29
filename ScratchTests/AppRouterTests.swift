@@ -3,10 +3,10 @@ import Testing
 @testable import Scratch
 
 struct AppRouterTests {
-    private let account = ServerAccount(baseURL: URL(string: "https://music.example.com")!, username: "me")
+    private let account = SavedServer.sample
 
-    private func next(from step: AppStep, account: ServerAccount?) -> AppStep? {
-        AppRouter(sessionState: SessionState(account: account)).nextStep(from: step, with: AppFlowData())
+    private func next(from step: AppStep, account: SavedServer?) -> AppStep? {
+        AppRouter(sessionState: SessionState(server: account)).nextStep(from: step, with: AppFlowData())
     }
 
     @Test func launchWithoutASavedServerOpensSetup() {

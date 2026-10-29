@@ -31,7 +31,7 @@ private final class SampleViewModel: RoutingViewModel {
 struct NavigationRouteTests {
     @Test func aViewModelRouteReachesTheCoordinator() async {
         let coordinator = CoordinatorSpy()
-        let viewModel = SampleViewModel(useCases: AppContainer.build(coordinator: coordinator))
+        let viewModel = SampleViewModel(useCases: TestContainer.build(coordinator: coordinator))
 
         _ = await viewModel.handleAction(.openDetail)
 

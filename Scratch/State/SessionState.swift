@@ -1,10 +1,10 @@
 import Combine
 
-/// Who the app is signed in as. UseCases update it; the Router reads it.
+/// The server the app is signed in to. UseCases update it; the Router reads it.
 final class SessionState: ObservableObject {
-    @Published var account: ServerAccount?
+    @Published var server: SavedServer?
 
-    init(account: ServerAccount? = nil) {
-        self.account = account
+    init(server: SavedServer? = nil) {
+        self.server = server
     }
 }

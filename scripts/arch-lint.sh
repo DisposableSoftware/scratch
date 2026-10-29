@@ -162,8 +162,12 @@ if [ -n "${view_files// /}" ]; then
   echo "$index" | in_files "$view_files" | code_has "${A}(let|var)[ \t]+[A-Za-z_][A-Za-z0-9_]*[ \t]*:[ \t]*[A-Za-z0-9_]*ViewModel$B" |
     code_lacks "${A}(let|var)[ \t]+viewModel[ \t]*:" |
     report views_submit_actions "a View's ViewModel property must be called viewModel" | emit
-  echo "$index" | in_files "$view_files" | code_has "${A}viewModel[.][A-Za-z_][A-Za-z0-9_]*[ \t]*[({]" |
+  echo "$index" | in_files "$view_files" | code_has "${A}viewModel[.][A-Za-z_][A-Za-z0-9_]*[ \t]*[(]" |
     code_lacks "${A}viewModel[.](submitAction|binding)[ \t]*[(]" |
+    report views_submit_actions "calls a ViewModel method; submit an action instead" | emit
+  # A trailing-closure call, unless the brace opens the body of an if, guard, while, switch or for.
+  echo "$index" | in_files "$view_files" | code_has "${A}viewModel[.][A-Za-z_][A-Za-z0-9_]*[ \t]*[{]" |
+    code_lacks "^[ \t]*([}][ \t]*)?(else[ \t]+)?(if|guard|while|switch|for)[ \t]" |
     report views_submit_actions "calls a ViewModel method; submit an action instead" | emit
   echo "$index" | in_files "$view_files" | code_has "${A}viewModel[.][A-Za-z_][A-Za-z0-9_.]*[ \t]*([-+*/]?=[^=]|[.](append|remove|insert|toggle|sort)[A-Za-z]*[(])" |
     report views_submit_actions "changes ViewModel state; submit an action instead" | emit

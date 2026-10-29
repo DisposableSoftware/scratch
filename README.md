@@ -1,3 +1,5 @@
+<p align="center"><img src="Scratch/Assets.xcassets/AppIcon.appiconset/AppIcon.png" width="128" alt="Scratch app icon"></p>
+
 <h1 align="center">Scratch</h1>
 
 <p align="center">A Navidrome player for iOS. Junk, but it plays your music.</p>

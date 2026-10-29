@@ -120,6 +120,21 @@ struct LiveServerTests {
         }
     }
 
+    /// ALB-2, ALB-4 against the real server: a page of albums with names and artists, and the next
+    /// page continuing where it stopped.
+    @Test func albumsPageInByName() async throws {
+        try await container.connectUseCase.connect(address: LiveServer.address, username: LiveServer.username, password: LiveServer.password)
+        let server = try #require(KeychainCredentialGateway(environment: .live).load())
+        let gateway = RemoteAlbumGateway(networkSession: URLSession.shared)
+
+        let first = try await gateway.albums(offset: 0, count: 100, server: server)
+        let second = try await gateway.albums(offset: 100, count: 100, server: server)
+
+        #expect(!first.isEmpty && first.count <= 100)
+        #expect(first.allSatisfy { !$0.name.isEmpty })
+        #expect(Set(first.map(\.id)).isDisjoint(with: second.map(\.id)))
+    }
+
     @Test func connectsAndSavesTheServer() async throws {
         try await container.connectUseCase.connect(address: LiveServer.address, username: LiveServer.username, password: LiveServer.password)
 

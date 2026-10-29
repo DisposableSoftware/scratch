@@ -11,6 +11,7 @@ struct AppContainer: AllUseCases {
     let coverArtUseCase: CoverArtUseCase
     let playbackUseCase: PlaybackUseCase
     let transcodingUseCase: TranscodingUseCase
+    let albumUseCase: AlbumUseCase
 }
 
 extension AppContainer {
@@ -23,12 +24,14 @@ extension AppContainer {
         // 1. Shared state
         let sessionState = SessionState()
         let libraryState = LibraryState()
+        let albumsState = AlbumsState()
         let playbackState = PlaybackState()
 
         // 2. Gateways
         let serverGateway = RemoteServerGateway(networkSession: networkSession)
         let credentialGateway = KeychainCredentialGateway(environment: environment)
         let libraryGateway = RemoteLibraryGateway(networkSession: networkSession)
+        let albumGateway = RemoteAlbumGateway(networkSession: networkSession)
         let coverArtGateway = RemoteCoverArtGateway(networkSession: networkSession)
         let audioPlayer = AVPlayerAudioGateway()
         let nowPlaying = MPNowPlayingGateway()
@@ -46,6 +49,11 @@ extension AppContainer {
             sessionState: sessionState,
             libraryState: libraryState
         )
+        let albumUseCase = DefaultAlbumUseCase(
+            albumGateway: albumGateway,
+            sessionState: sessionState,
+            albumsState: albumsState
+        )
         let coverArtUseCase = DefaultCoverArtUseCase(coverArtGateway: coverArtGateway, sessionState: sessionState)
         let transcodingUseCase = DefaultTranscodingUseCase(settingsGateway: settingsGateway, networkGateway: networkGateway)
         let playbackUseCase = DefaultPlaybackUseCase(
@@ -59,7 +67,8 @@ extension AppContainer {
             credentialGateway: credentialGateway,
             playback: playbackUseCase,
             sessionState: sessionState,
-            libraryState: libraryState
+            libraryState: libraryState,
+            albumsState: albumsState
         )
 
         // 4. Routers
@@ -79,7 +88,8 @@ extension AppContainer {
             libraryUseCase: libraryUseCase,
             coverArtUseCase: coverArtUseCase,
             playbackUseCase: playbackUseCase,
-            transcodingUseCase: transcodingUseCase
+            transcodingUseCase: transcodingUseCase,
+            albumUseCase: albumUseCase
         )
         viewFactory.useCases = container
         return container

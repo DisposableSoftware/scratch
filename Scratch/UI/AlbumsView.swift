@@ -1,12 +1,14 @@
 import SwiftUI
 
-/// The Albums tab. The grid arrives with ALB-2; until then it says so.
+/// The Albums tab: a grid of covers with the album's name and artist under each.
 struct AlbumsView: View {
     @ObservedObject var viewModel: AlbumsViewModel
 
+    private let spacing: CGFloat = 16
+
     var body: some View {
         NavigationStack {
-            ContentUnavailableView("Albums", systemImage: "square.grid.2x2", description: Text("The album grid is on its way."))
+            content
                 .navigationTitle("Albums")
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
@@ -19,5 +21,72 @@ struct AlbumsView: View {
                     }
                 }
         }
+        .onAppear { viewModel.submitAction(.lifecycle(.viewDidAppear)) }
+    }
+
+    @ViewBuilder private var content: some View {
+        switch viewModel.phase {
+        case .loading:
+            ProgressView()
+        case .empty:
+            ContentUnavailableView("No albums", systemImage: "square.grid.2x2", description: Text("The server has no albums yet."))
+        case .failed(let message):
+            ContentUnavailableView {
+                Label("Couldn't load the albums", systemImage: "exclamationmark.triangle")
+            } description: {
+                Text(message)
+            } actions: {
+                Button("Retry") { viewModel.submitAction(.retry) }
+            }
+        case .loaded:
+            ScrollView {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: spacing, alignment: .top), count: viewModel.columns), spacing: spacing) {
+                    ForEach(viewModel.albums) { album in
+                        AlbumCell(album: album, viewModel: viewModel)
+                    }
+                }
+                .padding(.horizontal, spacing)
+                if viewModel.isLoadingMore {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                } else if let message = viewModel.loadMoreError {
+                    VStack(spacing: 8) {
+                        Text(message).foregroundStyle(.secondary)
+                        Button("Retry") { viewModel.submitAction(.retry) }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                }
+            }
+        }
+    }
+}
+
+private struct AlbumCell: View {
+    let album: Album
+    @ObservedObject var viewModel: AlbumsViewModel
+    @Environment(\.displayScale) private var displayScale
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Color.clear
+                .aspectRatio(1, contentMode: .fit)
+                .overlay { CoverArt(image: album.coverArtID.flatMap { viewModel.artwork[$0] }).accessibilityHidden(true) }
+                // The cover is fetched at the width this cell gives it (ALB-7).
+                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in
+                    guard let id = album.coverArtID, width > 0 else { return }
+                    viewModel.submitAction(.artworkNeeded(coverArtID: id, pixelSize: Int((width * displayScale).rounded())))
+                }
+            Text(album.name)
+                .font(.subheadline.weight(.medium))
+                .lineLimit(1)
+            Text(album.artist)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+        .accessibilityElement(children: .combine)
+        .onAppear { viewModel.submitAction(.albumAppeared(album.id)) }
     }
 }

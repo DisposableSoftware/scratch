@@ -60,8 +60,9 @@ struct SessionUseCaseTests {
     private let playback = PlaybackUseCaseMock()
     private let session = SessionState()
     private let library = LibraryState()
+    private let albums = AlbumsState()
     private var useCase: DefaultSessionUseCase {
-        DefaultSessionUseCase(credentialGateway: storage, playback: playback, sessionState: session, libraryState: library)
+        DefaultSessionUseCase(credentialGateway: storage, playback: playback, sessionState: session, libraryState: library, albumsState: albums)
     }
 
     @Test func restoresTheSavedServer() {
@@ -80,12 +81,16 @@ struct SessionUseCaseTests {
         useCase.restoreSavedServer()
         library.tracks = Track.numbered(3)
         library.hasMoreTracks = false
+        albums.albums = Album.numbered(3)
+        albums.hasMoreAlbums = false
+        albums.nextOffset = 100
 
         useCase.signOut()
 
         #expect(playback.stops == 1)
         #expect(storage.stored == nil && session.server == nil && useCase.account == nil)
         #expect(library.tracks.isEmpty && library.hasMoreTracks)
+        #expect(albums.albums.isEmpty && albums.hasMoreAlbums && albums.nextOffset == 0)
         #expect(useCase.rejectedAccount == nil)
     }
 

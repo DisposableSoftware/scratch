@@ -92,7 +92,12 @@ Scratch/Container/        AppContainer, Has* protocols                          
 Scratch/Routing/          AppStep + AppFlowData, AppRouter (pure)                       ARCH-11, SRV-1
 Scratch/UI/               ViewModel, Coordinator + NavigationDestination, NavigationRoute + RoutingViewModel   ARCH-8, ARCH-10, ARCH-12, ARCH-13
 Scratch/UI/               AppRoutingUseCase + ViewFactory, AppViewFactory, SetupView(Model), LibraryView     ARCH-11, SRV-1, SRV-3
-Scratch/UI/               MainView (Albums + Songs tabs, now-playing bar as bottom accessory), AlbumsView(Model)   ALB-1, PLAY-2, LIB-6
+Scratch/UI/               MainView (Albums + Songs tabs, now-playing bar as bottom accessory)   ALB-1, PLAY-2, LIB-6
+Scratch/UI/               AlbumsView(Model): the grid, paging, states, covers            ALB-2, ALB-4, ALB-6, ALB-7
+Scratch/Models/           Album                                                          ALB-2
+Scratch/State/            AlbumsState (albums shown, next offset)                       ALB-4
+Scratch/Gateways/         RemoteAlbumGateway (getAlbumList2 by name)                     ALB-2, ALB-4
+Scratch/UseCases/         AlbumUseCase (paging, reload and sign-out races)               ALB-4
 Scratch/State/            SessionState (the signed-in ServerAccount)                    SRV-1
 Scratch/Models/           ServerAddress (URL parsing), SubsonicCredentials (salt+token)  SRV-2, SRV-4
 Scratch/Gateways/         SubsonicRequest: every server URL, signed                      PROD-3, SRV-4

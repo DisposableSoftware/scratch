@@ -117,10 +117,25 @@ final class LibraryGatewayMock: LibraryGateway {
 
 final class CoverArtUseCaseMock: CoverArtUseCase {
     var data: Data?
+    var gate: (() async -> Void)?
     private(set) var requests: [(id: String, pixelSize: Int)] = []
+
+    /// Holds the next request open. `entered` yields once that request is inside the use case;
+    /// `release` lets it finish. Later requests aren't held.
+    func holdNextRequest() -> (entered: AsyncStream<Void>, release: () -> Void) {
+        let (entered, signalEntered) = AsyncStream.makeStream(of: Void.self)
+        let (held, release) = AsyncStream.makeStream(of: Void.self)
+        gate = { [weak self] in
+            self?.gate = nil
+            signalEntered.yield()
+            for await _ in held { break }
+        }
+        return (entered, { release.yield(); release.finish() })
+    }
 
     func coverArt(id: String, pixelSize: Int) async -> Data? {
         requests.append((id, pixelSize))
+        if let gate { await gate() }
         return data
     }
 }
@@ -212,5 +227,39 @@ final class SessionUseCaseMock: SessionUseCase {
         signOuts += 1
         account = nil
         rejectedAccount = nil
+    }
+}
+
+final class AlbumGatewayMock: AlbumGateway {
+    /// Pages are cut from this list by offset and count.
+    var all: [Album] = []
+    var error: ServerError?
+    var gate: (() async -> Void)?
+    private(set) var requests: [(offset: Int, count: Int)] = []
+
+    /// Holds the next request open. `entered` yields once that request is inside the gateway;
+    /// `release` lets it finish. Later requests aren't held.
+    func holdNextRequest() -> (entered: AsyncStream<Void>, release: () -> Void) {
+        let (entered, signalEntered) = AsyncStream.makeStream(of: Void.self)
+        let (held, release) = AsyncStream.makeStream(of: Void.self)
+        gate = { [weak self] in
+            self?.gate = nil
+            signalEntered.yield()
+            for await _ in held { break }
+        }
+        return (entered, { release.yield(); release.finish() })
+    }
+
+    func albums(offset: Int, count: Int, server: SavedServer) async throws(ServerError) -> [Album] {
+        requests.append((offset, count))
+        if let gate { await gate() }
+        if let error { throw error }
+        return Array(all.dropFirst(offset).prefix(count))
+    }
+}
+
+extension Album {
+    static func numbered(_ count: Int) -> [Album] {
+        (0..<count).map { Album(id: "a\($0)", name: "Album \($0)", artist: "Artist", coverArtID: "ac\($0)", songCount: 10, duration: 2400, year: 2000, genre: "Rock", isStarred: false) }
     }
 }

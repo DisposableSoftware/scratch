@@ -18,12 +18,20 @@ final class DefaultSessionUseCase: SessionUseCase {
     private let playback: PlaybackUseCase
     private let sessionState: SessionState
     private let libraryState: LibraryState
+    private let albumsState: AlbumsState
 
-    init(credentialGateway: CredentialGateway, playback: PlaybackUseCase, sessionState: SessionState, libraryState: LibraryState) {
+    init(
+        credentialGateway: CredentialGateway,
+        playback: PlaybackUseCase,
+        sessionState: SessionState,
+        libraryState: LibraryState,
+        albumsState: AlbumsState
+    ) {
         self.credentialGateway = credentialGateway
         self.playback = playback
         self.sessionState = sessionState
         self.libraryState = libraryState
+        self.albumsState = albumsState
     }
 
     var account: ServerAccount? { sessionState.server?.account }
@@ -54,5 +62,8 @@ final class DefaultSessionUseCase: SessionUseCase {
         sessionState.rejectedAccount = nil
         libraryState.tracks = []
         libraryState.hasMoreTracks = true
+        albumsState.albums = []
+        albumsState.hasMoreAlbums = true
+        albumsState.nextOffset = 0
     }
 }

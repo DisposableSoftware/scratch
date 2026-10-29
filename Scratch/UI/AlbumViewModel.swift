@@ -8,6 +8,7 @@ enum AlbumAction: Equatable {
     case retry
     case trackTapped(Track.ID)
     case playTapped
+    case shuffleTapped
     case artworkNeeded(pixelSize: Int)
 }
 
@@ -56,7 +57,10 @@ final class AlbumViewModel: ViewModel {
             }
         case .playTapped:
             // ALB-13: from the first track.
-            useCases.playbackUseCase.play(tracks, startingAt: 0)
+            if !tracks.isEmpty { useCases.playbackUseCase.play(tracks, startingAt: 0) }
+        case .shuffleTapped:
+            // ALB-14: every track once, in a random order.
+            if !tracks.isEmpty { useCases.playbackUseCase.playShuffled(tracks) }
         case .artworkNeeded(let pixelSize):
             await loadCover(pixelSize: pixelSize)
         }

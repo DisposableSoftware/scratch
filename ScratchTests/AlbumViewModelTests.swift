@@ -121,6 +121,24 @@ struct AlbumViewModelTests {
         #expect(played.index == 0 && played.tracks.count == 4)
     }
 
+    @Test func shuffleHandsEveryTrackOfTheAlbumToThePlayerInDiscOrder() async throws {
+        let viewModel = viewModel(.numbered(discs: 2, perDisc: 3))
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
+        _ = await viewModel.handleAction(.shuffleTapped)
+
+        let shuffled = try #require(playback.shuffled.first)
+        #expect(shuffled.map(\.id) == ["d1t1", "d1t2", "d1t3", "d2t1", "d2t2", "d2t3"])
+        #expect(playback.played.isEmpty)
+    }
+
+    @Test func playAndShuffleBeforeTheTracksHaveLoadedPlayNothing() async {
+        let viewModel = viewModel(.numbered(discs: 1, perDisc: 2))
+        _ = await viewModel.handleAction(.shuffleTapped)
+        _ = await viewModel.handleAction(.playTapped)
+        #expect(playback.shuffled.isEmpty && playback.played.isEmpty)
+    }
+
     @Test func tappingATrackThatIsntThereDoesNothing() async {
         let viewModel = viewModel(.numbered(discs: 1, perDisc: 2))
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))

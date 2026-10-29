@@ -26,12 +26,12 @@ The Albums tab, and the screen for one album. Tracks and their art are the same 
 
 | ID | Requirement | Status | Verified by |
 |----|-------------|--------|-------------|
-| `ALB-9` | The album screen shows, from the top, the album's cover art large; its info: name, artist, year, genre, number of tracks and total duration, each shown only when the server has it; then the **Play** and **Shuffle** actions, then the tracks. | partial: **Shuffle** arrives with `PLAY-9` | `AlbumViewModelTests`; `manual:` `scripts/manual/live-connect.sh` renders the real screen of a multi-disc and a single-disc album (`alb9-*.png`) |
+| `ALB-9` | The album screen shows, from the top, the album's cover art large; its info: name, artist, year, genre, number of tracks and total duration, each shown only when the server has it; then the **Play** and **Shuffle** actions, then the tracks. | done | `AlbumViewModelTests`; `manual:` `scripts/manual/live-connect.sh` renders the real screen of a multi-disc and a single-disc album with Play and Shuffle (`alb9-*.png`) |
 | `ALB-10` | Tracks are in disc and track-number order. An album with more than one disc groups them under a header per disc, "Disc 2", or "Disc 2 · Development" when the server names the disc. A single-disc album has no headers. | done | `AlbumUseCaseTests`, `AlbumDetailTests`, `AlbumViewModelTests`, `AlbumGatewayTests`; `LiveServerTests.albumScreensShowTracksByDisc` and its screenshot of the multi-disc Chrono Cross soundtrack |
 | `ALB-11` | Each track row shows its track number, title and duration, and its artist when that differs from the album's artist. | done | `AlbumViewModelTests`; live screenshots of both album screens |
 | `ALB-12` | Tapping a track plays it and queues the tracks after it, in disc and track order across discs. | done | `AlbumViewModelTests`, `PlaybackUseCaseTests`; tapping a track on the real screen is in the verification backlog |
 | `ALB-13` | **Play** plays the album from its first track and queues the rest in order. | done | `AlbumViewModelTests`; tapping Play on the real screen is in the verification backlog |
-| `ALB-14` | **Shuffle** plays all of the album's tracks once, in a random order (`PLAY-9`). | planned | `AlbumViewModelTests` |
+| `ALB-14` | **Shuffle** plays all of the album's tracks once, in a random order (`PLAY-9`). | done | `AlbumViewModelTests`, `PlaybackUseCaseTests`; tapping Shuffle on the real screen is in the verification backlog |
 | `ALB-15` | While the album loads its screen shows a progress indicator, and a load error shows its message with **Retry**. | done | `AlbumViewModelTests` |
 | `ALB-16` | An album or Albums-tab request that the server rejects as unauthorised (Subsonic error 40 or 41) returns the user to setup with the URL and username filled in, as for the track list (`SRV-6`). | planned | `AlbumsViewModelTests`, `AlbumViewModelTests`; `manual:` live test: a stale-credential album request is rejected |
 

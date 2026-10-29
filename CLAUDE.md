@@ -94,7 +94,7 @@ Scratch/UI/               ViewModel, Coordinator + NavigationDestination, Naviga
 Scratch/UI/               AppRoutingUseCase + ViewFactory, AppViewFactory, SetupView(Model), LibraryView     ARCH-11, SRV-1, SRV-3
 Scratch/UI/               MainView (Albums + Songs tabs, now-playing bar as bottom accessory)   ALB-1, PLAY-2, LIB-6
 Scratch/UI/               AlbumsView(Model): the grid, favourites, paging, states, covers   ALB-2…7
-Scratch/UI/               AlbumView(Model), AlbumRows: cover, info, discs, Play, track taps    ALB-8…13, ALB-15
+Scratch/UI/               AlbumView(Model), AlbumRows: cover, info, discs, Play, Shuffle, track taps   ALB-8…15
 Scratch/UI/               NavigationStackPort (Port: the host's stack for `.push` screens)   ALB-8, ARCH-15
 Scratch/App/              PushStackHost: the stack's path, `.push` handler               ALB-8
 Scratch/Models/           AlbumDetail, AlbumTrack, AlbumDisc                             ALB-9, ALB-10
@@ -120,7 +120,7 @@ Scratch/State/            PlaybackState (queue, current index, status, time)    
 Scratch/Gateways/         AVPlayerAudioGateway (stream URL, AVPlayer + audio session → events)   PLAY-1, PLAY-6, PLAY-7, PLAY-8
 Scratch/Gateways/         MPNowPlayingGateway (lock screen info, remote commands)        PLAY-6
 Scratch/Info.plist        background audio (PLAY-6), arbitrary loads for plain-http servers (SRV-2)
-Scratch/UseCases/         PlaybackUseCase (queue, end, failure, interruption, lock screen rules)   PLAY-1, PLAY-4…8
+Scratch/UseCases/         PlaybackUseCase (queue, shuffle, end, failure, interruption, lock screen rules)   PLAY-1, PLAY-4…9
 Scratch/Models/           StreamQuality, TranscodingSettings, NetworkKind               TRANS-1…3
 Scratch/Gateways/         UserDefaultsSettingsGateway, PathMonitorNetworkGateway, SubsonicRequest.stream   TRANS-3…5
 Scratch/UseCases/         TranscodingUseCase (settings, quality for the next track)     TRANS-1…5

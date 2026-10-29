@@ -8,6 +8,8 @@ protocol PlaybackUseCase {
 
     /// Plays `tracks[index]` and queues the tracks after it.
     func play(_ tracks: [Track], startingAt index: Int)
+    /// Queues every track once in a random order and plays the first of them (PLAY-9).
+    func playShuffled(_ tracks: [Track])
     func togglePlayPause()
     func next()
     func previous()
@@ -23,6 +25,8 @@ final class DefaultPlaybackUseCase: PlaybackUseCase {
     private let audioPlayer: AudioPlayerGateway
     private let nowPlaying: NowPlayingGateway
     private let transcoding: TranscodingUseCase
+    /// Puts tracks in a random order; tests give one that isn't.
+    private let shuffle: ([Track]) -> [Track]
     private let sessionState: SessionState
     private let playbackState: PlaybackState
     /// Whether an interruption paused playback that should come back when it ends.
@@ -35,11 +39,13 @@ final class DefaultPlaybackUseCase: PlaybackUseCase {
         nowPlaying: NowPlayingGateway,
         transcoding: TranscodingUseCase,
         sessionState: SessionState,
-        playbackState: PlaybackState
+        playbackState: PlaybackState,
+        shuffle: @escaping ([Track]) -> [Track] = { $0.shuffled() }
     ) {
         self.audioPlayer = audioPlayer
         self.nowPlaying = nowPlaying
         self.transcoding = transcoding
+        self.shuffle = shuffle
         self.sessionState = sessionState
         self.playbackState = playbackState
         audioPlayer.onEvent = { [weak self] event in self?.handle(event) }
@@ -51,6 +57,12 @@ final class DefaultPlaybackUseCase: PlaybackUseCase {
     func play(_ tracks: [Track], startingAt index: Int) {
         guard sessionState.server != nil, tracks.indices.contains(index) else { return }
         playbackState.queue = Array(tracks[index...])
+        start(at: 0)
+    }
+
+    func playShuffled(_ tracks: [Track]) {
+        guard sessionState.server != nil, !tracks.isEmpty else { return }
+        playbackState.queue = shuffle(tracks)
         start(at: 0)
     }
 

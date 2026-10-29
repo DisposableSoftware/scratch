@@ -172,8 +172,10 @@ final class AudioPlayerGatewayMock: AudioPlayerGateway {
 final class PlaybackUseCaseMock: PlaybackUseCase {
     let state = PlaybackState()
     private(set) var played: [(tracks: [Track], index: Int)] = []
+    private(set) var shuffled: [[Track]] = []
 
     func play(_ tracks: [Track], startingAt index: Int) { played.append((tracks, index)) }
+    func playShuffled(_ tracks: [Track]) { shuffled.append(tracks) }
     func togglePlayPause() {}
     func next() {}
     func previous() {}

@@ -8,8 +8,12 @@ struct PlaybackUseCaseTests {
     private let transcoding = TranscodingUseCaseMock()
     private let state = PlaybackState()
     private let tracks = Track.numbered(4)
-    private func useCase(signedIn: Bool = true) -> DefaultPlaybackUseCase {
-        DefaultPlaybackUseCase(audioPlayer: player, nowPlaying: lockScreen, transcoding: transcoding, sessionState: SessionState(server: signedIn ? .sample : nil), playbackState: state)
+    private func useCase(signedIn: Bool = true, shuffle: (([Track]) -> [Track])? = nil) -> DefaultPlaybackUseCase {
+        let session = SessionState(server: signedIn ? .sample : nil)
+        guard let shuffle else {
+            return DefaultPlaybackUseCase(audioPlayer: player, nowPlaying: lockScreen, transcoding: transcoding, sessionState: session, playbackState: state)
+        }
+        return DefaultPlaybackUseCase(audioPlayer: player, nowPlaying: lockScreen, transcoding: transcoding, sessionState: session, playbackState: state, shuffle: shuffle)
     }
 
     @Test func playsTheTappedTrackAndQueuesTheRest() {
@@ -399,5 +403,85 @@ struct PlaybackUseCaseTests {
         #expect(state.quality == nil && state.duration == nil && state.elapsed == 0)
         #expect(player.calls.last == .stop)
         #expect(lockScreen.updates.last == .some(nil))
+    }
+
+    // PLAY-9
+
+    @Test func aShuffledListQueuesEveryTrackOnceInTheShufflesOrderAndStartsWithTheFirst() {
+        let useCase = useCase(shuffle: { Array($0.reversed()) })
+
+        useCase.playShuffled(tracks)
+
+        #expect(state.queue.map(\.id) == ["t3", "t2", "t1", "t0"])
+        #expect(state.currentTrack?.id == "t3" && state.status == .loading)
+        #expect(player.loads == ["t3"])
+    }
+
+    @Test func nextAndPreviousFollowTheShuffledOrder() {
+        let useCase = useCase(shuffle: { [$0[2], $0[0], $0[3], $0[1]] })
+        useCase.playShuffled(tracks)
+        player.send(.ready(duration: nil))
+
+        useCase.next()
+        #expect(state.currentTrack?.id == "t0")
+        useCase.next()
+        #expect(state.currentTrack?.id == "t3")
+        player.send(.ready(duration: nil))
+        player.send(.time(1))
+        useCase.previous()
+        #expect(state.currentTrack?.id == "t0")
+        #expect(player.loads == ["t2", "t0", "t3", "t0"])
+    }
+
+    @Test func aShuffledQueueEndsLikeAnyOther() {
+        let useCase = useCase(shuffle: { Array($0.reversed()) })
+        useCase.playShuffled(Array(tracks.prefix(2)))
+        player.send(.ready(duration: nil))
+
+        player.send(.ended)
+        player.send(.ready(duration: nil))
+        player.send(.ended)
+
+        #expect(state.currentTrack?.id == "t0" && state.status == .paused && state.elapsed == 0)
+    }
+
+    @Test func thereIsNoShuffleModeAfterwards() {
+        let useCase = useCase(shuffle: { Array($0.reversed()) })
+        useCase.playShuffled(tracks)
+
+        useCase.play(tracks, startingAt: 0)
+
+        #expect(state.queue.map(\.id) == ["t0", "t1", "t2", "t3"] && state.currentTrack?.id == "t0")
+    }
+
+    @Test func shufflingAgainShufflesAgain() {
+        var calls = 0
+        let useCase = useCase(shuffle: { list in
+            calls += 1
+            return calls == 1 ? list : Array(list.reversed())
+        })
+
+        useCase.playShuffled(tracks)
+        let first = state.queue.map(\.id)
+        useCase.playShuffled(tracks)
+
+        #expect(first == ["t0", "t1", "t2", "t3"] && state.queue.map(\.id) == ["t3", "t2", "t1", "t0"])
+    }
+
+    @Test func theRealShuffleKeepsEveryTrackExactlyOnce() {
+        let many = Track.numbered(200)
+        let useCase = useCase()
+
+        useCase.playShuffled(many)
+
+        #expect(state.queue.count == 200 && Set(state.queue.map(\.id)) == Set(many.map(\.id)))
+        #expect(state.queue.map(\.id) != many.map(\.id))
+        #expect(state.currentTrack?.id == state.queue.first?.id)
+    }
+
+    @Test func nothingIsShuffledWithoutTracksOrSignedOut() {
+        useCase().playShuffled([])
+        useCase(signedIn: false).playShuffled(tracks)
+        #expect(state.queue.isEmpty && player.loads.isEmpty)
     }
 }

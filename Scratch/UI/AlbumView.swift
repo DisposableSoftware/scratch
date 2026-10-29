@@ -46,13 +46,22 @@ struct AlbumView: View {
                 }
             }
             .multilineTextAlignment(.center)
-            Button {
-                viewModel.submitAction(.playTapped)
-            } label: {
-                Label("Play", systemImage: "play.fill")
-                    .frame(maxWidth: .infinity)
+            HStack(spacing: 12) {
+                Button {
+                    viewModel.submitAction(.playTapped)
+                } label: {
+                    Label("Play", systemImage: "play.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                Button {
+                    viewModel.submitAction(.shuffleTapped)
+                } label: {
+                    Label("Shuffle", systemImage: "shuffle")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.borderedProminent)
             .disabled(viewModel.phase != .loaded)
         }
         .frame(maxWidth: .infinity)

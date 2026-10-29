@@ -10,12 +10,12 @@
 | `PLAY-6` | Playback continues in the background and with the screen locked. The lock screen and Control Center show the track and offer play/pause, next, previous and scrubbing. | done | `PlaybackUseCaseTests`, `SystemGatewayTests`; lock screen and background play by hand are in the verification backlog |
 | `PLAY-7` | An audio interruption (a call, another app) pauses playback, which resumes afterwards when the system says it should. Unplugging headphones or disconnecting Bluetooth audio pauses. | done | `PlaybackUseCaseTests`, `SystemGatewayTests`; a real call or another app's audio is in the verification backlog |
 | `PLAY-8` | If a stream fails to load or play, the player shows the error and playback stops. It doesn't skip silently. | done | `PlaybackUseCaseTests`, `PlayerViewModelTests`; `manual:` live test fails on a missing track; `scripts/manual/snapshots.sh` renders the failed bar and player |
-| `PLAY-9` | Playing a list shuffled queues every track in it once, in a random order, and starts with the first of them. Next and Previous follow that order, and there is no shuffle mode afterwards: the next list played is in order again. | planned | `PlaybackUseCaseTests` |
+| `PLAY-9` | Playing a list shuffled queues every track in it once, in a random order, and starts with the first of them. Next and Previous follow that order, and there is no shuffle mode afterwards: the next list played is in order again. | done | `PlaybackUseCaseTests` |
 
 ## Implementation notes
 
 - The queue holds the tapped track and the ones after it in the list as it was loaded then. Pages loaded later aren't added. "The list" is whichever one the track was tapped in: the Songs tab, or an album (`ALB-12`).
-- A shuffled queue is every track of the list once, in an order chosen when it's started: a Fisher–Yates shuffle with a random generator the use case is given, so tests can fix the order. Shuffling an album again re-shuffles it.
+- A shuffled queue is every track of the list once, in an order chosen when it's started, by a shuffle the use case is given (Swift's `shuffled()`, a uniform one, in the app), so tests can fix the order. Shuffling an album again re-shuffles it. The use case only shuffles a list it's handed: with no tracks, or signed out, nothing starts.
 - After a failure (`PLAY-8`), the track stays failed: Next at the end of the queue and seeking do nothing, play/pause retries it, and Previous goes back one (or retries the first).
 - Previous decides by the elapsed time the app shows, not AVPlayer's clock. A seek lands asynchronously, so two quick presses would otherwise restart twice.
 - `AVPlayerAudioGateway` can't be unit-tested with `StubURLProtocol`, because AVPlayer loads outside URLSession's protocol classes. The live test in `scripts/manual/live-connect.sh` covers it against a real server: a track reaches ready and plays past a second, and a missing track fails.

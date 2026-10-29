@@ -89,8 +89,10 @@ Keep this table current: one line per module, with the spec IDs it implements.
 Scratch.xcodeproj         one app target, one test target, synchronized folders: new files join automatically
 Scratch/App/              host: ScratchApp, AppCoordinator + RootPresenter, RootView      ARCH-13, ARCH-15
 Scratch/Container/        AppContainer, Has* protocols                                   ARCH-9, ARCH-14
-Scratch/Routing/          Step enums and pure Routers (empty until ARCH-11)              ARCH-11
+Scratch/Routing/          AppStep + AppFlowData, AppRouter (pure)                       ARCH-11, SRV-1
 Scratch/UI/               ViewModel, Coordinator + NavigationDestination, NavigationRoute + RoutingViewModel   ARCH-8, ARCH-10, ARCH-12, ARCH-13
+Scratch/UI/               AppRoutingUseCase + ViewFactory, AppViewFactory, SetupView(Model), LibraryView     ARCH-11, SRV-1
+Scratch/State/            SessionState (the signed-in ServerAccount)                    SRV-1
 Scratch/Info.plist        background audio, arbitrary loads (merged with generated keys)
 ScratchTests/             Swift Testing suites; Support/ holds spies and mocks           ARCH-16
 scripts/arch-lint.sh      the architecture rules a script can check                     ARCH-1…10, 12–15

@@ -16,6 +16,9 @@ struct ScratchApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(presenter: presenter)
+                .task {
+                    await container.appRouting.navigateToNext(from: .launch, with: AppFlowData())
+                }
         }
     }
 }

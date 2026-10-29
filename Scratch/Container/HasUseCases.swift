@@ -5,4 +5,9 @@ protocol HasCoordinator {
     var coordinator: Coordinator { get }
 }
 
+protocol HasAppRoutingUseCase {
+    var appRouting: AppRoutingUseCase { get }
+}
+
 typealias AllUseCases = HasCoordinator
+    & HasAppRoutingUseCase

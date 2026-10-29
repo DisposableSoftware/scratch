@@ -26,7 +26,7 @@ Scratch follows the layered architecture in `~/Notes/Tech Notes/Work Notes/Archi
 
 | ID | Requirement | Status | Verified by |
 |----|-------------|--------|-------------|
-| `ARCH-11` | Moving between screens is decided by a Router: a pure value with a `…Step` enum and `nextStep(from:with:)`, with no side effects. A RoutingUseCase asks the Router for the next step and has the Coordinator navigate there. | planned | `AppRouterTests` |
+| `ARCH-11` | Moving between screens is decided by a Router: a pure value with a `…Step` enum and `nextStep(from:with:)`, with no side effects. A RoutingUseCase asks the Router for the next step and has the Coordinator navigate there. | done | `AppRouterTests`, `AppRoutingUseCaseTests` |
 | `ARCH-12` | Navigation within one screen (a sheet, an alert) is a ViewModel-local `…Route` enum resolved to a destination and handed to the Coordinator. | done | `NavigationRouteTests`; `test-arch-lint.sh: view_navigation_link, view_own_sheet` |
 | `ARCH-13` | The Coordinator is created in `App/`, which registers its destination handlers. Nothing outside `App/` and `Container/` knows how navigation is performed. | done | `test-arch-lint.sh: view_navigation_link, view_own_sheet, feature_names_host_type` |
 
@@ -44,6 +44,6 @@ Scratch follows the layered architecture in `~/Notes/Tech Notes/Work Notes/Archi
 - `ARCH-10` follows the note's `@Published` style rather than `@Observable`, because the note is the standard here. Main-actor isolation comes from the project's `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`. The lint rejects a `nonisolated` ViewModel or state class.
 - `Routing/` holds only the pure Routers and their `…Step` enums. The navigation mechanism lives in `UI/`: the `Coordinator` protocol, the note's `NavigationDestination` enum, `NavigationRoute`, the view factory, and the RoutingUseCases. It's there because destinations carry views, and keeping it out of `Routing/` lets `ARCH-4` hold without a type-erased destination and a downcast in the Coordinator.
 - A ViewModel with routes conforms to `RoutingViewModel` and names its Coordinator as `useCases.coordinator`. A `Has*` composition is an existential, which doesn't conform to its own protocols, so an extension constrained `where UseCases: HasCoordinator` never applies. The first version tried that, and the note's `navigateTo(.route)` failed to compile.
-- `AppContainer` is a struct, as in the note.
+- `AppContainer` is a struct, as in the note. The note's `build` uses a `viewFactory` without saying where it comes from. Here `AppViewFactory` is a class that receives the finished container, because the ViewModels it builds need the use cases that the routing use case belongs to. The cycle this makes (factory, container, routing use case, factory) lives as long as the app. `AllUseCases` isn't class-bound, so it can't be held weakly.
 - The note leaves `SideEffect` open. Here it has only `.none`, and `submitAction(_:)` runs each action in its own task. Add cases, or serialize actions, when a screen needs them, and give that change its own row.
 - `viewModel.binding(_:to:)` is how a control writes: the binding reads published state and submits an action on set, so `ARCH-8` holds.

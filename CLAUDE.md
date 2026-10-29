@@ -66,7 +66,7 @@ Scratch follows `~/Notes/Tech Notes/Work Notes/Architecture Design.md` **strictl
 - A concrete Gateway or UseCase is named only in its own folder and `Container/`. Everything else holds the protocol.
 - Views read published state and call `viewModel.submitAction(_:)`, or `viewModel.binding(_:to:)` for controls. Nothing else.
 - New dependencies for a ViewModel: add a `Has…` protocol in `Container/HasUseCases.swift`, add it to `AllUseCases`, and build the implementation in `AppContainer.build(…)`.
-- The project sets `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`: everything is main-actor unless marked `nonisolated`. Keep blocking work out of it.
+- The project sets `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`: everything is main-actor unless marked `nonisolated`. Keep blocking work out of it. Value models used in `@Test(arguments:)` must be `nonisolated`, since Swift Testing evaluates arguments off the main actor.
 
 ## Subagents
 
@@ -110,6 +110,10 @@ Scratch/Gateways/         AVPlayerAudioGateway (stream URL, AVPlayer + audio ses
 Scratch/Gateways/         MPNowPlayingGateway (lock screen info, remote commands)        PLAY-6
 Scratch/Info.plist        background audio (PLAY-6), arbitrary loads for plain-http servers (SRV-2)
 Scratch/UseCases/         PlaybackUseCase (queue, end, failure, interruption, lock screen rules)   PLAY-1, PLAY-4…8
+Scratch/Models/           StreamQuality, TranscodingSettings, NetworkKind               TRANS-1…3
+Scratch/Gateways/         UserDefaultsSettingsGateway, PathMonitorNetworkGateway, SubsonicRequest.stream   TRANS-3…5
+Scratch/UseCases/         TranscodingUseCase (settings, quality for the next track)     TRANS-1…5
+Scratch/UI/               SettingsView(Model): transcoding per network                   LIB-6, TRANS-1, TRANS-2
 Scratch/UI/               PlayerViewModel (mirrors PlaybackState), NowPlayingBar, PlayerView   PLAY-2, PLAY-3, PLAY-8
 ScratchTests/SnapshotTests  skipped unless snapshots.sh passes a directory in
 scripts/manual/snapshots.sh  renders the bar and player (playing, failed) to PNGs

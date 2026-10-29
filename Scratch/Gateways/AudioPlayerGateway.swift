@@ -7,8 +7,8 @@ protocol AudioPlayerGateway: AnyObject {
     var onEvent: ((AudioPlayerEvent) -> Void)? { get set }
     var currentTime: TimeInterval { get }
 
-    /// Starts streaming the track; it plays as soon as it can.
-    func load(_ track: Track, server: SavedServer)
+    /// Starts streaming the track at the given quality; it plays as soon as it can.
+    func load(_ track: Track, server: SavedServer, quality: StreamQuality)
     func play()
     func pause()
     func seek(to seconds: TimeInterval)
@@ -90,9 +90,9 @@ final class AVPlayerAudioGateway: AudioPlayerGateway {
         return seconds.isFinite ? seconds : 0
     }
 
-    func load(_ track: Track, server: SavedServer) {
+    func load(_ track: Track, server: SavedServer, quality: StreamQuality) {
         itemObservers = []
-        let request = SubsonicRequest(method: "stream", parameters: [URLQueryItem(name: "id", value: track.id)])
+        let request = SubsonicRequest.stream(trackID: track.id, quality: quality)
         guard let url = try? request.url(baseURL: server.account.baseURL, credentials: server.credentials) else {
             player.replaceCurrentItem(with: nil)
             onEvent?(.failed)

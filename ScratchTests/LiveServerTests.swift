@@ -37,7 +37,7 @@ struct LiveServerTests {
         let player = AVPlayerAudioGateway()
         let (events, sink) = AsyncStream.makeStream(of: AudioPlayerEvent.self)
         player.onEvent = { sink.yield($0) }
-        player.load(track, server: server)
+        player.load(track, server: server, quality: TranscodingSettings.defaults.wifi)
         var ready = false
         var played: TimeInterval = 0
         for await event in events {
@@ -52,7 +52,7 @@ struct LiveServerTests {
         missing.id = "no-such-track"
         let (failures, failureSink) = AsyncStream.makeStream(of: AudioPlayerEvent.self)
         player.onEvent = { failureSink.yield($0) }
-        player.load(missing, server: server)
+        player.load(missing, server: server, quality: TranscodingSettings.defaults.wifi)
         var failed = false
         for await event in failures {
             if case .failed = event { failed = true; break }
@@ -60,6 +60,48 @@ struct LiveServerTests {
         }
         player.stop()
         #expect(failed)
+    }
+
+    /// TRANS-4 against the real server: each quality streams as what it asks for, plays, and a
+    /// transcoded stream can be sought into.
+    @Test(arguments: [
+        (StreamQuality(format: .mp3, maxBitRate: 128), "audio/mpeg"),
+        (StreamQuality(format: .aac, maxBitRate: 128), "audio/aac"),
+        (StreamQuality(format: .original, maxBitRate: nil), ""),
+    ])
+    func streamsAsAskedPlayAndSeek(quality: StreamQuality, contentType: String) async throws {
+        try await container.connectUseCase.connect(address: LiveServer.address, username: LiveServer.username, password: LiveServer.password)
+        let server = try #require(KeychainCredentialGateway(environment: .live).load())
+        let track = try #require(try await RemoteLibraryGateway(networkSession: URLSession.shared).tracks(offset: 0, count: 1, server: server).first)
+
+        if !contentType.isEmpty {
+            let url = try SubsonicRequest.stream(trackID: track.id, quality: quality).url(baseURL: server.account.baseURL, credentials: server.credentials)
+            var head = URLRequest(url: url)
+            head.setValue("bytes=0-1023", forHTTPHeaderField: "Range")
+            let (_, response) = try await URLSession.shared.data(for: head)
+            #expect((response as? HTTPURLResponse)?.mimeType == contentType)
+        }
+
+        let player = AVPlayerAudioGateway()
+        let (events, sink) = AsyncStream.makeStream(of: AudioPlayerEvent.self)
+        player.onEvent = { sink.yield($0) }
+        player.load(track, server: server, quality: quality)
+        var played = false
+        var sought = false
+        for await event in events {
+            if case .failed = event { break }
+            if case .time(let t) = event {
+                if !played, t > 1 {
+                    played = true
+                    player.seek(to: 60)
+                } else if played, t > 59 {
+                    sought = true
+                    break
+                }
+            }
+        }
+        player.stop()
+        #expect(played && sought, "\(quality.format): played \(played), sought \(sought)")
     }
 
     @Test func connectsAndSavesTheServer() async throws {

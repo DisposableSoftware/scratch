@@ -5,7 +5,8 @@ import UIKit
 @testable import Scratch
 
 /// Renders screens to PNGs for a look by eye. Skipped unless scripts/manual/snapshots.sh passes a
-/// directory in. ImageRenderer draws some controls (Slider, Button chrome) as placeholders.
+/// directory in. ImageRenderer draws some controls (Slider, Button chrome) as placeholders, and
+/// can't draw a Form at all, so the settings sheet is checked in the simulator instead.
 @Suite(.serialized, .enabled(if: Snapshots.directory != nil))
 struct SnapshotTests {
     private struct UseCases: HasPlaybackUseCase, HasCoverArtUseCase, HasCoordinator {
@@ -16,7 +17,7 @@ struct SnapshotTests {
 
     private func viewModel(failed: Bool) async -> PlayerViewModel {
         let player = AudioPlayerGatewayMock()
-        let playback = DefaultPlaybackUseCase(audioPlayer: player, nowPlaying: NowPlayingGatewayMock(), sessionState: SessionState(server: .sample), playbackState: PlaybackState())
+        let playback = DefaultPlaybackUseCase(audioPlayer: player, nowPlaying: NowPlayingGatewayMock(), transcoding: TranscodingUseCaseMock(), sessionState: SessionState(server: .sample), playbackState: PlaybackState())
         let art = CoverArtUseCaseMock()
         art.data = UIGraphicsImageRenderer(size: CGSize(width: 600, height: 600)).image { context in
             UIColor.systemTeal.setFill()

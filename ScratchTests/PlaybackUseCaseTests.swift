@@ -5,10 +5,11 @@ import Testing
 struct PlaybackUseCaseTests {
     private let player = AudioPlayerGatewayMock()
     private let lockScreen = NowPlayingGatewayMock()
+    private let transcoding = TranscodingUseCaseMock()
     private let state = PlaybackState()
     private let tracks = Track.numbered(4)
     private func useCase(signedIn: Bool = true) -> DefaultPlaybackUseCase {
-        DefaultPlaybackUseCase(audioPlayer: player, nowPlaying: lockScreen, sessionState: SessionState(server: signedIn ? .sample : nil), playbackState: state)
+        DefaultPlaybackUseCase(audioPlayer: player, nowPlaying: lockScreen, transcoding: transcoding, sessionState: SessionState(server: signedIn ? .sample : nil), playbackState: state)
     }
 
     @Test func playsTheTappedTrackAndQueuesTheRest() {
@@ -359,5 +360,31 @@ struct PlaybackUseCaseTests {
         player.send(.buffering(false))
         #expect(lockScreen.last?.isPlaying == true)
         _ = useCase
+    }
+
+    // TRANS-3, TRANS-5
+
+    @Test func eachTrackGetsTheQualityForTheNetworkItStartsOn() {
+        let useCase = useCase()
+        useCase.play(tracks, startingAt: 0)
+        transcoding.network = .cellular
+        useCase.next()
+
+        #expect(player.qualities == [TranscodingSettings.defaults.wifi, TranscodingSettings.defaults.cellular])
+        #expect(state.quality == TranscodingSettings.defaults.cellular)
+    }
+
+    @Test func aSettingsChangeAppliesFromTheNextTrack() {
+        let useCase = useCase()
+        useCase.play(tracks, startingAt: 0)
+        player.send(.ready(duration: nil))
+        let aac = StreamQuality(format: .aac, maxBitRate: 128)
+
+        transcoding.update(TranscodingSettings(wifi: aac, cellular: aac))
+        #expect(player.loads == ["t0"])
+        #expect(state.quality == TranscodingSettings.defaults.wifi)
+        useCase.next()
+
+        #expect(player.qualities.last == aac)
     }
 }

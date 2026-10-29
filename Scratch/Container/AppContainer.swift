@@ -10,6 +10,7 @@ struct AppContainer: AllUseCases {
     let libraryUseCase: LibraryUseCase
     let coverArtUseCase: CoverArtUseCase
     let playbackUseCase: PlaybackUseCase
+    let transcodingUseCase: TranscodingUseCase
 }
 
 extension AppContainer {
@@ -31,6 +32,8 @@ extension AppContainer {
         let coverArtGateway = RemoteCoverArtGateway(networkSession: networkSession)
         let audioPlayer = AVPlayerAudioGateway()
         let nowPlaying = MPNowPlayingGateway()
+        let settingsGateway = UserDefaultsSettingsGateway(environment: environment)
+        let networkGateway = PathMonitorNetworkGateway()
 
         // 3. UseCases
         let connectUseCase = DefaultConnectUseCase(
@@ -45,9 +48,11 @@ extension AppContainer {
             libraryState: libraryState
         )
         let coverArtUseCase = DefaultCoverArtUseCase(coverArtGateway: coverArtGateway, sessionState: sessionState)
+        let transcodingUseCase = DefaultTranscodingUseCase(settingsGateway: settingsGateway, networkGateway: networkGateway)
         let playbackUseCase = DefaultPlaybackUseCase(
             audioPlayer: audioPlayer,
             nowPlaying: nowPlaying,
+            transcoding: transcodingUseCase,
             sessionState: sessionState,
             playbackState: playbackState
         )
@@ -68,7 +73,8 @@ extension AppContainer {
             sessionUseCase: sessionUseCase,
             libraryUseCase: libraryUseCase,
             coverArtUseCase: coverArtUseCase,
-            playbackUseCase: playbackUseCase
+            playbackUseCase: playbackUseCase,
+            transcodingUseCase: transcodingUseCase
         )
         viewFactory.useCases = container
         return container

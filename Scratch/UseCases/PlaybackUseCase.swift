@@ -20,6 +20,7 @@ final class DefaultPlaybackUseCase: PlaybackUseCase {
 
     private let audioPlayer: AudioPlayerGateway
     private let nowPlaying: NowPlayingGateway
+    private let transcoding: TranscodingUseCase
     private let sessionState: SessionState
     private let playbackState: PlaybackState
     /// Whether an interruption paused playback that should come back when it ends.
@@ -30,11 +31,13 @@ final class DefaultPlaybackUseCase: PlaybackUseCase {
     init(
         audioPlayer: AudioPlayerGateway,
         nowPlaying: NowPlayingGateway,
+        transcoding: TranscodingUseCase,
         sessionState: SessionState,
         playbackState: PlaybackState
     ) {
         self.audioPlayer = audioPlayer
         self.nowPlaying = nowPlaying
+        self.transcoding = transcoding
         self.sessionState = sessionState
         self.playbackState = playbackState
         audioPlayer.onEvent = { [weak self] event in self?.handle(event) }
@@ -114,7 +117,10 @@ final class DefaultPlaybackUseCase: PlaybackUseCase {
         playbackState.elapsed = 0
         playbackState.duration = track.duration.map(TimeInterval.init)
         playbackState.status = .loading
-        audioPlayer.load(track, server: server)
+        // TRANS-3: the quality for the network this track starts on.
+        let quality = transcoding.qualityForNextTrack()
+        playbackState.quality = quality
+        audioPlayer.load(track, server: server, quality: quality)
         publishNowPlaying()
     }
 

@@ -131,7 +131,7 @@ extension Track {
 
 final class AudioPlayerGatewayMock: AudioPlayerGateway {
     enum Call: Equatable {
-        case load(Track.ID)
+        case load(Track.ID, StreamQuality)
         case play, pause, stop
         case seek(TimeInterval)
     }
@@ -140,14 +140,15 @@ final class AudioPlayerGatewayMock: AudioPlayerGateway {
     var currentTime: TimeInterval = 0
     private(set) var calls: [Call] = []
 
-    func load(_ track: Track, server: SavedServer) { calls.append(.load(track.id)) }
+    func load(_ track: Track, server: SavedServer, quality: StreamQuality) { calls.append(.load(track.id, quality)) }
     func play() { calls.append(.play) }
     func pause() { calls.append(.pause) }
     func seek(to seconds: TimeInterval) { calls.append(.seek(seconds)) }
     func stop() { calls.append(.stop) }
 
     func send(_ event: AudioPlayerEvent) { onEvent?(event) }
-    var loads: [Track.ID] { calls.compactMap { if case .load(let id) = $0 { id } else { nil } } }
+    var loads: [Track.ID] { calls.compactMap { if case .load(let id, _) = $0 { id } else { nil } } }
+    var qualities: [StreamQuality] { calls.compactMap { if case .load(_, let quality) = $0 { quality } else { nil } } }
 }
 
 final class PlaybackUseCaseMock: PlaybackUseCase {
@@ -168,4 +169,23 @@ final class NowPlayingGatewayMock: NowPlayingGateway {
 
     func update(_ info: NowPlayingInfo?) { updates.append(info) }
     func send(_ command: RemoteCommand) { onCommand?(command) }
+}
+
+final class TranscodingUseCaseMock: TranscodingUseCase {
+    var settings = TranscodingSettings.defaults
+    var network = NetworkKind.wifi
+
+    func update(_ settings: TranscodingSettings) { self.settings = settings }
+    func qualityForNextTrack() -> StreamQuality { settings.quality(on: network) }
+}
+
+final class NetworkGatewayStub: NetworkGateway {
+    var currentNetwork = NetworkKind.wifi
+}
+
+final class SettingsGatewayMock: SettingsGateway {
+    private(set) var saved: TranscodingSettings?
+
+    func transcoding() -> TranscodingSettings? { saved }
+    func saveTranscoding(_ settings: TranscodingSettings) { saved = settings }
 }

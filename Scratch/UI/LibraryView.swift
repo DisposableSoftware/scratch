@@ -9,6 +9,16 @@ struct LibraryView: View {
         NavigationStack {
             content
                 .navigationTitle("Library")
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            viewModel.submitAction(.settingsTapped)
+                        } label: {
+                            Image(systemName: "gearshape")
+                        }
+                        .accessibilityLabel("Settings")
+                    }
+                }
                 .safeAreaInset(edge: .bottom, spacing: 0) { nowPlaying }
         }
         .onAppear { viewModel.submitAction(.lifecycle(.viewDidAppear)) }

@@ -7,7 +7,7 @@
 | `LIB-3` | Pull to refresh reloads the list from the first page. | done | `LibraryViewModelTests`, `LibraryUseCaseTests`; the pull gesture itself is unchecked (no UI automation) |
 | `LIB-4` | While the first page loads, the screen shows a progress indicator. A load error shows its message with **Retry**, and an empty library says so. | done | `LibraryViewModelTests` |
 | `LIB-5` | Cover art comes from `getCoverArt` at the size it is shown (scaled for the screen), and is cached in memory for the session. | done | `CoverArtGatewayTests`, `CoverArtUseCaseTests`, `LibraryViewModelTests`; `manual:` live screenshot |
-| `LIB-6` | A settings button on the library screen opens settings (transcoding, server, sign out) as a sheet. | planned | `manual:` simulator check |
+| `LIB-6` | A settings button on the library screen opens settings (transcoding, server, sign out) as a sheet. | partial: the sheet has transcoding only; server and sign out come with `SRV-7` | `LibraryViewModelTests`, `SettingsViewModelTests`; the sheet itself is in the verification backlog |
 
 ## Implementation notes
 

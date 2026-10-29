@@ -29,6 +29,10 @@ protocol HasPlaybackUseCase {
     var playbackUseCase: PlaybackUseCase { get }
 }
 
+protocol HasTranscodingUseCase {
+    var transcodingUseCase: TranscodingUseCase { get }
+}
+
 typealias AllUseCases = HasCoordinator
     & HasAppRoutingUseCase
     & HasConnectUseCase
@@ -36,3 +40,4 @@ typealias AllUseCases = HasCoordinator
     & HasLibraryUseCase
     & HasCoverArtUseCase
     & HasPlaybackUseCase
+    & HasTranscodingUseCase

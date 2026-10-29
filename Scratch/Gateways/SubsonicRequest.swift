@@ -17,6 +17,20 @@ struct SubsonicRequest: Equatable {
     var method: String
     var parameters: [URLQueryItem] = []
 
+    /// A track's audio at the given quality (TRANS-4). `estimateContentLength` gives AVPlayer a
+    /// length for a transcoded stream, which it needs for the duration and seeking.
+    static func stream(trackID: String, quality: StreamQuality) -> SubsonicRequest {
+        var parameters = [
+            URLQueryItem(name: "id", value: trackID),
+            URLQueryItem(name: "format", value: quality.format.rawValue),
+        ]
+        if quality.format != .original, let maxBitRate = quality.maxBitRate {
+            parameters.append(URLQueryItem(name: "maxBitRate", value: String(maxBitRate)))
+        }
+        parameters.append(URLQueryItem(name: "estimateContentLength", value: "true"))
+        return SubsonicRequest(method: "stream", parameters: parameters)
+    }
+
     func url(baseURL: URL, credentials: SubsonicCredentials) throws(SubsonicRequestError) -> URL {
         let endpoint = baseURL.appending(path: "rest").appending(path: method)
         guard var components = URLComponents(url: endpoint, resolvingAgainstBaseURL: false) else {

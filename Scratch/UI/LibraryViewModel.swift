@@ -1,4 +1,5 @@
 import Combine
+import SwiftUI
 import UIKit
 
 enum LibraryAction: Equatable {
@@ -8,11 +9,20 @@ enum LibraryAction: Equatable {
     case retry
     case refresh
     case trackTapped(Track.ID)
+    case settingsTapped
 }
 
 /// The library screen: the server's tracks, loaded a page at a time (LIB-1, LIB-2, LIB-4).
-final class LibraryViewModel: ViewModel {
-    typealias UseCases = HasLibraryUseCase & HasCoverArtUseCase & HasPlaybackUseCase
+final class LibraryViewModel: RoutingViewModel {
+    typealias UseCases = HasLibraryUseCase & HasCoverArtUseCase & HasPlaybackUseCase & HasTranscodingUseCase & HasCoordinator
+
+    enum Route: NavigationRoute {
+        case settings
+
+        func destination(context: LibraryViewModel) -> NavigationDestination {
+            .sheet(AnyView(SettingsView(viewModel: SettingsViewModel(useCases: context.useCases))))
+        }
+    }
 
     enum Phase: Equatable {
         case loading
@@ -27,6 +37,7 @@ final class LibraryViewModel: ViewModel {
     static let artworkLimit = 200
 
     let useCases: UseCases
+    var coordinator: Coordinator { useCases.coordinator }
 
     @Published private(set) var phase = Phase.loading
     @Published private(set) var tracks: [Track] = []
@@ -59,6 +70,8 @@ final class LibraryViewModel: ViewModel {
             await loadArtwork(coverArtID, pixelSize: pixelSize)
         case .refresh:
             await loadFirstPage(keepingListOnScreen: true)
+        case .settingsTapped:
+            await navigateTo(.settings)
         case .trackTapped(let id):
             // PLAY-1: play it, and queue what follows it in the list.
             if let index = tracks.firstIndex(where: { $0.id == id }) {

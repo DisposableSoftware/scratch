@@ -3,10 +3,12 @@ import Testing
 import UIKit
 @testable import Scratch
 
-private struct LibraryUseCases: HasLibraryUseCase, HasCoverArtUseCase, HasPlaybackUseCase {
+private struct LibraryUseCases: HasLibraryUseCase, HasCoverArtUseCase, HasPlaybackUseCase, HasTranscodingUseCase, HasCoordinator {
     let libraryUseCase: LibraryUseCase
     let coverArtUseCase: CoverArtUseCase
     let playbackUseCase: PlaybackUseCase
+    var transcodingUseCase: TranscodingUseCase = TranscodingUseCaseMock()
+    var coordinator: Coordinator = CoordinatorSpy()
 }
 
 @Suite(.timeLimit(.minutes(1)))
@@ -206,5 +208,18 @@ struct LibraryViewModelTests {
         #expect(playback.played.count == 1)
         #expect(playback.played.first?.tracks == Track.numbered(5))
         #expect(playback.played.first?.index == 2)
+    }
+
+    @Test func theSettingsButtonOpensSettingsAsASheet() async {
+        let coordinator = CoordinatorSpy()
+        let library = DefaultLibraryUseCase(libraryGateway: gateway, sessionState: SessionState(server: .sample), libraryState: LibraryState())
+        let viewModel = LibraryViewModel(useCases: LibraryUseCases(libraryUseCase: library, coverArtUseCase: art, playbackUseCase: playback, coordinator: coordinator))
+
+        _ = await viewModel.handleAction(.settingsTapped)
+
+        guard case .sheet = coordinator.destinations.last else {
+            Issue.record("expected a sheet, got \(coordinator.destinations)")
+            return
+        }
     }
 }

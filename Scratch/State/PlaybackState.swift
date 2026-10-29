@@ -9,6 +9,8 @@ final class PlaybackState: ObservableObject {
     @Published var status = PlaybackStatus.stopped
     @Published var elapsed: TimeInterval = 0
     @Published var duration: TimeInterval?
+    /// What was asked of the server for the current track (TRANS-6).
+    @Published var quality: StreamQuality?
 
     var currentTrack: Track? {
         currentIndex.flatMap { queue.indices.contains($0) ? queue[$0] : nil }

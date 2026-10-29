@@ -130,14 +130,14 @@ struct AlbumLayoutTests {
         for flavour in Flavour.allCases {
             for accent in Accent.allCases {
                 let image = try await screen(theme: Theme(flavour: flavour, accent: accent))
-                let cgImage = try #require(image.cgImage)
-                let data = try #require(cgImage.dataProvider?.data)
-                let bytes = try #require(CFDataGetBytePtr(data))
-                let bytesPerPixel = cgImage.bitsPerPixel / 8
-                do {
-                    let scale = Int(image.scale)
+                let scale = Int(image.scale)
+                let width = Int(image.size.width) * scale
+                var bytes = [UInt8](repeating: 0, count: width * Int(image.size.height) * scale * 4)
+                let context = try #require(CGContext(data: &bytes, width: width, height: Int(image.size.height) * scale, bitsPerComponent: 8, bytesPerRow: width * 4, space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue))
+                context.draw(try #require(image.cgImage), in: CGRect(x: 0, y: 0, width: width, height: Int(image.size.height) * scale))
 
-                    func pixel(_ x: Int, _ y: Int) -> [Int] { (0..<3).map { Int(bytes[y * scale * cgImage.bytesPerRow + x * scale * bytesPerPixel + $0]) } }
+                do {
+                    func pixel(_ x: Int, _ y: Int) -> [Int] { (0..<3).map { Int(bytes[(y * scale * width + x * scale) * 4 + $0]) } }
 
                     // The fill is read left of the label; the label's ink is the pixel furthest from it.
                     let fill = pixel(22, 609)
@@ -150,14 +150,12 @@ struct AlbumLayoutTests {
                     }
 
                     if contrast(fill, ink) < 4.5 {
-                        unreadable.append("\(flavour)/\(accent) \(String(format: "%.1f", contrast(fill, ink)))")
+                        unreadable.append("\(flavour)/\(accent) \(String(format: "%.1f", contrast(fill, ink))) fill \(fill) ink \(ink)")
                     }
                 }
             }
         }
 
-        withKnownIssue("LOOK-9: fails until fixed") {
-            #expect(unreadable.isEmpty, "Play's label is under 4.5:1 on: \(unreadable.joined(separator: ", "))")
-        }
+        #expect(unreadable.isEmpty, "Play's label is under 4.5:1 on: \(unreadable.joined(separator: ", "))")
     }
 }

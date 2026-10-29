@@ -102,7 +102,8 @@ Scratch/Models/           AlbumDetail, AlbumTrack, AlbumDisc                    
 Scratch/Models/           Album, AlbumsPerRow (1…5, default 2)                           ALB-2, ALB-17
 Scratch/State/            DisplayState (albums per row, flavour, accent); DisplayUseCase saves them   ALB-17, ALB-18, LOOK-6
 Scratch/Models/           Flavour, Accent, Palette (Catppuccin values; design/catppuccin/*.css are the published copies)   LOOK-1, LOOK-7
-Scratch/UI/               Theme (accent, red, light/dark from the flavour; `\.theme`); RootView applies tint + colour scheme   LOOK-2…4
+Scratch/Models/           Contrast (WCAG ratio; the dark or light label for an accent)   LOOK-9
+Scratch/UI/               Theme (accent, onAccent, red, light/dark from the flavour; `\.theme`); RootView applies tint + colour scheme   LOOK-2…4
 Scratch/State/            AlbumsState (albums shown, next offset)                       ALB-4
 Scratch/Gateways/         RemoteAlbumGateway (getAlbumList2 by name, getStarred2)        ALB-2, ALB-3, ALB-4
 Scratch/UseCases/         AlbumUseCase (favourites + paging, reload and sign-out races)  ALB-3, ALB-4

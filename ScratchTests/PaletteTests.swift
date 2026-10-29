@@ -19,6 +19,22 @@ struct PaletteTests {
         return colours
     }
 
+    // LOOK-9
+
+    @Test(arguments: Flavour.allCases)
+    func theLabelOnEveryAccentReadsAtFourAndAHalfToOne(flavour: Flavour) {
+        for accent in Accent.allCases {
+            let fill = Palette.hex(accent, in: flavour)
+
+            #expect(Contrast.ratio(Contrast.label(on: fill), fill) >= 4.5, "\(flavour)/\(accent)")
+        }
+    }
+
+    @Test func theRatioMatchesTheKnownExtremes() {
+        #expect(abs(Contrast.ratio(0x000000, 0xffffff) - 21) < 0.01)
+        #expect(Contrast.ratio(0x808080, 0x808080) == 1)
+    }
+
     // LOOK-1, LOOK-2
 
     @Test(arguments: Flavour.allCases)

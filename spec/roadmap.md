@@ -2,7 +2,7 @@
 
 The order of approved work: `planned` requirements, and `partial` ones with a known bug from `/bug`. Change it here when priorities change. `/implement` works through this file: the verification backlog first, then the requirements in the order listed.
 
-1. `LOOK-9`: Play's white label is nearly unreadable on the pale dark-flavour accents (about 2:1 on Mocha Mauve); give the label a colour that reads on the accent.
+None.
 
 ## Verification backlog
 

@@ -5,6 +5,7 @@ import SwiftUI
 struct AlbumView: View {
     @ObservedObject var viewModel: AlbumViewModel
     @Environment(\.displayScale) private var displayScale
+    @Environment(\.theme) private var theme
 
     var body: some View {
         List {
@@ -56,6 +57,7 @@ struct AlbumView: View {
                 } label: {
                     Label("Play", systemImage: "play.fill")
                         .frame(maxWidth: .infinity)
+                        .foregroundStyle(theme.onAccent)
                 }
                 .buttonStyle(.borderedProminent)
                 Button {

@@ -4,6 +4,9 @@ import SwiftUI
 /// user chose. Backgrounds and text stay the system's.
 struct Theme: Equatable {
     let accent: Color
+
+    /// The colour for text on a filled accent: dark or light, whichever reads (LOOK-9).
+    let onAccent: Color
     let error: Color
     let colorScheme: ColorScheme
 
@@ -11,6 +14,7 @@ struct Theme: Equatable {
 
     init(flavour: Flavour, accent: Accent) {
         self.accent = Color(accent, in: flavour)
+        onAccent = Color(hex: Contrast.label(on: Palette.hex(accent, in: flavour)))
         error = Color(hex: Palette.red(in: flavour))
         colorScheme = flavour.isDark ? .dark : .light
     }

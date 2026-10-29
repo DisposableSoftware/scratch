@@ -93,6 +93,8 @@ Scratch/Routing/          AppStep + AppFlowData, AppRouter (pure)               
 Scratch/UI/               ViewModel, Coordinator + NavigationDestination, NavigationRoute + RoutingViewModel   ARCH-8, ARCH-10, ARCH-12, ARCH-13
 Scratch/UI/               AppRoutingUseCase + ViewFactory, AppViewFactory, SetupView(Model), LibraryView     ARCH-11, SRV-1
 Scratch/State/            SessionState (the signed-in ServerAccount)                    SRV-1
+Scratch/Models/           ServerAddress (URL parsing), SubsonicCredentials (salt+token)  SRV-2, SRV-4
+Scratch/Gateways/         SubsonicRequest: every server URL, signed                      PROD-3, SRV-4
 Scratch/Info.plist        background audio, arbitrary loads (merged with generated keys)
 ScratchTests/             Swift Testing suites; Support/ holds spies and mocks           ARCH-16
 scripts/arch-lint.sh      the architecture rules a script can check                     ARCH-1…10, 12–15
@@ -129,5 +131,5 @@ The version lives in `VERSION`, and `scripts/release.sh` copies it to `MARKETING
 Prefer adding a script to `scripts/manual/` over ad-hoc commands. Each script names the spec IDs it checks.
 
 - Use the simulator, never the user's phone: `xcrun simctl boot "iPhone 17"`, build with `-derivedDataPath build/`, then `xcrun simctl install booted build/Build/Products/Debug-iphonesimulator/Scratch.app` and `xcrun simctl launch booted lol.weston.scratch`. Screenshots: `xcrun simctl io booted screenshot <file>`.
-- Against a server, use Navidrome's public demo (`https://demo.navidrome.org`, user `demo`, password `demo`) unless the user names their own. Never put the user's credentials in a script or a commit.
+- Against a server, use the user's test server: ask for its address and credentials, and pass them at run time (environment variables), never in a script, a spec row or a commit. Navidrome's public demo (`https://demo.navidrome.org`, `demo` / `demo`) is the fallback.
 - `xcrun simctl erase "iPhone 17"` resets the Keychain and `UserDefaults` for a first-launch check.

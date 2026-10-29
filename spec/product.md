@@ -8,7 +8,7 @@ Scratch is a small iOS player for a [Navidrome](https://www.navidrome.org) serve
 |----|-------------|--------|
 | `PROD-1` | Every change follows the spec-first workflow in `CLAUDE.md`. | done (ongoing constraint) |
 | `PROD-2` | Runs on iPhone with iOS 27 or later. | done (`IPHONEOS_DEPLOYMENT_TARGET = 27.0`, `TARGETED_DEVICE_FAMILY = 1`, not offered on Mac or Vision Pro) |
-| `PROD-3` | Talks to the server only through the [OpenSubsonic API](https://opensubsonic.netlify.app) (Subsonic API 1.16.1 plus OpenSubsonic extensions), so any OpenSubsonic server works, with Navidrome as the reference. | planned |
+| `PROD-3` | Talks to the server only through the [OpenSubsonic API](https://opensubsonic.netlify.app) (Subsonic API 1.16.1 plus OpenSubsonic extensions), so any OpenSubsonic server works, with Navidrome as the reference. | done (ongoing constraint: every server URL is built by `SubsonicRequest`) |
 | `PROD-4` | Follows the Container / UseCase / Router / Gateway architecture strictly (see [architecture.md](architecture.md)). | done (ongoing constraint, enforced by `scripts/arch-lint.sh`) |
 
 ## Non-goals

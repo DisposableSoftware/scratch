@@ -11,6 +11,9 @@ NAME="Scratch"
 # it in its own manifest too (package.json, Cargo.toml, pyproject.toml).
 set_version() {
   printf '%s\n' "$1" >VERSION
+  if [ -f Scratch.xcodeproj/project.pbxproj ]; then
+    V=$1 perl -pi -e 's/MARKETING_VERSION = [^;]*;/MARKETING_VERSION = $ENV{V};/' Scratch.xcodeproj/project.pbxproj
+  fi
 }
 
 [ $# = 2 ] || { echo "usage: $0 patch|minor|major|X.Y.Z NOTES_FILE" >&2; exit 2; }

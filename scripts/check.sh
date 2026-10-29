@@ -7,7 +7,11 @@ cd "$(dirname "$0")/.."
 scripts/spec-lint.sh
 scripts/test-tooling.sh
 
-# Project checks. For example:
-#   cargo clippy --all-targets -- -D warnings && cargo test
-#   npm run lint && npm test
-#   ruff check . && pytest
+scripts/arch-lint.sh
+scripts/test-arch-lint.sh >/dev/null
+
+# Build and run the unit tests on an iOS 27 simulator. Set SCRATCH_SIMULATOR to use another device.
+# The grep drops Xcode 27.1 log noise; pipefail keeps xcodebuild's exit status.
+xcodebuild -project Scratch.xcodeproj -scheme Scratch \
+  -destination "platform=iOS Simulator,name=${SCRATCH_SIMULATOR:-iPhone 17}" \
+  -quiet test 2>&1 | { grep -vE 'IDESchemeActionSDKRecord|IDETestOperationsObserverDebug|^Testing started$' || true; }

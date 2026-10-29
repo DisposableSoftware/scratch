@@ -1,6 +1,6 @@
 # Scratch
 
-_One line on what Scratch is. Say it properly in [`spec/product.md`](spec/product.md)._
+An iPhone player for a Navidrome server, over the OpenSubsonic API. SwiftUI, iOS 27, one app target, no dependencies.
 
 **What the project does is defined in [`spec/`](spec/README.md).** This file covers how to work on it.
 
@@ -31,10 +31,42 @@ scripts/spec-lint.sh                  # spec format and roadmap consistency only
 scripts/test-tooling.sh               # tests for the scripts in scripts/
 scripts/release-check.sh              # recommended version bump since the last v* tag
 git config core.hooksPath .githooks   # once per clone: enables the pre-push release check
+scripts/arch-lint.sh                  # the architecture rules in spec/architecture.md
+scripts/test-arch-lint.sh             # tests for arch-lint, one break of each rule
 ```
 
-<!-- Add the project's build, run, lint and test commands here, including how to run a
-     single test, and add the checks to scripts/check.sh so the workflow runs them. -->
+`scripts/check.sh` builds the app and runs `ScratchTests` on the iPhone 17 simulator (iOS 27.0). Set `SCRATCH_SIMULATOR` to use another device. Directly:
+
+```sh
+xcodebuild -project Scratch.xcodeproj -scheme Scratch \
+  -destination 'platform=iOS Simulator,name=iPhone 17' test
+# one suite or one test:
+  -only-testing:ScratchTests/AppContainerTests
+  -only-testing:ScratchTests/AppContainerTests/buildKeepsTheCoordinatorItWasGiven
+```
+
+Tests use Swift Testing (`import Testing`, `@Test`, `#expect`). The iOS 27 simulator runtime has to be installed (Xcode ▸ Settings ▸ Components); after an Xcode update it may need downloading again.
+
+## Architecture
+
+Scratch follows `~/Notes/Tech Notes/Work Notes/Architecture Design.md` **strictly**. Read the note before adding a type. [`spec/architecture.md`](spec/architecture.md) says how it maps onto one app target, and `scripts/arch-lint.sh` fails the build on the rules a script can see. Its rule names (`[no_upward_refs]` and so on) are in the Verified by column there.
+
+| Folder | Holds | May use |
+|--------|-------|---------|
+| `App/` | The host: `@main`, `AppCoordinator` and its destination handlers, `RootView`, Port adapters | Everything |
+| `Container/` | `AppContainer` and `build(…)`, the `Has*` protocols | Everything except `App/` types |
+| `UI/` | Views, ViewModels, `…Action` and `…Route` enums; the navigation mechanism: `Coordinator`, `NavigationDestination`, the view factory, RoutingUseCases | UseCase protocols, `Routing/`, `Models/`, `State/`, the `Has*` protocols |
+| `Routing/` | `…Step` enums and Routers: pure functions, no navigation | `Models/`, `State/` |
+| `UseCases/` | UseCase protocols and `Default…` implementations | Gateway protocols, `Models/`, `State/` |
+| `State/` | Shared `ObservableObject`s the UseCases update | `Models/` |
+| `Gateways/` | Gateway protocols and implementations: HTTP, Keychain, `UserDefaults`, AVFoundation | `Models/` |
+| `Models/` | Domain values and the errors that cross layers | Nothing |
+
+- Only `UI/` and `App/` import SwiftUI or UIKit.
+- A concrete Gateway or UseCase is named only in its own folder and `Container/`. Everything else holds the protocol.
+- Views read published state and call `viewModel.submitAction(_:)`, or `viewModel.binding(_:to:)` for controls. Nothing else.
+- New dependencies for a ViewModel: add a `Has…` protocol in `Container/HasUseCases.swift`, add it to `AllUseCases`, and build the implementation in `AppContainer.build(…)`.
+- The project sets `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`: everything is main-actor unless marked `nonisolated`. Keep blocking work out of it.
 
 ## Subagents
 
@@ -54,12 +86,21 @@ Keep the main conversation for the spec, decisions and edits. Hand research that
 Keep this table current: one line per module, with the spec IDs it implements.
 
 ```
+Scratch.xcodeproj         one app target, one test target, synchronized folders: new files join automatically
+Scratch/App/              host: ScratchApp, AppCoordinator + RootPresenter, RootView      ARCH-13, ARCH-15
+Scratch/Container/        AppContainer, Has* protocols                                   ARCH-9, ARCH-14
+Scratch/Routing/          Step enums and pure Routers (empty until ARCH-11)              ARCH-11
+Scratch/UI/               ViewModel, Coordinator + NavigationDestination, NavigationRoute + RoutingViewModel   ARCH-8, ARCH-10, ARCH-12, ARCH-13
+Scratch/Info.plist        background audio, arbitrary loads (merged with generated keys)
+ScratchTests/             Swift Testing suites; Support/ holds spies and mocks           ARCH-16
+scripts/arch-lint.sh      the architecture rules a script can check                     ARCH-1…10, 12–15
+scripts/test-arch-lint.sh tests for arch-lint
 scripts/check.sh          the single gate: spec lint, tooling tests, project checks     TOOL-10
 scripts/spec-lint.sh      spec format and roadmap consistency                            TOOL-1…5
 scripts/lib/spec-rows.awk parses requirement rows (shared by lint and release check)
 scripts/test-tooling.sh   tests for the scripts, in throwaway git repos
 scripts/release-check.sh  recommended version bump since the last v* tag (spec delta)  TOOL-6
-scripts/release.sh        bump VERSION, commit "Scratch X.Y.Z", tag, notes      TOOL-7
+scripts/release.sh        bump VERSION + MARKETING_VERSION, commit, tag, notes           TOOL-7
 scripts/manual/           manual checks, one script per area, each naming its IDs
 .githooks/pre-push        on a push of main, offers to release                         TOOL-8
 .claude/skills/           /feature, /bug, /implement, /release
@@ -77,7 +118,7 @@ spec/                     the specification
 
 ## Releasing
 
-The version lives in `VERSION`. If the stack keeps it somewhere else too (`package.json`, `Cargo.toml`, `pyproject.toml`), extend `set_version` in `scripts/release.sh`.
+The version lives in `VERSION`, and `scripts/release.sh` copies it to `MARKETING_VERSION` in `Scratch.xcodeproj`. Don't edit either by hand.
 
 `scripts/release-check.sh` recommends a bump from the commits since the last `v*` tag: major for `BREAKING` or a shipped requirement that became `dropped`, minor when a requirement became `done` or `partial`, patch for other changes outside `spec/`, docs and tooling. `scripts/release.sh LEVEL NOTES` bumps `VERSION`, runs `scripts/check.sh`, commits and tags, and drafts notes; then `git push origin main vX.Y.Z` and `gh release create vX.Y.Z -F NOTES`. With the hook enabled, pushing main offers all of this (`NO_RELEASE_CHECK=1` skips it). `/release` (`.claude/skills/release/`) runs all of this: it pushes main, releases a patch or minor bump without asking, and asks first for a major one. Otherwise ask before pushing.
 
@@ -85,6 +126,6 @@ The version lives in `VERSION`. If the stack keeps it somewhere else too (`packa
 
 Prefer adding a script to `scripts/manual/` over ad-hoc commands. Each script names the spec IDs it checks.
 
-<!-- Describe how to run checks without touching the user's own session or data: temp
-     config, state and cache dirs, a headless display, a scratch database, a test account.
-     Say which checks need the user's real environment, and the guards to run first. -->
+- Use the simulator, never the user's phone: `xcrun simctl boot "iPhone 17"`, build with `-derivedDataPath build/`, then `xcrun simctl install booted build/Build/Products/Debug-iphonesimulator/Scratch.app` and `xcrun simctl launch booted lol.weston.scratch`. Screenshots: `xcrun simctl io booted screenshot <file>`.
+- Against a server, use Navidrome's public demo (`https://demo.navidrome.org`, user `demo`, password `demo`) unless the user names their own. Never put the user's credentials in a script or a commit.
+- `xcrun simctl erase "iPhone 17"` resets the Keychain and `UserDefaults` for a first-launch check.

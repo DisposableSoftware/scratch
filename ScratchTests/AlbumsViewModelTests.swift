@@ -3,10 +3,11 @@ import Testing
 import UIKit
 @testable import Scratch
 
-private struct AlbumsUseCases: HasAlbumUseCase, HasCoverArtUseCase, HasTranscodingUseCase, HasDisplayUseCase,
-    HasSessionUseCase, HasAppRoutingUseCase, HasCoordinator {
+private struct AlbumsUseCases: HasAlbumUseCase, HasCoverArtUseCase, HasPlaybackUseCase, HasTranscodingUseCase,
+    HasDisplayUseCase, HasSessionUseCase, HasAppRoutingUseCase, HasCoordinator {
     let albumUseCase: AlbumUseCase
     let coverArtUseCase: CoverArtUseCase
+    var playbackUseCase: PlaybackUseCase = PlaybackUseCaseMock()
     var displayUseCase: DisplayUseCase = DisplayUseCaseMock()
     var transcodingUseCase: TranscodingUseCase = TranscodingUseCaseMock()
     var sessionUseCase: SessionUseCase = SessionUseCaseMock()
@@ -221,6 +222,35 @@ struct AlbumsViewModelTests {
         // A restart: a new state and use case over the same saved settings.
         let restarted = DefaultDisplayUseCase(settingsGateway: settings, displayState: DisplayState())
         #expect(restarted.state.albumsPerRow == 5)
+    }
+
+    // ALB-8
+
+    @Test func tappingAnAlbumPushesItsScreenThroughTheCoordinator() async {
+        gateway.all = Album.numbered(3)
+        gateway.starred = [gateway.all[2]]
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
+        _ = await viewModel.handleAction(.albumTapped("a1"))
+        _ = await viewModel.handleAction(.albumTapped("a2"))
+
+        #expect(coordinator.destinations.count == 2)
+        var keys: [String] = []
+        for destination in coordinator.destinations {
+            guard case .push(let key, _) = destination else {
+                Issue.record("expected a push, got \(destination)")
+                return
+            }
+            keys.append(key)
+        }
+        #expect(keys == ["album:a1", "album:a2"])
+    }
+
+    @Test func tappingAnAlbumThatIsntThereDoesNothing() async {
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.albumTapped("nope"))
+        #expect(coordinator.destinations.isEmpty)
     }
 
     @Test func anEmptyServerSaysSo() async {

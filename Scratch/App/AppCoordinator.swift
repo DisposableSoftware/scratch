@@ -32,6 +32,9 @@ final class RootPresenter: ObservableObject, DestinationHandler {
 
     func handle(_ destination: NavigationDestination) -> Bool {
         switch destination {
+        case .push:
+            // The navigation stack takes these (PushStackHost).
+            return false
         case .root(let view):
             sheet = nil
             screen = view

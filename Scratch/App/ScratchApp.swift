@@ -10,11 +10,14 @@ struct ScratchApp: App {
         let presenter = RootPresenter()
         let coordinator = AppCoordinator()
         coordinator.register(presenter)
+        let pushStack = PushStackHost()
+        coordinator.register(pushStack)
         _presenter = StateObject(wrappedValue: presenter)
         container = AppContainer.build(
             coordinator: coordinator,
             networkSession: URLSession.shared,
-            environment: .live
+            environment: .live,
+            navigationStack: pushStack
         )
     }
 

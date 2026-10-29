@@ -3,6 +3,7 @@
 #   SRV-3: a wrong password, a web page and a closed port each fail with their own error, and the
 #          right credentials connect and save the server.
 #   SRV-5: launching the app afterwards opens the library, not setup (screenshot).
+#   ALB-9 to ALB-12: an album's tracks in disc order, and screenshots of its screen (alb9-*.png).
 #   ALB-17, ALB-18: the Albums grid at 5, 1 and 2 per row, from the saved setting.
 #   LIB-1, LIB-5: that library lists the server's tracks with title, artist, album, duration and art.
 # Credentials come from the environment and are never written anywhere:
@@ -25,6 +26,7 @@ xcrun simctl uninstall "$device" lol.weston.scratch 2>/dev/null || true
 # its full ten minutes, which looked like a hung script.
 # xcodebuild hands TEST_RUNNER_-prefixed variables to the test process without the prefix.
 TEST_RUNNER_SCRATCH_SERVER=$SCRATCH_SERVER TEST_RUNNER_SCRATCH_USER=$SCRATCH_USER TEST_RUNNER_SCRATCH_PASSWORD=$SCRATCH_PASSWORD \
+  TEST_RUNNER_SCRATCH_SNAPSHOT_DIR=$(cd "$out" && pwd) \
   xcodebuild -project Scratch.xcodeproj -scheme Scratch -destination "platform=iOS Simulator,name=$device" \
   -derivedDataPath build -collect-test-diagnostics never -only-testing:ScratchTests/LiveServerTests test 2>&1 |
   { grep -E '✔|✘|passed|failed|error:' || true; } | { grep -v IDESchemeActionSDKRecord || true; }

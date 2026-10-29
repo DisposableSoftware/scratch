@@ -4,6 +4,7 @@ import SwiftUI
 /// once they exist, because the routing use case it belongs to is part of them.
 final class AppViewFactory: ViewFactory {
     var useCases: AllUseCases?
+    var navigationStack: NavigationStackPort?
 
     func destination(for step: AppStep, with data: AppFlowData) -> NavigationDestination {
         guard let useCases else {
@@ -16,9 +17,10 @@ final class AppViewFactory: ViewFactory {
         case .setup:
             return .root(AnyView(SetupView(viewModel: SetupViewModel(useCases: useCases))))
         case .library:
+            let albums = AnyView(AlbumsView(viewModel: AlbumsViewModel(useCases: useCases)))
             return .root(AnyView(MainView(
                 viewModel: PlayerViewModel(useCases: useCases),
-                albums: AlbumsView(viewModel: AlbumsViewModel(useCases: useCases)),
+                albums: navigationStack?.stack(root: albums) ?? albums,
                 songs: LibraryView(viewModel: LibraryViewModel(useCases: useCases))
             )))
         }

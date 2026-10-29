@@ -12,6 +12,8 @@ protocol AlbumUseCase {
     func loadFirstPage() async throws(ServerError)
     /// Loads the page after the last one, unless the server has run out or a load is running.
     func loadNextPage() async throws(ServerError)
+    /// One album with its tracks in disc and track order, or nil when signed out meanwhile.
+    func album(id: Album.ID) async throws(ServerError) -> AlbumDetail?
 }
 
 final class DefaultAlbumUseCase: AlbumUseCase {
@@ -96,6 +98,18 @@ final class DefaultAlbumUseCase: AlbumUseCase {
             // A page of nothing but favourites adds nothing to scroll to, so take the next too.
             if added > 0 || !albumsState.hasMoreAlbums { return }
         }
+    }
+
+    func album(id: Album.ID) async throws(ServerError) -> AlbumDetail? {
+        guard let server = sessionState.server else { return nil }
+        var detail = try await albumGateway.album(id: id, server: server)
+        // The server's order, but by disc and track number; a track with no number keeps its place
+        // after the numbered ones, and ties keep the server's order.
+        detail.tracks = detail.tracks.enumerated()
+            .sorted { ($0.element.disc, $0.element.number ?? Int.max, $0.offset) < ($1.element.disc, $1.element.number ?? Int.max, $1.offset) }
+            .map(\.element)
+        guard sessionState.server == server else { return nil }
+        return detail
     }
 
     /// Fetches the page after the last and adds what isn't a favourite or already shown. Returns

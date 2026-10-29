@@ -321,4 +321,62 @@ struct AlbumUseCaseTests {
         try await stale.value
         #expect(useCase.albums.count == 200)
     }
+
+    // getAlbum
+
+    @Test func anAlbumsTracksComeByDiscThenTrackNumber() async throws {
+        var detail = AlbumDetail.numbered(discs: 2, perDisc: 3)
+        detail.tracks.shuffle()
+        gateway.details["al1"] = detail
+
+        let result = try #require(try await useCase().album(id: "al1"))
+
+        #expect(result.tracks.map(\.id) == ["d1t1", "d1t2", "d1t3", "d2t1", "d2t2", "d2t3"])
+        #expect(gateway.albumRequests == ["al1"])
+    }
+
+    @Test func aTrackWithNoNumberGoesAfterTheNumberedOnesInTheServersOrder() async throws {
+        var detail = AlbumDetail.numbered(discs: 1, perDisc: 2)
+        let extra = { (id: String) in AlbumTrack(track: Track(id: id, title: id, artist: "", album: "", duration: nil, coverArtID: nil), disc: 1, number: nil) }
+        detail.tracks = [extra("x"), detail.tracks[1], extra("y"), detail.tracks[0]]
+        gateway.details["al1"] = detail
+
+        let result = try #require(try await useCase().album(id: "al1"))
+
+        #expect(result.tracks.map(\.id) == ["d1t1", "d1t2", "x", "y"])
+    }
+
+    @Test func anAlbumIsLoadedAgainEachTime() async throws {
+        gateway.details["al1"] = AlbumDetail.numbered(discs: 1, perDisc: 2)
+        let useCase = useCase()
+        _ = try await useCase.album(id: "al1")
+        _ = try await useCase.album(id: "al1")
+        #expect(gateway.albumRequests.count == 2)
+    }
+
+    @Test func signedOutThereIsNoAlbum() async throws {
+        gateway.details["al1"] = AlbumDetail.numbered(discs: 1, perDisc: 2)
+        #expect(try await useCase(signedIn: false).album(id: "al1") == nil)
+        #expect(gateway.albumRequests.isEmpty)
+    }
+
+    @Test func anAlbumForAServerSignedOutOfIsDropped() async throws {
+        gateway.details["al1"] = AlbumDetail.numbered(discs: 1, perDisc: 2)
+        let session = SessionState(server: .sample)
+        let useCase = DefaultAlbumUseCase(albumGateway: gateway, sessionState: session, albumsState: albumsState)
+        let hold = gateway.holdNextAlbumRequest()
+
+        let load = Task { try await useCase.album(id: "al1") }
+        for await _ in hold.entered { break }
+        session.server = nil
+        hold.release()
+
+        #expect(try await load.value == nil)
+    }
+
+    @Test func aMissingAlbumIsAnError() async {
+        await #expect(throws: ServerError.failed(code: 70, message: "Album not found")) {
+            try await useCase().album(id: "nope")
+        }
+    }
 }

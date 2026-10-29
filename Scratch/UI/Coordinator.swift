@@ -12,6 +12,9 @@ enum NavigationDestination {
     /// Replace the whole screen, as when moving between setup and the library.
     case root(AnyView)
     case sheet(AnyView)
+    /// Push a screen onto the navigation stack the host keeps (see NavigationStackPort). The key
+    /// names the screen: pushing the one already on top again is ignored, as a double tap would.
+    case push(key: String, AnyView)
     case dismissSheet
     case alert(AlertContent)
 }

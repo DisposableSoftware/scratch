@@ -18,7 +18,7 @@ The Albums tab, and the screen for one album. Tracks and their art are the same 
 | `ALB-5` | Pull to refresh reloads the favourites and the first page, keeping the grid on screen meanwhile. | done | `AlbumsViewModelTests`, `AlbumUseCaseTests`; the pull gesture itself is unchecked (no UI automation), as for `LIB-3` |
 | `ALB-6` | While the first load runs the tab shows a progress indicator. A load error shows its message with **Retry**, and a server with no albums says so. | done | `AlbumsViewModelTests` |
 | `ALB-7` | Each cell's cover comes from `getCoverArt` at the size it is shown (scaled for the screen) and is cached like the track covers (`LIB-5`). An album without art shows a placeholder. | done | `AlbumsViewModelTests`, `CoverArtGatewayTests`; `manual:` live screenshot of the grid |
-| `ALB-8` | Tapping an album pushes its screen onto the Albums tab, and back returns to the grid where it was. | planned | `AlbumsViewModelTests`; `manual:` simulator check |
+| `ALB-8` | Tapping an album pushes its screen onto the Albums tab, and back returns to the grid where it was. | partial: the push, the swipe back and the tap on the real navigation stack aren't checked by hand yet; see the verification backlog | `AlbumsViewModelTests`, `PushStackHostTests` |
 | `ALB-17` | Settings has an **Albums per row** choice from 1 to 5, defaulting to 2, which sets the number of columns in both the Favourites and All Albums sections. | done | `DisplayUseCaseTests`, `AlbumsViewModelTests`, `SettingsViewModelTests`; `manual:` `scripts/manual/live-connect.sh` screenshots the grid at 5, 1 and 2 per row |
 | `ALB-18` | The choice is saved across launches, and changing it re-lays the grid at once without reloading it. | done | `SettingsGatewayTests`, `DisplayUseCaseTests`, `AlbumsViewModelTests`; the launch screenshots read the setting at start; changing it with the grid scrolled partway, from the sheet, is in the verification backlog |
 
@@ -26,13 +26,13 @@ The Albums tab, and the screen for one album. Tracks and their art are the same 
 
 | ID | Requirement | Status | Verified by |
 |----|-------------|--------|-------------|
-| `ALB-9` | The album screen shows, from the top, the album's cover art large; its info: name, artist, year, genre, number of tracks and total duration, each shown only when the server has it; then the **Play** and **Shuffle** actions, then the tracks. | planned | `AlbumViewModelTests`; `manual:` live screenshot |
-| `ALB-10` | Tracks are in disc and track-number order. An album with more than one disc groups them under a header per disc, "Disc 2", or "Disc 2 · Development" when the server names the disc. A single-disc album has no headers. | planned | `AlbumUseCaseTests`, `AlbumViewModelTests`; `manual:` live screenshot of a multi-disc album |
-| `ALB-11` | Each track row shows its track number, title and duration, and its artist when that differs from the album's artist. | planned | `AlbumViewModelTests`; `manual:` live screenshot |
-| `ALB-12` | Tapping a track plays it and queues the tracks after it, in disc and track order across discs. | planned | `AlbumViewModelTests`, `PlaybackUseCaseTests` |
-| `ALB-13` | **Play** plays the album from its first track and queues the rest in order. | planned | `AlbumViewModelTests` |
+| `ALB-9` | The album screen shows, from the top, the album's cover art large; its info: name, artist, year, genre, number of tracks and total duration, each shown only when the server has it; then the **Play** and **Shuffle** actions, then the tracks. | partial: **Shuffle** arrives with `PLAY-9` | `AlbumViewModelTests`; `manual:` `scripts/manual/live-connect.sh` renders the real screen of a multi-disc and a single-disc album (`alb9-*.png`) |
+| `ALB-10` | Tracks are in disc and track-number order. An album with more than one disc groups them under a header per disc, "Disc 2", or "Disc 2 · Development" when the server names the disc. A single-disc album has no headers. | done | `AlbumUseCaseTests`, `AlbumDetailTests`, `AlbumViewModelTests`, `AlbumGatewayTests`; `LiveServerTests.albumScreensShowTracksByDisc` and its screenshot of the multi-disc Chrono Cross soundtrack |
+| `ALB-11` | Each track row shows its track number, title and duration, and its artist when that differs from the album's artist. | done | `AlbumViewModelTests`; live screenshots of both album screens |
+| `ALB-12` | Tapping a track plays it and queues the tracks after it, in disc and track order across discs. | done | `AlbumViewModelTests`, `PlaybackUseCaseTests`; tapping a track on the real screen is in the verification backlog |
+| `ALB-13` | **Play** plays the album from its first track and queues the rest in order. | done | `AlbumViewModelTests`; tapping Play on the real screen is in the verification backlog |
 | `ALB-14` | **Shuffle** plays all of the album's tracks once, in a random order (`PLAY-9`). | planned | `AlbumViewModelTests` |
-| `ALB-15` | While the album loads its screen shows a progress indicator, and a load error shows its message with **Retry**. | planned | `AlbumViewModelTests` |
+| `ALB-15` | While the album loads its screen shows a progress indicator, and a load error shows its message with **Retry**. | done | `AlbumViewModelTests` |
 | `ALB-16` | An album or Albums-tab request that the server rejects as unauthorised (Subsonic error 40 or 41) returns the user to setup with the URL and username filled in, as for the track list (`SRV-6`). | planned | `AlbumsViewModelTests`, `AlbumViewModelTests`; `manual:` live test: a stale-credential album request is rejected |
 
 ## Implementation notes
@@ -50,6 +50,9 @@ The Albums tab, and the screen for one album. Tracks and their art are the same 
 - The favourites and the first page must both load: if either fails, the tab shows the error with Retry.
 - Disc titles come from `getAlbum`'s `discTitles`, matched by disc number. A track without a `discNumber` is on disc 1.
 - A pushed screen is a `NavigationDestination` (a `.push` case) that goes through the Coordinator, like the sheets (`ARCH-12`, `ARCH-13`). Views have no `NavigationLink`, so the stack's path is owned by the host in `App/`, and the album screen is built by a ViewModel-local Route from the Albums ViewModel.
+- A `.push` carries a key naming its screen (`album:<id>`), and the host ignores a push whose key is the screen already on top, so a double tap pushes one screen. The same album can be pushed again once something else is on top.
+- The album screen shows the grid's cover and info at once, loads the tracks and refreshes the info from `getAlbum`, and loads again each time it's pushed (nothing is cached). A second appearance while it loads waits for the first. Its cover is fetched at the width it's shown at, with the same keep-smaller, refetch-larger, fetch-after rules as the grid's. The album's name is in the navigation bar and again under the cover.
+- Play is disabled until the tracks have loaded. An album with no tracks says so.
 - Tab selection is the container's own state, not a route: nothing navigates between tabs. A tab loads when it is first shown, so Songs no longer loads at launch.
 - There is one now-playing bar, in the tab view's bottom accessory, so it sits above the tab bar and also shows on the album screen. It draws no background of its own: the accessory supplies it. Its ViewModel is shared with the player.
 - The grid has as many columns as the setting says, with equal gaps, and the covers fill their column's width. Each cell is a square cover with the name and artist below it, each on one line and truncated, so at 4 or 5 per row the text is small. The covers are fetched at the size the column gives them.

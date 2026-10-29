@@ -6,22 +6,22 @@ struct AlbumsView: View {
 
     private let spacing: CGFloat = 16
 
+    /// The host puts this inside the navigation stack that albums are pushed onto (ALB-8), so
+    /// the title and the settings button below belong to that stack's bar.
     var body: some View {
-        NavigationStack {
-            content
-                .navigationTitle("Albums")
-                .toolbar {
-                    ToolbarItem(placement: .primaryAction) {
-                        Button {
-                            viewModel.submitAction(.settingsTapped)
-                        } label: {
-                            Image(systemName: "gearshape")
-                        }
-                        .accessibilityLabel("Settings")
+        content
+            .navigationTitle("Albums")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        viewModel.submitAction(.settingsTapped)
+                    } label: {
+                        Image(systemName: "gearshape")
                     }
+                    .accessibilityLabel("Settings")
                 }
-        }
-        .onAppear { viewModel.submitAction(.lifecycle(.viewDidAppear)) }
+            }
+            .onAppear { viewModel.submitAction(.lifecycle(.viewDidAppear)) }
     }
 
     @ViewBuilder private var content: some View {
@@ -103,6 +103,16 @@ private struct AlbumCell: View {
     @Environment(\.displayScale) private var displayScale
 
     var body: some View {
+        Button {
+            viewModel.submitAction(.albumTapped(album.id))
+        } label: {
+            label
+        }
+        .buttonStyle(.plain)
+        .onAppear { viewModel.submitAction(.albumAppeared(album.id)) }
+    }
+
+    private var label: some View {
         VStack(alignment: .leading, spacing: 6) {
             Color.clear
                 .aspectRatio(1, contentMode: .fit)
@@ -121,6 +131,5 @@ private struct AlbumCell: View {
                 .lineLimit(1)
         }
         .accessibilityElement(children: .combine)
-        .onAppear { viewModel.submitAction(.albumAppeared(album.id)) }
     }
 }

@@ -8,19 +8,27 @@ enum AlbumsAction: Equatable {
     case artworkNeeded(coverArtID: String, pixelSize: Int)
     case retry
     case refresh
+    case albumTapped(Album.ID)
     case settingsTapped
 }
 
 /// The Albums tab: the server's albums in a grid, a page at a time (ALB-2, ALB-4, ALB-6, ALB-7).
 final class AlbumsViewModel: RoutingViewModel {
-    typealias UseCases = HasAlbumUseCase & HasCoverArtUseCase & HasTranscodingUseCase & HasDisplayUseCase
-        & HasSessionUseCase & HasAppRoutingUseCase & HasCoordinator
+    typealias UseCases = HasAlbumUseCase & HasCoverArtUseCase & HasPlaybackUseCase & HasTranscodingUseCase
+        & HasDisplayUseCase & HasSessionUseCase & HasAppRoutingUseCase & HasCoordinator
 
     enum Route: NavigationRoute {
         case settings
+        /// ALB-8: the album's screen, pushed onto the tab's stack.
+        case album(Album)
 
         func destination(context: AlbumsViewModel) -> NavigationDestination {
-            SettingsViewModel.destination(useCases: context.useCases)
+            switch self {
+            case .settings:
+                SettingsViewModel.destination(useCases: context.useCases)
+            case .album(let album):
+                .push(key: "album:\(album.id)", AnyView(AlbumView(viewModel: AlbumViewModel(album: album, useCases: context.useCases))))
+            }
         }
     }
 
@@ -76,6 +84,10 @@ final class AlbumsViewModel: RoutingViewModel {
             await loadNextPage()
         case .artworkNeeded(let coverArtID, let pixelSize):
             await loadArtwork(coverArtID, pixelSize: pixelSize)
+        case .albumTapped(let id):
+            if let album = (favourites + albums).first(where: { $0.id == id }) {
+                await navigateTo(.album(album))
+            }
         case .settingsTapped:
             await navigateTo(.settings)
         }

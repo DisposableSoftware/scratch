@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import Testing
 @testable import Scratch
 
@@ -7,7 +8,7 @@ import Testing
 @Suite(.serialized, .enabled(if: LiveServer.configured), .timeLimit(.minutes(1)))
 struct LiveServerTests {
     /// The app's own storage, so a launch afterwards finds the saved server (SRV-5).
-    private let container = AppContainer.build(coordinator: CoordinatorSpy(), networkSession: URLSession.shared, environment: .live)
+    private let container = AppContainer.build(coordinator: CoordinatorSpy(), networkSession: URLSession.shared, environment: .live, navigationStack: NavigationStackPortStub())
 
     @Test func aWrongPasswordIsRejected() async {
         await #expect(throws: ConnectError.server(.wrongCredentials)) {
@@ -150,6 +151,39 @@ struct LiveServerTests {
         #expect(Set(favourites.map { $0.id }).isDisjoint(with: others))
     }
 
+    /// ALB-9 to ALB-12 against the real server: an album's tracks arrive in disc and track order,
+    /// and a multi-disc album groups into discs. With SCRATCH_SNAPSHOT_DIR set, the album screens
+    /// (a multi-disc one if the library has one, and a single-disc one) are saved as PNGs.
+    @Test func albumScreensShowTracksByDisc() async throws {
+        try await container.connectUseCase.connect(address: LiveServer.address, username: LiveServer.username, password: LiveServer.password)
+        try await container.albumUseCase.loadFirstPage()
+        let candidates = container.albumUseCase.albums.filter { ($0.songCount ?? 0) >= 14 }.prefix(40)
+
+        var multiDisc: AlbumDetail?
+        var singleDisc: AlbumDetail?
+        for album in candidates {
+            guard let detail = try await container.albumUseCase.album(id: album.id) else { continue }
+            let order = detail.tracks.map { [$0.disc, $0.number ?? Int.max] }
+            #expect(order == order.sorted { ($0[0], $0[1]) < ($1[0], $1[1]) }, "\(album.name) isn't in disc and track order")
+            #expect(detail.discs.flatMap { $0.tracks }.count == detail.tracks.count)
+            if detail.discs.count > 1, multiDisc == nil { multiDisc = detail }
+            if detail.discs.count == 1, singleDisc == nil { singleDisc = detail }
+            if multiDisc != nil, singleDisc != nil { break }
+        }
+        #expect(multiDisc != nil || singleDisc != nil, "no album with 14 or more tracks in the first page")
+
+        guard let directory = LiveServer.snapshotDirectory else { return }
+        for (name, detail) in [("alb9-album-multi-disc", multiDisc), ("alb9-album-single-disc", singleDisc)] {
+            guard let detail else { continue }
+            let viewModel = AlbumViewModel(album: detail.album, useCases: container)
+            _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+            _ = await viewModel.handleAction(.artworkNeeded(pixelSize: 1080))
+            let image = await WindowSnapshot.image(of: AlbumView(viewModel: viewModel), size: CGSize(width: 402, height: 874))
+            let png = try #require(image?.pngData())
+            try png.write(to: URL(fileURLWithPath: directory).appending(path: "\(name).png"))
+        }
+    }
+
     @Test func connectsAndSavesTheServer() async throws {
         try await container.connectUseCase.connect(address: LiveServer.address, username: LiveServer.username, password: LiveServer.password)
 
@@ -168,4 +202,5 @@ nonisolated enum LiveServer {
     static var address: String { environment["SCRATCH_SERVER"] ?? "" }
     static var username: String { environment["SCRATCH_USER"] ?? "" }
     static var password: String { environment["SCRATCH_PASSWORD"] ?? "" }
+    static var snapshotDirectory: String? { environment["SCRATCH_SNAPSHOT_DIR"] }
 }

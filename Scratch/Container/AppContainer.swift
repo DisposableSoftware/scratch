@@ -20,7 +20,8 @@ extension AppContainer {
     static func build(
         coordinator: Coordinator,
         networkSession: NetworkSession,
-        environment: AppEnvironment
+        environment: AppEnvironment,
+        navigationStack: NavigationStackPort
     ) -> AppContainer {
         // 1. Shared state
         let sessionState = SessionState()
@@ -76,6 +77,7 @@ extension AppContainer {
 
         // 4. Routers
         let viewFactory = AppViewFactory()
+        viewFactory.navigationStack = navigationStack
         let appRouting = DefaultAppRoutingUseCase(
             router: AppRouter(sessionState: sessionState),
             coordinator: coordinator,

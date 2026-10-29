@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 @testable import Scratch
 
 final class ServerGatewayMock: ServerGateway {
@@ -54,7 +55,7 @@ final class AppRoutingUseCaseSpy: AppRoutingUseCase {
 enum TestContainer {
     /// The real container over a network that's never reached and storage that's thrown away.
     static func build(coordinator: Coordinator = CoordinatorSpy()) -> AppContainer {
-        AppContainer.build(coordinator: coordinator, networkSession: OfflineSession(), environment: .test)
+        AppContainer.build(coordinator: coordinator, networkSession: OfflineSession(), environment: .test, navigationStack: NavigationStackPortStub())
     }
 }
 
@@ -250,6 +251,11 @@ final class AlbumGatewayMock: AlbumGateway {
     var starred: [Album] = []
     var error: ServerError?
     var starredError: ServerError?
+    /// What `album(id:)` returns, by album.
+    var details: [Album.ID: AlbumDetail] = [:]
+    var albumError: ServerError?
+    var albumGate: (() async -> Void)?
+    private(set) var albumRequests: [Album.ID] = []
     /// Fail every album request after this many have been made.
     var failAfterRequests: Int?
     /// Answer every page from the start, as a server that ignores the offset would.
@@ -292,6 +298,26 @@ final class AlbumGatewayMock: AlbumGateway {
         return Array(all.dropFirst(ignoresOffset ? 0 : offset).prefix(count))
     }
 
+    /// The same for the next `album(id:)` request.
+    func holdNextAlbumRequest() -> (entered: AsyncStream<Void>, release: () -> Void) {
+        let (entered, signalEntered) = AsyncStream.makeStream(of: Void.self)
+        let (held, release) = AsyncStream.makeStream(of: Void.self)
+        albumGate = { [weak self] in
+            self?.albumGate = nil
+            signalEntered.yield()
+            for await _ in held { break }
+        }
+        return (entered, { release.yield(); release.finish() })
+    }
+
+    func album(id: Album.ID, server: SavedServer) async throws(ServerError) -> AlbumDetail {
+        albumRequests.append(id)
+        if let albumGate { await albumGate() }
+        if let albumError { throw albumError }
+        guard let detail = details[id] else { throw .failed(code: 70, message: "Album not found") }
+        return detail
+    }
+
     func starredAlbums(server: SavedServer) async throws(ServerError) -> [Album] {
         starredRequests += 1
         // The answer is what the server held when asked, not when it finishes.
@@ -305,5 +331,27 @@ final class AlbumGatewayMock: AlbumGateway {
 extension Album {
     static func numbered(_ count: Int) -> [Album] {
         (0..<count).map { Album(id: "a\($0)", name: "Album \($0)", artist: "Artist", coverArtID: "ac\($0)", songCount: 10, duration: 2400, year: 2000, genre: "Rock", isStarred: false) }
+    }
+}
+
+/// A stack that is just its root: nothing is ever pushed in tests.
+struct NavigationStackPortStub: NavigationStackPort {
+    func stack(root: AnyView) -> AnyView { root }
+}
+
+extension AlbumDetail {
+    /// An album of `discs` discs with `perDisc` tracks each, in the order a server lists them.
+    static func numbered(discs: Int, perDisc: Int, titles: [Int: String] = [:], id: String = "al1") -> AlbumDetail {
+        let album = Album(id: id, name: "Chrono Cross", artist: "Mitsuda", coverArtID: "al-\(id)", songCount: discs * perDisc, duration: 7200, year: 2000, genre: "Game", isStarred: false)
+        let tracks = (1...discs).flatMap { disc in
+            (1...perDisc).map { number in
+                AlbumTrack(
+                    track: Track(id: "d\(disc)t\(number)", title: "Track \(number)", artist: "Mitsuda", album: "Chrono Cross", duration: 200, coverArtID: "al-\(id)"),
+                    disc: disc,
+                    number: number
+                )
+            }
+        }
+        return AlbumDetail(album: album, tracks: tracks, discTitles: titles)
     }
 }

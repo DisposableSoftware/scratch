@@ -5,7 +5,8 @@ import SwiftUI
 struct MainView: View {
     /// The now-playing bar's ViewModel.
     @ObservedObject var viewModel: PlayerViewModel
-    let albums: AlbumsView
+    /// The Albums tab, inside the stack the host keeps for pushed screens.
+    let albums: AnyView
     let songs: LibraryView
 
     var body: some View {

@@ -71,6 +71,54 @@ struct AlbumGatewayTests {
         #expect(try await gateway.starredAlbums(server: .sample).isEmpty)
     }
 
+    // getAlbum
+
+    @Test func asksGetAlbumAndReadsTheTracksDiscsAndDiscTitles() async throws {
+        let body = #"""
+        {"subsonic-response":{"status":"ok","version":"1.16.1","album":{
+          "id":"al1","name":"Chrono Cross","artist":"Mitsuda","coverArt":"al-al1","songCount":3,"duration":600,"year":2000,"genre":"Game",
+          "discTitles":[{"disc":1,"title":"Opening"},{"disc":2,"title":"Development"},{"disc":3,"title":""}],
+          "song":[
+            {"id":"s1","title":"Scars","artist":"Mitsuda","displayArtist":"Mitsuda & Guest","album":"Chrono Cross","duration":212,"coverArt":"al-al1","track":1,"discNumber":1},
+            {"id":"s2","title":"No disc"},
+            {"id":"s3","title":"Brink","track":5,"discNumber":2,"coverArt":""}
+          ]}}}
+        """#
+        let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })
+
+        let detail = try await gateway.album(id: "al1", server: .sample)
+
+        #expect(detail.album.name == "Chrono Cross" && detail.album.year == 2000 && detail.album.songCount == 3)
+        #expect(detail.discTitles == [1: "Opening", 2: "Development"])
+        #expect(detail.tracks.map(\.id) == ["s1", "s2", "s3"])
+        #expect(detail.tracks[0] == AlbumTrack(track: Track(id: "s1", title: "Scars", artist: "Mitsuda & Guest", album: "Chrono Cross", duration: 212, coverArtID: "al-al1"), disc: 1, number: 1))
+        #expect(detail.tracks[1].disc == 1 && detail.tracks[1].number == nil)
+        #expect(detail.tracks[2].disc == 2 && detail.tracks[2].number == 5 && detail.tracks[2].track.coverArtID == nil)
+        let url = try #require(StubURLProtocol.requests.first?.url)
+        #expect(url.path == "/rest/getAlbum" && url.query?.contains("id=al1") == true)
+    }
+
+    @Test func anAlbumWithNoSongsHasNoTracks() async throws {
+        let body = #"{"subsonic-response":{"status":"ok","version":"1.16.1","album":{"id":"al1","name":"Empty"}}}"#
+        let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })
+        let detail = try await gateway.album(id: "al1", server: .sample)
+        #expect(detail.tracks.isEmpty && detail.discTitles.isEmpty)
+    }
+
+    @Test func anAlbumTheServerDoesntHaveIsAnError() async {
+        let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: SubsonicReply.error(70, "Album not found")) })
+        await #expect(throws: ServerError.failed(code: 70, message: "Album not found")) {
+            try await gateway.album(id: "nope", server: .sample)
+        }
+    }
+
+    @Test func aReplyWithoutTheAlbumKeyIsNotSubsonic() async {
+        let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: SubsonicReply.ok) })
+        await #expect(throws: ServerError.notSubsonic) {
+            try await gateway.album(id: "al1", server: .sample)
+        }
+    }
+
     @Test func aPageWithNoAlbumsIsEmpty() async throws {
         let body = #"{"subsonic-response":{"status":"ok","version":"1.16.1","albumList2":{}}}"#
         let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })

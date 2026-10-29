@@ -25,9 +25,14 @@ protocol HasCoverArtUseCase {
     var coverArtUseCase: CoverArtUseCase { get }
 }
 
+protocol HasPlaybackUseCase {
+    var playbackUseCase: PlaybackUseCase { get }
+}
+
 typealias AllUseCases = HasCoordinator
     & HasAppRoutingUseCase
     & HasConnectUseCase
     & HasSessionUseCase
     & HasLibraryUseCase
     & HasCoverArtUseCase
+    & HasPlaybackUseCase

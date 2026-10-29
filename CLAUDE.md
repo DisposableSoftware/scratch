@@ -103,7 +103,11 @@ Scratch/Models/           Track                                                 
 Scratch/State/            LibraryState (tracks loaded so far)                           LIB-2
 Scratch/Gateways/         RemoteLibraryGateway (search3), RemoteCoverArtGateway (getCoverArt + NSCache)  LIB-2, LIB-5
 Scratch/UseCases/         LibraryUseCase (paging), CoverArtUseCase                       LIB-2, LIB-5
-Scratch/UI/               LibraryView(Model): rows, phases, prefetch, art                LIB-1, LIB-2, LIB-4, LIB-5
+Scratch/UI/               LibraryView(Model): rows, phases, prefetch, art, tap to play   LIB-1…5, PLAY-1
+Scratch/Models/           PlaybackStatus, AudioPlayerEvent
+Scratch/State/            PlaybackState (queue, current index, status, time)            PLAY-1
+Scratch/Gateways/         AVPlayerAudioGateway (stream URL, AVPlayer → events)           PLAY-1, PLAY-8
+Scratch/UseCases/         PlaybackUseCase (queue, next/previous, end, failure rules)     PLAY-1, PLAY-4, PLAY-5, PLAY-8
 scripts/manual/live-connect.sh  SRV-3/SRV-5 against a real server; credentials from the environment only
 Scratch/Info.plist        background audio, arbitrary loads (merged with generated keys)
 ScratchTests/             Swift Testing suites; Support/ holds mocks, StubURLProtocol, TestContainer   ARCH-16

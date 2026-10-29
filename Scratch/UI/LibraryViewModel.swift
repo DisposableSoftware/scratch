@@ -7,11 +7,12 @@ enum LibraryAction: Equatable {
     case artworkNeeded(coverArtID: String, pixelSize: Int)
     case retry
     case refresh
+    case trackTapped(Track.ID)
 }
 
 /// The library screen: the server's tracks, loaded a page at a time (LIB-1, LIB-2, LIB-4).
 final class LibraryViewModel: ViewModel {
-    typealias UseCases = HasLibraryUseCase & HasCoverArtUseCase
+    typealias UseCases = HasLibraryUseCase & HasCoverArtUseCase & HasPlaybackUseCase
 
     enum Phase: Equatable {
         case loading
@@ -58,6 +59,11 @@ final class LibraryViewModel: ViewModel {
             await loadArtwork(coverArtID, pixelSize: pixelSize)
         case .refresh:
             await loadFirstPage(keepingListOnScreen: true)
+        case .trackTapped(let id):
+            // PLAY-1: play it, and queue what follows it in the list.
+            if let index = tracks.firstIndex(where: { $0.id == id }) {
+                useCases.playbackUseCase.play(tracks, startingAt: index)
+            }
         }
         return .none
     }

@@ -2,13 +2,12 @@
 
 The order of approved work: `planned` requirements, and `partial` ones with a known bug from `/bug`. Change it here when priorities change. `/implement` works through this file: the verification backlog first, then the requirements in the order listed.
 
-1. `PLAY-1`, `PLAY-4`, `PLAY-5`, `PLAY-8`: the queue and the player engine.
-2. `PLAY-2`, `PLAY-3`: the now-playing bar and the player screen.
-3. `PLAY-6`, `PLAY-7`: background audio, the lock screen and interruptions.
-4. `TRANS-1`, `TRANS-2`, `TRANS-3`, `TRANS-4`, `TRANS-5`: the transcoding settings and stream URLs.
-5. `TRANS-6`: quality in the player.
-6. `LIB-6`, `SRV-6`, `SRV-7`: the settings sheet, re-authentication and sign out.
-7. `ARCH-16`: confirm every Router and UseCase has tests.
+1. `PLAY-2`, `PLAY-3`, `PLAY-8`: the now-playing bar and the player screen, which shows a failed stream.
+2. `PLAY-6`, `PLAY-7`: background audio, the lock screen and interruptions.
+3. `TRANS-1`, `TRANS-2`, `TRANS-3`, `TRANS-4`, `TRANS-5`: the transcoding settings and stream URLs.
+4. `TRANS-6`: quality in the player.
+5. `LIB-6`, `SRV-6`, `SRV-7`: the settings sheet, re-authentication and sign out.
+6. `ARCH-16`: confirm every Router and UseCase has tests.
 
 ## Verification backlog
 

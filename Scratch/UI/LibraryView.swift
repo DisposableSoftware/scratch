@@ -32,8 +32,13 @@ struct LibraryView: View {
         case .loaded:
             List {
                 ForEach(viewModel.tracks) { track in
-                    TrackRow(track: track, viewModel: viewModel)
-                        .onAppear { viewModel.submitAction(.rowAppeared(track.id)) }
+                    Button {
+                        viewModel.submitAction(.trackTapped(track.id))
+                    } label: {
+                        TrackRow(track: track, viewModel: viewModel)
+                    }
+                    .buttonStyle(.plain)
+                    .onAppear { viewModel.submitAction(.rowAppeared(track.id)) }
                 }
                 if viewModel.isLoadingMore {
                     ProgressView()

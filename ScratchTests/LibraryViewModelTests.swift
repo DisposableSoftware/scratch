@@ -3,18 +3,20 @@ import Testing
 import UIKit
 @testable import Scratch
 
-private struct LibraryUseCases: HasLibraryUseCase, HasCoverArtUseCase {
+private struct LibraryUseCases: HasLibraryUseCase, HasCoverArtUseCase, HasPlaybackUseCase {
     let libraryUseCase: LibraryUseCase
     let coverArtUseCase: CoverArtUseCase
+    let playbackUseCase: PlaybackUseCase
 }
 
 @Suite(.timeLimit(.minutes(1)))
 struct LibraryViewModelTests {
     private let gateway = LibraryGatewayMock()
     private let art = CoverArtUseCaseMock()
+    private let playback = PlaybackUseCaseMock()
     private var viewModel: LibraryViewModel {
         let library = DefaultLibraryUseCase(libraryGateway: gateway, sessionState: SessionState(server: .sample), libraryState: LibraryState())
-        return LibraryViewModel(useCases: LibraryUseCases(libraryUseCase: library, coverArtUseCase: art))
+        return LibraryViewModel(useCases: LibraryUseCases(libraryUseCase: library, coverArtUseCase: art, playbackUseCase: playback))
     }
 
     @Test func showsTheFirstPageWithItsDetails() async {
@@ -192,5 +194,17 @@ struct LibraryViewModelTests {
         gateway.error = nil
         _ = await viewModel.handleAction(.retry)
         #expect(viewModel.phase == .loaded && viewModel.tracks.count == 3)
+    }
+
+    @Test func tappingATrackPlaysItFromTheLoadedList() async {
+        gateway.all = Track.numbered(5)
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
+        _ = await viewModel.handleAction(.trackTapped("t2"))
+
+        #expect(playback.played.count == 1)
+        #expect(playback.played.first?.tracks == Track.numbered(5))
+        #expect(playback.played.first?.index == 2)
     }
 }

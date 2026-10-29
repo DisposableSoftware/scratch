@@ -128,3 +128,34 @@ extension Track {
         (0..<count).map { Track(id: "t\($0)", title: "Song \($0)", artist: "Artist", album: "Album", duration: 200, coverArtID: "c\($0)") }
     }
 }
+
+final class AudioPlayerGatewayMock: AudioPlayerGateway {
+    enum Call: Equatable {
+        case load(Track.ID)
+        case play, pause, stop
+        case seek(TimeInterval)
+    }
+
+    var onEvent: ((AudioPlayerEvent) -> Void)?
+    var currentTime: TimeInterval = 0
+    private(set) var calls: [Call] = []
+
+    func load(_ track: Track, server: SavedServer) { calls.append(.load(track.id)) }
+    func play() { calls.append(.play) }
+    func pause() { calls.append(.pause) }
+    func seek(to seconds: TimeInterval) { calls.append(.seek(seconds)) }
+    func stop() { calls.append(.stop) }
+
+    func send(_ event: AudioPlayerEvent) { onEvent?(event) }
+    var loads: [Track.ID] { calls.compactMap { if case .load(let id) = $0 { id } else { nil } } }
+}
+
+final class PlaybackUseCaseMock: PlaybackUseCase {
+    private(set) var played: [(tracks: [Track], index: Int)] = []
+
+    func play(_ tracks: [Track], startingAt index: Int) { played.append((tracks, index)) }
+    func togglePlayPause() {}
+    func next() {}
+    func previous() {}
+    func seek(to seconds: TimeInterval) {}
+}

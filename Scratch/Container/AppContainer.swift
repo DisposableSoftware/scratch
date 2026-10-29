@@ -9,6 +9,7 @@ struct AppContainer: AllUseCases {
     let sessionUseCase: SessionUseCase
     let libraryUseCase: LibraryUseCase
     let coverArtUseCase: CoverArtUseCase
+    let playbackUseCase: PlaybackUseCase
 }
 
 extension AppContainer {
@@ -21,12 +22,14 @@ extension AppContainer {
         // 1. Shared state
         let sessionState = SessionState()
         let libraryState = LibraryState()
+        let playbackState = PlaybackState()
 
         // 2. Gateways
         let serverGateway = RemoteServerGateway(networkSession: networkSession)
         let credentialGateway = KeychainCredentialGateway(environment: environment)
         let libraryGateway = RemoteLibraryGateway(networkSession: networkSession)
         let coverArtGateway = RemoteCoverArtGateway(networkSession: networkSession)
+        let audioPlayer = AVPlayerAudioGateway()
 
         // 3. UseCases
         let connectUseCase = DefaultConnectUseCase(
@@ -41,6 +44,11 @@ extension AppContainer {
             libraryState: libraryState
         )
         let coverArtUseCase = DefaultCoverArtUseCase(coverArtGateway: coverArtGateway, sessionState: sessionState)
+        let playbackUseCase = DefaultPlaybackUseCase(
+            audioPlayer: audioPlayer,
+            sessionState: sessionState,
+            playbackState: playbackState
+        )
 
         // 4. Routers
         let viewFactory = AppViewFactory()
@@ -57,7 +65,8 @@ extension AppContainer {
             connectUseCase: connectUseCase,
             sessionUseCase: sessionUseCase,
             libraryUseCase: libraryUseCase,
-            coverArtUseCase: coverArtUseCase
+            coverArtUseCase: coverArtUseCase,
+            playbackUseCase: playbackUseCase
         )
         viewFactory.useCases = container
         return container

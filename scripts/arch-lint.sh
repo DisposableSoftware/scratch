@@ -176,7 +176,10 @@ if [ -n "${view_files// /}" ]; then
 fi
 
 # ARCH-12, 13: Views don't navigate on their own; navigation goes through the Coordinator.
+# A Route builds NavigationDestination values like .sheet(AnyView(…)) and .alert(AlertContent(…));
+# those are the Coordinator's, not SwiftUI's presentation modifiers.
 echo "$index" | in_layers "" "UI" | code_has "${A}NavigationLink$B|[.](sheet|fullScreenCover|popover|alert|confirmationDialog|navigationDestination|inspector)[ \t]*[(]" |
+  code_lacks "[.]sheet[ \t]*[(][ \t]*AnyView[ \t]*[(]|[.]alert[ \t]*[(][ \t]*AlertContent[ \t]*[(]" |
   report navigation_through_coordinator "navigates from a View; submit an action and use a Route or Router" | emit
 
 # ARCH-9, 10: ViewModels declare a UseCases typealias and take their dependencies through one

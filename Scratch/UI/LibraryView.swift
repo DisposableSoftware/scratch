@@ -2,11 +2,14 @@ import SwiftUI
 
 struct LibraryView: View {
     @ObservedObject var viewModel: LibraryViewModel
+    /// The now-playing bar (PLAY-2), which has its own ViewModel.
+    let nowPlaying: NowPlayingBar
 
     var body: some View {
         NavigationStack {
             content
                 .navigationTitle("Library")
+                .safeAreaInset(edge: .bottom, spacing: 0) { nowPlaying }
         }
         .onAppear { viewModel.submitAction(.lifecycle(.viewDidAppear)) }
     }

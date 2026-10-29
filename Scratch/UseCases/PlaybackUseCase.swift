@@ -2,6 +2,9 @@ import Foundation
 
 /// The queue and the player (PLAY-1, PLAY-4, PLAY-5, PLAY-8).
 protocol PlaybackUseCase {
+    /// The queue and where playback is in it, for the screens that show it.
+    var state: PlaybackState { get }
+
     /// Plays `tracks[index]` and queues the tracks after it.
     func play(_ tracks: [Track], startingAt index: Int)
     func togglePlayPause()
@@ -24,6 +27,8 @@ final class DefaultPlaybackUseCase: PlaybackUseCase {
         self.playbackState = playbackState
         audioPlayer.onEvent = { [weak self] event in self?.handle(event) }
     }
+
+    var state: PlaybackState { playbackState }
 
     func play(_ tracks: [Track], startingAt index: Int) {
         guard sessionState.server != nil, tracks.indices.contains(index) else { return }

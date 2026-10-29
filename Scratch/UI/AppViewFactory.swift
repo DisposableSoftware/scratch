@@ -16,7 +16,10 @@ final class AppViewFactory: ViewFactory {
         case .setup:
             return .root(AnyView(SetupView(viewModel: SetupViewModel(useCases: useCases))))
         case .library:
-            return .root(AnyView(LibraryView(viewModel: LibraryViewModel(useCases: useCases))))
+            return .root(AnyView(LibraryView(
+                viewModel: LibraryViewModel(useCases: useCases),
+                nowPlaying: NowPlayingBar(viewModel: PlayerViewModel(useCases: useCases))
+            )))
         }
     }
 }

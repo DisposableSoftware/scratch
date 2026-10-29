@@ -40,9 +40,10 @@ private struct SearchPayload: Decodable {
         let album: String?
         let duration: Int?
         let coverArt: String?
+        let starred: String?
 
         var track: Track {
-            Track(id: id, title: title ?? "", artist: artist ?? "", album: album ?? "", duration: duration, coverArtID: coverArt)
+            Track(id: id, title: title ?? "", artist: artist ?? "", album: album ?? "", duration: duration, coverArtID: coverArt, isStarred: starred != nil)
         }
     }
 

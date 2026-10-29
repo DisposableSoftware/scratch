@@ -95,6 +95,7 @@ Scratch/UI/               AppRoutingUseCase + ViewFactory, AppViewFactory, Setup
 Scratch/UI/               MainView (Albums + Songs tabs, now-playing bar as bottom accessory)   ALB-1, PLAY-2, LIB-6
 Scratch/UI/               AlbumsView(Model): the grid, favourites, paging, states, covers   ALB-2…7
 Scratch/UI/               AlbumView(Model), AlbumRows: cover, info, discs, Play, Shuffle, track taps   ALB-8…16
+Scratch/UI/               FavouriteHeart: the read-only mark on a starred track   LIB-7, ALB-20
 Scratch/UI/               NavigationStackPort (Port: the host's stack for `.push` screens)   ALB-8, ARCH-15
 Scratch/App/              PushStackHost: the stack's path, `.push` handler               ALB-8
 Scratch/Models/           AlbumDetail, AlbumTrack, AlbumDisc                             ALB-9, ALB-10

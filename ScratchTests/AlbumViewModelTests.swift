@@ -87,6 +87,17 @@ struct AlbumViewModelTests {
         #expect(row == AlbumRow(id: "d1t2", number: "2", title: "Track 2", artist: nil, duration: "3:20"))
     }
 
+    // ALB-20
+
+    @Test func aStarredTrackShowsAHeart() async throws {
+        var detail = AlbumDetail.numbered(discs: 1, perDisc: 2)
+        detail.tracks[1].track.isStarred = true
+        let viewModel = viewModel(detail)
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
+        #expect(viewModel.sections.first?.rows.map(\.isStarred) == [false, true])
+    }
+
     @Test func aRowShowsItsArtistOnlyWhenItDiffersFromTheAlbums() async throws {
         var detail = AlbumDetail.numbered(discs: 1, perDisc: 3)
         detail.tracks[1].track.artist = "Guest"

@@ -9,6 +9,7 @@ struct AlbumRow: Equatable, Identifiable {
     /// Only when the track's artist isn't the album's.
     var artist: String?
     var duration: String?
+    var isStarred = false
 }
 
 /// A disc's tracks under its header; a single-disc album has the one section and no header (ALB-10).

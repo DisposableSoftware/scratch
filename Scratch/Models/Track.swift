@@ -8,4 +8,7 @@ struct Track: Equatable, Identifiable {
     /// Whole seconds, when the server knows it.
     var duration: Int?
     var coverArtID: String?
+
+    /// Whether the user has starred it on the server (LIB-7). Only shown, never changed.
+    var isStarred = false
 }

@@ -93,6 +93,7 @@ struct SongEntry: Decodable {
     let coverArt: String?
     let track: Int?
     let discNumber: Int?
+    let starred: String?
 
     var albumTrack: AlbumTrack {
         AlbumTrack(
@@ -102,7 +103,8 @@ struct SongEntry: Decodable {
                 artist: [displayArtist, artist].compactMap { $0 }.first { !$0.isEmpty } ?? "",
                 album: album ?? "",
                 duration: duration,
-                coverArtID: coverArt.flatMap { $0.isEmpty ? nil : $0 }
+                coverArtID: coverArt.flatMap { $0.isEmpty ? nil : $0 },
+                isStarred: starred != nil
             ),
             disc: discNumber ?? 1,
             number: track

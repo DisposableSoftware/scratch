@@ -5,14 +5,14 @@ import Testing
 @Suite(.serialized)
 struct LibraryGatewayTests {
     @Test func asksSearch3ForOnePageOfSongs() async throws {
-        let body = #"{"subsonic-response":{"status":"ok","version":"1.16.1","searchResult3":{"song":[{"id":"a","title":"You gave away","album":"Live","artist":"Mars Argo","duration":224,"coverArt":"dc-1"},{"id":"b"}]}}}"#
+        let body = #"{"subsonic-response":{"status":"ok","version":"1.16.1","searchResult3":{"song":[{"id":"a","title":"You gave away","album":"Live","artist":"Mars Argo","duration":224,"coverArt":"dc-1"},{"id":"b","starred":"2026-02-06T11:05:42-05:00"}]}}}"#
         let gateway = RemoteLibraryGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })
 
         let tracks = try await gateway.tracks(offset: 200, count: 100, server: .sample)
 
         #expect(tracks == [
             Track(id: "a", title: "You gave away", artist: "Mars Argo", album: "Live", duration: 224, coverArtID: "dc-1"),
-            Track(id: "b", title: "", artist: "", album: "", duration: nil, coverArtID: nil),
+            Track(id: "b", title: "", artist: "", album: "", duration: nil, coverArtID: nil, isStarred: true),
         ])
         let url = try #require(StubURLProtocol.requests.first?.url)
 

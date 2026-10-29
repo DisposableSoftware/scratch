@@ -96,6 +96,10 @@ private struct TrackRow: View {
 
             Spacer()
 
+            if track.isStarred {
+                FavouriteHeart()
+            }
+
             if let duration = track.duration {
                 Text(Duration.seconds(duration).formatted(.time(pattern: .minuteSecond)))
                     .font(.subheadline)

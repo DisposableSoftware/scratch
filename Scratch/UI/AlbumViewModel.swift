@@ -164,7 +164,8 @@ final class AlbumViewModel: ViewModel {
             number: albumTrack.number.map(String.init) ?? "",
             title: track.title,
             artist: track.artist.isEmpty || track.artist == albumArtist ? nil : track.artist,
-            duration: track.duration.map { Duration.seconds($0).formatted(.time(pattern: .minuteSecond)) }
+            duration: track.duration.map { Duration.seconds($0).formatted(.time(pattern: .minuteSecond)) },
+            isStarred: track.isStarred
         )
     }
 

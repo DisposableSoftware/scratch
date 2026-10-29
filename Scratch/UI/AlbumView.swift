@@ -137,6 +137,10 @@ private struct TrackLine: View {
 
             Spacer()
 
+            if row.isStarred {
+                FavouriteHeart()
+            }
+
             if let duration = row.duration {
                 Text(duration)
                     .font(.subheadline.monospacedDigit())

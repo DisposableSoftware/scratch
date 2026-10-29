@@ -8,7 +8,7 @@
 | `LIB-4` | While the first page loads, the screen shows a progress indicator. A load error shows its message with **Retry**, and an empty library says so. | done | `LibraryViewModelTests` |
 | `LIB-5` | Cover art comes from `getCoverArt` at the size it is shown (scaled for the screen), and is cached in memory for the session. | done | `CoverArtGatewayTests`, `CoverArtUseCaseTests`, `LibraryViewModelTests`; `manual:` live screenshot |
 | `LIB-6` | A settings button on the top screen of each tab opens settings as a sheet, with the server and sign out, the albums per row, and the transcoding. | partial: not tapped in the simulator yet; see the verification backlog | `LibraryViewModelTests`, `AlbumsViewModelTests`, `SettingsViewModelTests`; opening settings from both tabs is in the verification backlog |
-| `LIB-7` | A track the user has starred on the server shows a filled heart in the accent colour, immediately left of its duration, on the Songs tab. A track that isn't starred shows no heart, and its duration stays where it is. | planned | `LibraryGatewayTests`, `LibraryViewModelTests`; `manual:` a screenshot of the Songs tab on a server with a starred song |
+| `LIB-7` | A track the user has starred on the server shows a filled heart in the accent colour, immediately left of its duration, on the Songs tab. A track that isn't starred shows no heart, and its duration stays where it is. | partial: the Songs tab with a heart has not been seen on screen yet; see the verification backlog | `LibraryGatewayTests` (the `starred` attribute becomes `isStarred`); the row is the same heart as `ALB-20`, checked by `AlbumLayoutTests` |
 
 ## Implementation notes
 

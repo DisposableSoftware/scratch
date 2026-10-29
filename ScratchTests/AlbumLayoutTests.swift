@@ -22,7 +22,9 @@ struct AlbumLayoutTests {
     }
 
     private func screen() async throws -> UIImage {
-        let detail = AlbumDetail.numbered(discs: 1, perDisc: 12)
+        var detail = AlbumDetail.numbered(discs: 1, perDisc: 12)
+        detail.tracks[1].track.isStarred = true
+        detail.tracks[10].track.isStarred = true
         let gateway = AlbumGatewayMock()
         gateway.details[detail.album.id] = detail
         let albums = DefaultAlbumUseCase(albumGateway: gateway, sessionState: SessionState(server: .sample), albumsState: AlbumsState())
@@ -62,7 +64,29 @@ struct AlbumLayoutTests {
         return Edges(leading: CGFloat(first) / CGFloat(scale), trailing: CGFloat(width - 1 - last) / CGFloat(scale))
     }
 
-    // ALB-19
+    /// Whether anything is drawn in rows `rows` and columns `columns` (both in points) of `image`.
+    private func isDrawn(in image: UIImage, rows: Range<Int>, columns: Range<Int>) throws -> Bool {
+        let cgImage = try #require(image.cgImage)
+        let data = try #require(cgImage.dataProvider?.data)
+        let bytes = try #require(CFDataGetBytePtr(data))
+        let bytesPerPixel = cgImage.bitsPerPixel / 8
+        let scale = Int(image.scale)
+
+        func pixel(_ x: Int, _ y: Int) -> [Int] { (0..<3).map { Int(bytes[y * cgImage.bytesPerRow + x * bytesPerPixel + $0]) } }
+
+        for y in (rows.lowerBound * scale)..<(rows.upperBound * scale) {
+            let background = pixel(0, y)
+
+            for x in (columns.lowerBound * scale)..<(columns.upperBound * scale)
+            where zip(pixel(x, y), background).map({ abs($0 - $1) }).reduce(0, +) > 30 {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    // ALB-19, ALB-20: two of the twelve tracks are starred, and still end on the margin.
     @Test func theTracksSitOnTheSameMarginsAsTheButtons() async throws {
         let image = try await screen()
         let directory = ProcessInfo.processInfo.environment["SCRATCH_SNAPSHOTS"]
@@ -75,6 +99,9 @@ struct AlbumLayoutTests {
         let buttons = try edges(of: image, rows: 600..<620)
         let tracks = try edges(of: image, rows: 650..<1260)
 
+        // Tracks 2 and 11 are starred: the gap left of the duration (326 to 346 pt) holds a heart in their rows only.
+        #expect(try isDrawn(in: image, rows: 705..<720, columns: 326..<346))
+        #expect(try isDrawn(in: image, rows: 653..<668, columns: 326..<346) == false)
         #expect(abs(tracks.leading - buttons.leading) < 1, "tracks start \(tracks.leading) pt from the left, the buttons \(buttons.leading)")
         #expect(abs(tracks.trailing - buttons.trailing) < 1, "tracks end \(tracks.trailing) pt from the right, the buttons \(buttons.trailing)")
     }

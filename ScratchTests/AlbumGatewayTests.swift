@@ -87,7 +87,7 @@ struct AlbumGatewayTests {
           "song":[
             {"id":"s1","title":"Scars","artist":"Mitsuda","displayArtist":"Mitsuda & Guest","album":"Chrono Cross","duration":212,"coverArt":"al-al1","track":1,"discNumber":1},
             {"id":"s2","title":"No disc"},
-            {"id":"s3","title":"Brink","track":5,"discNumber":2,"coverArt":""}
+            {"id":"s3","title":"Brink","track":5,"discNumber":2,"coverArt":"","starred":"2026-02-06T11:05:42-05:00"}
           ]}}}
         """#
         let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })
@@ -99,6 +99,7 @@ struct AlbumGatewayTests {
         #expect(detail.tracks.map(\.id) == ["s1", "s2", "s3"])
         #expect(detail.tracks[0] == AlbumTrack(track: Track(id: "s1", title: "Scars", artist: "Mitsuda & Guest", album: "Chrono Cross", duration: 212, coverArtID: "al-al1"), disc: 1, number: 1))
         #expect(detail.tracks[1].disc == 1 && detail.tracks[1].number == nil)
+        #expect(detail.tracks.map(\.track.isStarred) == [false, false, true])
         #expect(detail.tracks[2].disc == 2 && detail.tracks[2].number == 5 && detail.tracks[2].track.coverArtID == nil)
         let url = try #require(StubURLProtocol.requests.first?.url)
 

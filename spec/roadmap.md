@@ -2,13 +2,13 @@
 
 The order of approved work: `planned` requirements, and `partial` ones with a known bug from `/bug`. Change it here when priorities change. `/implement` works through this file: the verification backlog first, then the requirements in the order listed.
 
-1. `LIB-7`: a heart left of the duration for starred tracks on the Songs tab.
-2. `ALB-20`: the same heart on the album screen, without moving the duration off its margin.
+None.
 
 ## Verification backlog
 
 Built requirements that are not fully verified. Clear these before starting new planned work.
 
+- `LIB-7`: in the simulator, on a server with a starred song, open Songs and check the heart shows left of that song's duration, in the accent colour, and not on unstarred songs.
 - `ALB-1`, `PLAY-2`, `LIB-6`: in the simulator, launch signed in and check Albums is first and tapping Songs loads the track list; start a track and check the now-playing bar shows above the tab bar on both tabs, that tapping it opens the player and that its buttons are reachable with VoiceOver; sign out and check the bar goes; open settings from both tabs.
 - `ALB-8`, `ALB-12`, `ALB-13`, `ALB-14`: in the simulator, tap an album in the grid, check its screen is pushed once even on a double tap, that the back swipe returns to the grid at the same place, that tapping a track plays it and the next tracks follow, that Play starts the first track, and that Shuffle starts a random one and plays the album through once in that order.
 - `LOOK-5`, `LOOK-6`: in the simulator, open settings, pick another flavour and accent, and check the app (and the open sheet) change at once, that Latte turns the app light and the others dark whatever the simulator's setting, and that the choices are still there after a relaunch.

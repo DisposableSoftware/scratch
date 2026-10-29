@@ -116,19 +116,28 @@ private struct TrackRow: View {
     }
 }
 
-/// A cover, or a placeholder until it arrives or when there is none.
+/// A cover, or the fallback until it arrives or when there is none: a tile in the accent colour
+/// with a music note in its label colour, about half the tile wide (LOOK-10).
 struct CoverArt: View {
     let image: UIImage?
+
+    @Environment(\.theme) private var theme
 
     var body: some View {
         Group {
             if let image {
                 Image(uiImage: image).resizable().scaledToFill()
             } else {
-                Image(systemName: "music.note")
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(.quaternary)
+                GeometryReader { proxy in
+                    ZStack {
+                        theme.accent
+
+                        // The note's glyph is drawn narrower than its font size.
+                        Image(systemName: "music.note")
+                            .font(.system(size: min(proxy.size.width, proxy.size.height) * 0.85))
+                            .foregroundStyle(theme.onAccent)
+                    }
+                }
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 6))

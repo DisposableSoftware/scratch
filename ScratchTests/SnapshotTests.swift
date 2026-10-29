@@ -76,6 +76,21 @@ struct SnapshotTests {
             try data.write(to: URL(fileURLWithPath: try #require(Snapshots.directory)).appending(path: name))
         }
     }
+
+    /// LOOK-10: the fallback cover at the sizes it shows at, in each flavour with an accent.
+    @Test(arguments: [(Flavour.mocha, Accent.mauve), (.latte, .blue), (.frappe, .peach), (.macchiato, .teal)])
+    func fallbackCover(flavour: Flavour, accent: Accent) throws {
+        let theme = Theme(flavour: flavour, accent: accent)
+        let row = HStack(alignment: .top, spacing: 16) {
+            CoverArt(image: nil).frame(width: 48, height: 48)
+            CoverArt(image: nil).frame(width: 120, height: 120)
+            CoverArt(image: nil).frame(width: 240, height: 240)
+        }
+        .padding(16)
+        .environment(\.theme, theme)
+
+        try write(row, size: CGSize(width: 480, height: 280), name: "look-\(flavour.rawValue)-fallback.png")
+    }
 }
 
 nonisolated enum Snapshots {

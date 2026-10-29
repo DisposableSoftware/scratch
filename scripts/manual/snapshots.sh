@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Renders the now-playing bar and the player, playing and failed, to PNGs for a look by eye
 # (PLAY-2, PLAY-3, PLAY-8), and the settings sheet and the failed player in each flavour with an
-# accent (LOOK-2 to LOOK-5). ImageRenderer draws some controls as placeholders. The bar draws no
+# accent (LOOK-2 to LOOK-5), and the fallback cover at three sizes in each (LOOK-10). ImageRenderer draws some controls as placeholders. The bar draws no
 # background of its own, since in the app the tab view's bottom accessory supplies it, so its
 # render shows content only.
 # Usage: scripts/manual/snapshots.sh [OUT_DIR]   (defaults to build/snapshots)

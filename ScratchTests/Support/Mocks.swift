@@ -204,9 +204,22 @@ final class NetworkGatewayStub: NetworkGateway {
 
 final class SettingsGatewayMock: SettingsGateway {
     private(set) var saved: TranscodingSettings?
+    var savedAlbumsPerRow: Int?
 
     func transcoding() -> TranscodingSettings? { saved }
     func saveTranscoding(_ settings: TranscodingSettings) { saved = settings }
+    func albumsPerRow() -> Int? { savedAlbumsPerRow }
+    func saveAlbumsPerRow(_ count: Int) { savedAlbumsPerRow = count }
+}
+
+final class DisplayUseCaseMock: DisplayUseCase {
+    let state = DisplayState()
+    private(set) var calls: [Int] = []
+
+    func setAlbumsPerRow(_ count: Int) {
+        calls.append(count)
+        state.albumsPerRow = count
+    }
 }
 
 final class SessionUseCaseMock: SessionUseCase {

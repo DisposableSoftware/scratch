@@ -53,9 +53,10 @@ struct TranscodingSettingsTests {
     }
 }
 
-private struct SettingsUseCases: HasTranscodingUseCase, HasSessionUseCase, HasAppRoutingUseCase, HasCoordinator {
+private struct SettingsUseCases: HasTranscodingUseCase, HasDisplayUseCase, HasSessionUseCase, HasAppRoutingUseCase, HasCoordinator {
     let transcodingUseCase: TranscodingUseCase
     let coordinator: Coordinator
+    var displayUseCase: DisplayUseCase = DisplayUseCaseMock()
     var sessionUseCase: SessionUseCase = SessionUseCaseMock()
     var appRouting: AppRoutingUseCase = AppRoutingUseCaseSpy()
 }
@@ -103,5 +104,17 @@ struct SettingsViewModelTests {
 
         #expect(session.signOuts == 1 && viewModel.account == nil)
         #expect(routing.steps == [.library])
+    }
+
+    // ALB-17
+
+    @Test func theAlbumsPerRowChoiceReachesTheUseCaseAndComesBack() async {
+        let display = DisplayUseCaseMock()
+        let viewModel = SettingsViewModel(useCases: SettingsUseCases(transcodingUseCase: TranscodingUseCaseMock(), coordinator: CoordinatorSpy(), displayUseCase: display))
+        #expect(viewModel.albumsPerRow == 2)
+
+        _ = await viewModel.handleAction(.albumsPerRowChanged(4))
+
+        #expect(display.calls == [4] && viewModel.albumsPerRow == 4)
     }
 }

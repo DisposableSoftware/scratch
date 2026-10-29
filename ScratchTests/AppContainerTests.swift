@@ -7,4 +7,8 @@ struct AppContainerTests {
         let container = TestContainer.build(coordinator: coordinator)
         #expect(container.coordinator === coordinator)
     }
+
+    @Test func theGridStartsAtTwoPerRow() {
+        #expect(TestContainer.build().displayUseCase.state.albumsPerRow == AlbumsPerRow.default)
+    }
 }

@@ -4,11 +4,12 @@ import UIKit
 @testable import Scratch
 
 private struct LibraryUseCases: HasLibraryUseCase, HasCoverArtUseCase, HasPlaybackUseCase, HasTranscodingUseCase,
-    HasSessionUseCase, HasAppRoutingUseCase, HasCoordinator {
+    HasDisplayUseCase, HasSessionUseCase, HasAppRoutingUseCase, HasCoordinator {
     let libraryUseCase: LibraryUseCase
     let coverArtUseCase: CoverArtUseCase
     let playbackUseCase: PlaybackUseCase
     var transcodingUseCase: TranscodingUseCase = TranscodingUseCaseMock()
+    var displayUseCase: DisplayUseCase = DisplayUseCaseMock()
     var sessionUseCase: SessionUseCase = SessionUseCaseMock()
     var appRouting: AppRoutingUseCase = AppRoutingUseCaseSpy()
     var coordinator: Coordinator = CoordinatorSpy()

@@ -3,10 +3,11 @@ import Testing
 import UIKit
 @testable import Scratch
 
-private struct AlbumsUseCases: HasAlbumUseCase, HasCoverArtUseCase, HasTranscodingUseCase, HasSessionUseCase,
-    HasAppRoutingUseCase, HasCoordinator {
+private struct AlbumsUseCases: HasAlbumUseCase, HasCoverArtUseCase, HasTranscodingUseCase, HasDisplayUseCase,
+    HasSessionUseCase, HasAppRoutingUseCase, HasCoordinator {
     let albumUseCase: AlbumUseCase
     let coverArtUseCase: CoverArtUseCase
+    var displayUseCase: DisplayUseCase = DisplayUseCaseMock()
     var transcodingUseCase: TranscodingUseCase = TranscodingUseCaseMock()
     var sessionUseCase: SessionUseCase = SessionUseCaseMock()
     var appRouting: AppRoutingUseCase = AppRoutingUseCaseSpy()
@@ -172,6 +173,54 @@ struct AlbumsViewModelTests {
         _ = await first.value
 
         #expect(gateway.requests.count == 1 && viewModel.phase == .loaded)
+    }
+
+    // ALB-17, ALB-18
+
+    @Test func theGridHasAsManyColumnsAsTheSettingSays() async {
+        let display = DisplayUseCaseMock()
+        let albums = DefaultAlbumUseCase(albumGateway: gateway, sessionState: SessionState(server: .sample), albumsState: AlbumsState())
+        let viewModel = AlbumsViewModel(useCases: AlbumsUseCases(albumUseCase: albums, coverArtUseCase: art, displayUseCase: display, coordinator: coordinator))
+        #expect(viewModel.columns == 2)
+
+        display.setAlbumsPerRow(5)
+        #expect(viewModel.columns == 5)
+        display.setAlbumsPerRow(1)
+        #expect(viewModel.columns == 1)
+    }
+
+    @Test func aChangeReLaysTheGridWithoutReloadingIt() async {
+        gateway.all = Album.numbered(150)
+        gateway.starred = [gateway.all[0]]
+        let display = DisplayUseCaseMock()
+        let albums = DefaultAlbumUseCase(albumGateway: gateway, sessionState: SessionState(server: .sample), albumsState: AlbumsState())
+        let viewModel = AlbumsViewModel(useCases: AlbumsUseCases(albumUseCase: albums, coverArtUseCase: art, displayUseCase: display, coordinator: coordinator))
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        _ = await viewModel.handleAction(.albumAppeared("a99"))
+        let requests = gateway.requests.count
+
+        display.setAlbumsPerRow(4)
+
+        #expect(viewModel.columns == 4 && viewModel.phase == .loaded)
+        #expect(viewModel.albums.count == 149 && viewModel.favourites.count == 1)
+        #expect(gateway.requests.count == requests && gateway.starredRequests == 1)
+    }
+
+    @Test func theSettingsSheetAndTheGridShareTheSettingAndItIsSaved() async {
+        let settings = SettingsGatewayMock()
+        let display = DefaultDisplayUseCase(settingsGateway: settings, displayState: DisplayState())
+        let albums = DefaultAlbumUseCase(albumGateway: gateway, sessionState: SessionState(server: .sample), albumsState: AlbumsState())
+        let useCases = AlbumsUseCases(albumUseCase: albums, coverArtUseCase: art, displayUseCase: display, coordinator: coordinator)
+        let grid = AlbumsViewModel(useCases: useCases)
+        let sheet = SettingsViewModel(useCases: useCases)
+        #expect(grid.columns == 2 && sheet.albumsPerRow == 2)
+
+        _ = await sheet.handleAction(.albumsPerRowChanged(5))
+
+        #expect(grid.columns == 5 && sheet.albumsPerRow == 5 && settings.savedAlbumsPerRow == 5)
+        // A restart: a new state and use case over the same saved settings.
+        let restarted = DefaultDisplayUseCase(settingsGateway: settings, displayState: DisplayState())
+        #expect(restarted.state.albumsPerRow == 5)
     }
 
     @Test func anEmptyServerSaysSo() async {

@@ -3,6 +3,7 @@
 #   SRV-3: a wrong password, a web page and a closed port each fail with their own error, and the
 #          right credentials connect and save the server.
 #   SRV-5: launching the app afterwards opens the library, not setup (screenshot).
+#   ALB-17, ALB-18: the Albums grid at 5, 1 and 2 per row, from the saved setting.
 #   LIB-1, LIB-5: that library lists the server's tracks with title, artist, album, duration and art.
 # Credentials come from the environment and are never written anywhere:
 #   SCRATCH_SERVER=… SCRATCH_USER=… SCRATCH_PASSWORD=… scripts/manual/live-connect.sh [OUT_DIR]
@@ -33,6 +34,16 @@ xcrun simctl launch "$device" lol.weston.scratch >/dev/null
 sleep 8
 xcrun simctl io "$device" screenshot "$out/srv5-relaunch.png" >/dev/null 2>&1
 echo "screenshot: $out/srv5-relaunch.png (expect the library, not setup)"
+
+# ALB-17, ALB-18: the grid at 5, 1 and 2 per row, read from the setting at launch. A `-key value`
+# launch argument stands in for the saved setting for that launch.
+for per_row in 5 1 2; do
+  xcrun simctl terminate "$device" lol.weston.scratch 2>/dev/null || true
+  xcrun simctl launch "$device" lol.weston.scratch -settings.albumsPerRow "$per_row" >/dev/null
+  sleep 6
+  xcrun simctl io "$device" screenshot "$out/alb17-$per_row-per-row.png" >/dev/null 2>&1
+done
+echo "screenshots: $out/alb17-{5,1,2}-per-row.png (expect that many covers per row)"
 
 # Leave no signed-in app behind: unit tests run inside it, and must never reach a real server.
 xcrun simctl terminate "$device" lol.weston.scratch 2>/dev/null || true

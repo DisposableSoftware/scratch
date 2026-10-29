@@ -13,8 +13,8 @@ enum AlbumsAction: Equatable {
 
 /// The Albums tab: the server's albums in a grid, a page at a time (ALB-2, ALB-4, ALB-6, ALB-7).
 final class AlbumsViewModel: RoutingViewModel {
-    typealias UseCases = HasAlbumUseCase & HasCoverArtUseCase & HasTranscodingUseCase & HasSessionUseCase
-        & HasAppRoutingUseCase & HasCoordinator
+    typealias UseCases = HasAlbumUseCase & HasCoverArtUseCase & HasTranscodingUseCase & HasDisplayUseCase
+        & HasSessionUseCase & HasAppRoutingUseCase & HasCoordinator
 
     enum Route: NavigationRoute {
         case settings
@@ -44,7 +44,8 @@ final class AlbumsViewModel: RoutingViewModel {
     @Published private(set) var favourites: [Album] = []
     /// The other albums.
     @Published private(set) var albums: [Album] = []
-    @Published private(set) var columns = 2
+    /// The columns in the grid: the albums per row setting, which the grid follows at once.
+    @Published private(set) var columns = AlbumsPerRow.default
     @Published private(set) var isLoadingMore = false
     @Published private(set) var loadMoreError: String?
     /// Covers by cover-art ID, at the size the cells show them.
@@ -59,6 +60,7 @@ final class AlbumsViewModel: RoutingViewModel {
 
     init(useCases: UseCases) {
         self.useCases = useCases
+        useCases.displayUseCase.state.$albumsPerRow.assign(to: &$columns)
     }
 
     func handleAction(_ action: AlbumsAction) async -> SideEffect {

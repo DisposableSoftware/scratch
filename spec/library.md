@@ -7,7 +7,7 @@
 | `LIB-3` | Pull to refresh reloads the list from the first page. | done | `LibraryViewModelTests`, `LibraryUseCaseTests`; the pull gesture itself is unchecked (no UI automation) |
 | `LIB-4` | While the first page loads, the screen shows a progress indicator. A load error shows its message with **Retry**, and an empty library says so. | done | `LibraryViewModelTests` |
 | `LIB-5` | Cover art comes from `getCoverArt` at the size it is shown (scaled for the screen), and is cached in memory for the session. | done | `CoverArtGatewayTests`, `CoverArtUseCaseTests`, `LibraryViewModelTests`; `manual:` live screenshot |
-| `LIB-6` | A settings button on the top screen of each tab opens settings (albums per row, transcoding, server, sign out) as a sheet. | partial: not tapped in the simulator yet; see the verification backlog | `LibraryViewModelTests`, `AlbumsViewModelTests`, `SettingsViewModelTests`; opening settings from both tabs is in the verification backlog |
+| `LIB-6` | A settings button on the top screen of each tab opens settings as a sheet, with the server and sign out, the albums per row, and the transcoding. | partial: not tapped in the simulator yet; see the verification backlog | `LibraryViewModelTests`, `AlbumsViewModelTests`, `SettingsViewModelTests`; opening settings from both tabs is in the verification backlog |
 
 ## Implementation notes
 

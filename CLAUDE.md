@@ -94,7 +94,8 @@ Scratch/UI/               ViewModel, Coordinator + NavigationDestination, Naviga
 Scratch/UI/               AppRoutingUseCase + ViewFactory, AppViewFactory, SetupView(Model), LibraryView     ARCH-11, SRV-1, SRV-3
 Scratch/UI/               MainView (Albums + Songs tabs, now-playing bar as bottom accessory)   ALB-1, PLAY-2, LIB-6
 Scratch/UI/               AlbumsView(Model): the grid, favourites, paging, states, covers   ALB-2…7
-Scratch/Models/           Album                                                          ALB-2
+Scratch/Models/           Album, AlbumsPerRow (1…5, default 2)                           ALB-2, ALB-17
+Scratch/State/            DisplayState (albums per row); DisplayUseCase saves it        ALB-17, ALB-18
 Scratch/State/            AlbumsState (albums shown, next offset)                       ALB-4
 Scratch/Gateways/         RemoteAlbumGateway (getAlbumList2 by name, getStarred2)        ALB-2, ALB-3, ALB-4
 Scratch/UseCases/         AlbumUseCase (favourites + paging, reload and sign-out races)  ALB-3, ALB-4

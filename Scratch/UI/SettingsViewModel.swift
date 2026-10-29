@@ -5,6 +5,7 @@ import SwiftUI
 enum SettingsAction: Equatable {
     case formatChanged(NetworkKind, StreamQuality.Format)
     case maxBitRateChanged(NetworkKind, Int?)
+    case albumsPerRowChanged(Int)
     case signOut
     case done
 }
@@ -12,7 +13,7 @@ enum SettingsAction: Equatable {
 /// The settings sheet (LIB-6): transcoding per network (TRANS-1, TRANS-2, TRANS-3), and the
 /// server, with sign out (SRV-7).
 final class SettingsViewModel: ViewModel {
-    typealias UseCases = HasTranscodingUseCase & HasSessionUseCase & HasAppRoutingUseCase & HasCoordinator
+    typealias UseCases = HasTranscodingUseCase & HasDisplayUseCase & HasSessionUseCase & HasAppRoutingUseCase & HasCoordinator
 
     let useCases: UseCases
 
@@ -23,11 +24,14 @@ final class SettingsViewModel: ViewModel {
 
     @Published private(set) var transcoding: TranscodingSettings
     @Published private(set) var account: ServerAccount?
+    @Published private(set) var albumsPerRow: Int
 
     init(useCases: UseCases) {
         self.useCases = useCases
         transcoding = useCases.transcodingUseCase.settings
         account = useCases.sessionUseCase.account
+        albumsPerRow = useCases.displayUseCase.state.albumsPerRow
+        useCases.displayUseCase.state.$albumsPerRow.assign(to: &$albumsPerRow)
     }
 
     func handleAction(_ action: SettingsAction) async -> SideEffect {
@@ -36,6 +40,8 @@ final class SettingsViewModel: ViewModel {
             update(network) { $0.format = format }
         case .maxBitRateChanged(let network, let maxBitRate):
             update(network) { $0.maxBitRate = maxBitRate }
+        case .albumsPerRowChanged(let count):
+            useCases.displayUseCase.setAlbumsPerRow(count)
         case .signOut:
             // The Router takes a signed-out session to setup, which replaces the sheet too.
             useCases.sessionUseCase.signOut()

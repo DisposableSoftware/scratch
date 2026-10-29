@@ -37,6 +37,10 @@ protocol HasAlbumUseCase {
     var albumUseCase: AlbumUseCase { get }
 }
 
+protocol HasDisplayUseCase {
+    var displayUseCase: DisplayUseCase { get }
+}
+
 typealias AllUseCases = HasCoordinator
     & HasAppRoutingUseCase
     & HasConnectUseCase
@@ -46,3 +50,4 @@ typealias AllUseCases = HasCoordinator
     & HasPlaybackUseCase
     & HasTranscodingUseCase
     & HasAlbumUseCase
+    & HasDisplayUseCase

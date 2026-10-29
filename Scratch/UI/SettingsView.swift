@@ -13,6 +13,14 @@ struct SettingsView: View {
                         Button("Sign Out", role: .destructive) { viewModel.submitAction(.signOut) }
                     }
                 }
+                Section("Albums") {
+                    Picker("Albums per row", selection: viewModel.binding(\.albumsPerRow, to: { .albumsPerRowChanged($0) })) {
+                        ForEach(AlbumsPerRow.range, id: \.self) { count in
+                            Text("\(count)").tag(count)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
                 qualitySection(.wifi, title: "On Wi-Fi", quality: viewModel.transcoding.wifi)
                 qualitySection(.cellular, title: "On cellular", quality: viewModel.transcoding.cellular)
                 Section {

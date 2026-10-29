@@ -12,6 +12,7 @@ struct AppContainer: AllUseCases {
     let playbackUseCase: PlaybackUseCase
     let transcodingUseCase: TranscodingUseCase
     let albumUseCase: AlbumUseCase
+    let displayUseCase: DisplayUseCase
 }
 
 extension AppContainer {
@@ -25,6 +26,7 @@ extension AppContainer {
         let sessionState = SessionState()
         let libraryState = LibraryState()
         let albumsState = AlbumsState()
+        let displayState = DisplayState()
         let playbackState = PlaybackState()
 
         // 2. Gateways
@@ -54,6 +56,7 @@ extension AppContainer {
             sessionState: sessionState,
             albumsState: albumsState
         )
+        let displayUseCase = DefaultDisplayUseCase(settingsGateway: settingsGateway, displayState: displayState)
         let coverArtUseCase = DefaultCoverArtUseCase(coverArtGateway: coverArtGateway, sessionState: sessionState)
         let transcodingUseCase = DefaultTranscodingUseCase(settingsGateway: settingsGateway, networkGateway: networkGateway)
         let playbackUseCase = DefaultPlaybackUseCase(
@@ -89,7 +92,8 @@ extension AppContainer {
             coverArtUseCase: coverArtUseCase,
             playbackUseCase: playbackUseCase,
             transcodingUseCase: transcodingUseCase,
-            albumUseCase: albumUseCase
+            albumUseCase: albumUseCase,
+            displayUseCase: displayUseCase
         )
         viewFactory.useCases = container
         return container

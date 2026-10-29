@@ -15,7 +15,7 @@ enum LibraryAction: Equatable {
 /// The library screen: the server's tracks, loaded a page at a time (LIB-1, LIB-2, LIB-4).
 final class LibraryViewModel: RoutingViewModel {
     typealias UseCases = HasLibraryUseCase & HasCoverArtUseCase & HasPlaybackUseCase & HasTranscodingUseCase
-        & HasSessionUseCase & HasAppRoutingUseCase & HasCoordinator
+        & HasDisplayUseCase & HasSessionUseCase & HasAppRoutingUseCase & HasCoordinator
 
     enum Route: NavigationRoute {
         case settings

@@ -6,7 +6,7 @@ The Albums tab, and the screen for one album. Tracks and their art are the same 
 
 | ID | Requirement | Status | Verified by |
 |----|-------------|--------|-------------|
-| `ALB-1` | Once signed in, the app's main screen is a tab bar with **Albums** and **Songs**, and it opens on Albums. Songs is the track list of `LIB-1`. | planned | `manual:` launch signed in and check both tabs, and that Albums is first |
+| `ALB-1` | Once signed in, the app's main screen is a tab bar with **Albums** and **Songs**, and it opens on Albums. Songs is the track list of `LIB-1`. | partial: not tapped in the simulator yet; see the verification backlog | `manual:` live screenshot of a signed-in launch: Albums first with both tabs; tapping Songs is in the verification backlog |
 
 ## The Albums grid
 
@@ -43,7 +43,7 @@ The Albums tab, and the screen for one album. Tracks and their art are the same 
 - The favourites and the first page must both load: if either fails, the tab shows the error with Retry.
 - Disc titles come from `getAlbum`'s `discTitles`, matched by disc number. A track without a `discNumber` is on disc 1.
 - A pushed screen is a `NavigationDestination` (a `.push` case) that goes through the Coordinator, like the sheets (`ARCH-12`, `ARCH-13`). Views have no `NavigationLink`, so the stack's path is owned by the host in `App/`, and the album screen is built by a ViewModel-local Route from the Albums ViewModel.
-- Tab selection is the container's own state, not a route: nothing navigates between tabs.
-- There is one now-playing bar, above the tab bar, so it also shows on the album screen. Its ViewModel is shared with the player.
+- Tab selection is the container's own state, not a route: nothing navigates between tabs. A tab loads when it is first shown, so Songs no longer loads at launch.
+- There is one now-playing bar, in the tab view's bottom accessory, so it sits above the tab bar and also shows on the album screen. It draws no background of its own: the accessory supplies it. Its ViewModel is shared with the player.
 - The grid has as many columns as the setting says, with equal gaps, and the covers fill their column's width. Each cell is a square cover with the name and artist below it, each on one line and truncated, so at 4 or 5 per row the text is small. The covers are fetched at the size the column gives them.
 - The setting lives with the other settings (`UserDefaultsSettingsGateway`), and the Albums ViewModel reads it through the same use case. A change while the grid is showing reaches it at once, so the sheet's own result is visible behind it.

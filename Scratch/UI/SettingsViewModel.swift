@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import SwiftUI
 
 enum SettingsAction: Equatable {
     case formatChanged(NetworkKind, StreamQuality.Format)
@@ -14,6 +15,11 @@ final class SettingsViewModel: ViewModel {
     typealias UseCases = HasTranscodingUseCase & HasSessionUseCase & HasAppRoutingUseCase & HasCoordinator
 
     let useCases: UseCases
+
+    /// The settings sheet, as a destination, for the Route of every screen with a settings button.
+    static func destination(useCases: UseCases) -> NavigationDestination {
+        .sheet(AnyView(SettingsView(viewModel: SettingsViewModel(useCases: useCases))))
+    }
 
     @Published private(set) var transcoding: TranscodingSettings
     @Published private(set) var account: ServerAccount?

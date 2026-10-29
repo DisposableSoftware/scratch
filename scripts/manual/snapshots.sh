@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Renders the now-playing bar and the player, playing and failed, to PNGs for a look by eye
-# (PLAY-2, PLAY-3, PLAY-8). ImageRenderer draws some controls as placeholders.
+# (PLAY-2, PLAY-3, PLAY-8). ImageRenderer draws some controls as placeholders. The bar draws no
+# background of its own, since in the app the tab view's bottom accessory supplies it, so its
+# render shows content only.
 # Usage: scripts/manual/snapshots.sh [OUT_DIR]   (defaults to build/snapshots)
 set -euo pipefail
 cd "$(dirname "$0")/../.."

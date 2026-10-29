@@ -21,7 +21,7 @@ final class LibraryViewModel: RoutingViewModel {
         case settings
 
         func destination(context: LibraryViewModel) -> NavigationDestination {
-            .sheet(AnyView(SettingsView(viewModel: SettingsViewModel(useCases: context.useCases))))
+            SettingsViewModel.destination(useCases: context.useCases)
         }
     }
 

@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// The bar at the bottom of the library while a track is loaded (PLAY-2). Tapping it opens the
-/// player.
+/// The bar above the tab bar while a track is loaded (PLAY-2). It sits in the tab view's bottom
+/// accessory, which draws its own background. Tapping it opens the player.
 struct NowPlayingBar: View {
     @ObservedObject var viewModel: PlayerViewModel
     @Environment(\.displayScale) private var displayScale
@@ -42,8 +42,6 @@ struct NowPlayingBar: View {
                 .accessibilityLabel(playPauseLabel(viewModel))
             }
             .padding(.horizontal)
-            .padding(.vertical, 8)
-            .background(.bar)
         }
     }
 

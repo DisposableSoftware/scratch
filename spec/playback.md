@@ -3,7 +3,7 @@
 | ID | Requirement | Status | Verified by |
 |----|-------------|--------|-------------|
 | `PLAY-1` | Tapping a track plays it, and queues the tracks after it in the loaded list. | done | `PlaybackUseCaseTests`, `LibraryViewModelTests`; `manual:` live test streams a real track |
-| `PLAY-2` | While a track is loaded, a now-playing bar shows its art, title and artist, with play/pause, at the bottom of every tab and of the album screen, above the tab bar. | planned | `PlayerViewModelTests`; `manual:` `scripts/manual/snapshots.sh` renders the bar playing and failed; in the simulator, check it shows above the tab bar on Albums, Songs and an album screen, and that tapping it opens the player |
+| `PLAY-2` | While a track is loaded, a now-playing bar shows its art, title and artist, with play/pause, at the bottom of every tab and of the album screen, above the tab bar. | partial: not tapped in the simulator yet; see the verification backlog | `PlayerViewModelTests`; `manual:` `scripts/manual/snapshots.sh` renders the bar's content playing and failed; its place above the tab bar is in the verification backlog |
 | `PLAY-3` | Tapping the bar opens the player: large art, title, artist, album, elapsed and remaining time, a scrubber, previous, play/pause, next, and the current stream quality (`TRANS-6`). | done | `PlayerViewModelTests`; `manual:` `scripts/manual/snapshots.sh` renders the player |
 | `PLAY-4` | When a track ends, the next queued track plays. After the last one, playback stops at the start of that last track. | done | `PlaybackUseCaseTests` |
 | `PLAY-5` | **Previous** restarts the current track when more than 3 seconds in, and otherwise plays the previous queued track. At the first track it restarts it. | done | `PlaybackUseCaseTests` |

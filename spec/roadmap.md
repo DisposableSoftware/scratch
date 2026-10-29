@@ -2,7 +2,19 @@
 
 The order of approved work: `planned` requirements, and `partial` ones with a known bug from `/bug`. Change it here when priorities change. `/implement` works through this file: the verification backlog first, then the requirements in the order listed.
 
-None.
+1. `ALB-1`: the tab bar gains Me, while the model is available.
+2. `MIX-5`: the shortlists by rule.
+3. `MIX-6`: asking the model.
+4. `MIX-7`: only shortlisted tracks.
+5. `MIX-8`: the rule's own mix when the model fails.
+6. `MIX-9`: mixes kept until made again.
+7. `MIX-1`: the Me tab, shown while the model is available.
+8. `MIX-2`: the cards.
+9. `MIX-3`: loading, empty and error states.
+10. `MIX-4`: pull to refresh.
+11. `MIX-10`: the mix screen.
+12. `MIX-11`: tap, Play and Shuffle.
+13. `MIX-12`: unauthorised returns to setup.
 
 ## Verification backlog
 

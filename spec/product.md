@@ -1,6 +1,6 @@
 # Product
 
-Scratch is a small iOS player for a [Navidrome](https://www.navidrome.org) server. It connects to the user's own server, shows its albums, playlists and tracks, and streams them, with control over how the server transcodes them. It is for one person and one server, and stays small.
+Scratch is a small iOS player for a [Navidrome](https://www.navidrome.org) server. It connects to the user's own server, shows its albums, playlists and tracks, makes mixes of them on the device, and streams them, with control over how the server transcodes them. It is for one person and one server, and stays small.
 
 ## Requirements
 
@@ -22,6 +22,6 @@ Scratch is a small iOS player for a [Navidrome](https://www.navidrome.org) serve
 
 ## Stack constraints
 
-- Swift 6 language mode with strict concurrency, SwiftUI, AVFoundation, MediaPlayer. Toolchain: Xcode 27.1, Swift 6.4.
+- Swift 6 language mode with strict concurrency, SwiftUI, AVFoundation, MediaPlayer, and FoundationModels (the on-device language model, for `MIX-6`). Toolchain: Xcode 27.1, Swift 6.4.
 - One app target and one unit-test target in a checked-in `Scratch.xcodeproj`. No Swift packages, local or remote, and no third-party dependencies.
 - Ask before adding any dependency or target.

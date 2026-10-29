@@ -6,7 +6,7 @@ The Albums tab, and the screen for one album. Tracks and their art are the same 
 
 | ID | Requirement | Status | Verified by |
 |----|-------------|--------|-------------|
-| `ALB-1` | Once signed in, the app's main screen is a tab bar with **Albums**, **Playlists** and **Songs**, in that order, and it opens on Albums. Songs is the track list of `LIB-1`, and Playlists is `PLST-1`. | partial: not tapped in the simulator yet; see the verification backlog | `PushStackHostTests` (the main screen is built with both tabs' stacks); `manual:` live screenshot of a signed-in launch: Albums first; tapping Songs and Playlists is in the verification backlog |
+| `ALB-1` | Once signed in, the app's main screen is a tab bar with **Albums**, **Playlists** and **Songs**, in that order, and a fourth, **Me** (`MIX-1`), while the on-device model is available, and it opens on Albums. Songs is the track list of `LIB-1`, and Playlists is `PLST-1`. | planned | `manual:` live screenshot of a signed-in launch: Albums first with its tabs; tapping Songs and Playlists is in the verification backlog |
 
 ## The Albums grid
 

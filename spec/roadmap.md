@@ -2,7 +2,8 @@
 
 The order of approved work: `planned` requirements, and `partial` ones with a known bug from `/bug`. Change it here when priorities change. `/implement` works through this file: the verification backlog first, then the requirements in the order listed.
 
-None.
+1. `LOOK-1`, `LOOK-2`, `LOOK-3`, `LOOK-4`, `LOOK-5`, `LOOK-6`, `LOOK-7`: the Catppuccin accent and error colours, the flavour and accent settings, and the credit.
+2. `LOOK-8`: the new app icon.
 
 ## Verification backlog
 

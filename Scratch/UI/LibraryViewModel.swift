@@ -6,6 +6,7 @@ enum LibraryAction: Equatable {
     case rowAppeared(Track.ID)
     case artworkNeeded(coverArtID: String, pixelSize: Int)
     case retry
+    case refresh
 }
 
 /// The library screen: the server's tracks, loaded a page at a time (LIB-1, LIB-2, LIB-4).
@@ -55,15 +56,19 @@ final class LibraryViewModel: ViewModel {
             await loadNextPage()
         case .artworkNeeded(let coverArtID, let pixelSize):
             await loadArtwork(coverArtID, pixelSize: pixelSize)
+        case .refresh:
+            await loadFirstPage(keepingListOnScreen: true)
         }
         return .none
     }
 
-    private func loadFirstPage() async {
+    /// A pull to refresh keeps the list on screen while it reloads (LIB-3); the system shows its
+    /// own spinner at the top.
+    private func loadFirstPage(keepingListOnScreen: Bool = false) async {
         guard !loadingFirstPage else { return }
         loadingFirstPage = true
         defer { loadingFirstPage = false }
-        phase = .loading
+        if !(keepingListOnScreen && (phase == .loaded || phase == .empty)) { phase = .loading }
         loadMoreError = nil
         do {
             try await useCases.libraryUseCase.loadFirstPage()

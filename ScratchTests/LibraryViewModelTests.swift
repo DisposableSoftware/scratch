@@ -77,8 +77,8 @@ struct LibraryViewModelTests {
         #expect(viewModel.tracks.count == 150 && viewModel.loadMoreError == nil)
     }
 
-    @Test func artworkIsFetchedOncePerCoverAndSize() async throws {
-        art.data = try #require(UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData())
+    @Test func artworkIsFetchedOncePerCoverAndSize() async {
+        art.data = UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData()
         let viewModel = viewModel
 
         _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c1", pixelSize: 144))
@@ -89,20 +89,20 @@ struct LibraryViewModelTests {
         #expect(viewModel.artwork["c1"] != nil)
     }
 
-    @Test func aFailedCoverIsAskedForAgain() async throws {
+    @Test func aFailedCoverIsAskedForAgain() async {
         let viewModel = viewModel
         _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c1", pixelSize: 144))
         #expect(viewModel.artwork["c1"] == nil)
 
-        art.data = try #require(UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData())
+        art.data = UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData()
         _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c1", pixelSize: 144))
 
         #expect(art.requests.count == 2)
         #expect(viewModel.artwork["c1"] != nil)
     }
 
-    @Test func keepsOnlyTheMostRecentCovers() async throws {
-        art.data = try #require(UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData())
+    @Test func keepsOnlyTheMostRecentCovers() async {
+        art.data = UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData()
         let viewModel = viewModel
         for index in 0...LibraryViewModel.artworkLimit {
             _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c\(index)", pixelSize: 144))
@@ -130,5 +130,67 @@ struct LibraryViewModelTests {
 
         #expect(viewModel.phase == .loaded && viewModel.tracks.count == 3)
         #expect(gateway.requests.count == 1)
+    }
+
+    @Test func pullToRefreshReloadsFromTheFirstPageWithTheListStillShown() async {
+        gateway.all = Track.numbered(150)
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        _ = await viewModel.handleAction(.rowAppeared("t99"))
+        #expect(viewModel.tracks.count == 150)
+
+        gateway.all = Track.numbered(4)
+        let hold = gateway.holdNextRequest()
+        let refresh = Task { await viewModel.handleAction(.refresh) }
+        for await _ in hold.entered { break }
+        #expect(viewModel.phase == .loaded && viewModel.tracks.count == 150)
+        hold.release()
+        _ = await refresh.value
+
+        #expect(viewModel.tracks == Track.numbered(4))
+        #expect(gateway.requests.last?.offset == 0)
+    }
+
+    @Test func pagingStartsOverAfterARefresh() async {
+        gateway.all = Track.numbered(250)
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        _ = await viewModel.handleAction(.rowAppeared("t99"))
+        _ = await viewModel.handleAction(.rowAppeared("t199"))
+        #expect(viewModel.tracks.count == 250)
+
+        _ = await viewModel.handleAction(.refresh)
+        #expect(viewModel.tracks.count == 100)
+        _ = await viewModel.handleAction(.rowAppeared("t99"))
+        #expect(viewModel.tracks.count == 200)
+    }
+
+    @Test func anEmptyLibraryCanBeRefreshed() async {
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        #expect(viewModel.phase == .empty)
+
+        gateway.all = Track.numbered(2)
+        _ = await viewModel.handleAction(.refresh)
+        #expect(viewModel.phase == .loaded && viewModel.tracks.count == 2)
+    }
+
+    @Test func aFailedRefreshSaysWhyWithRetry() async {
+        gateway.all = Track.numbered(3)
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        gateway.error = .unreachable
+
+        _ = await viewModel.handleAction(.refresh)
+
+        guard case .failed(let message) = viewModel.phase else {
+            Issue.record("expected failed, got \(viewModel.phase)")
+            return
+        }
+        #expect(message.contains("Couldn't reach the server"))
+
+        gateway.error = nil
+        _ = await viewModel.handleAction(.retry)
+        #expect(viewModel.phase == .loaded && viewModel.tracks.count == 3)
     }
 }

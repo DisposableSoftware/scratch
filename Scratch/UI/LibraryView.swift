@@ -16,7 +16,11 @@ struct LibraryView: View {
         case .loading:
             ProgressView()
         case .empty:
-            ContentUnavailableView("No tracks", systemImage: "music.note.list", description: Text("The server has no songs yet."))
+            List {}
+                .overlay {
+                    ContentUnavailableView("No tracks", systemImage: "music.note.list", description: Text("The server has no songs yet."))
+                }
+                .refreshable { _ = await viewModel.handleAction(.refresh) }
         case .failed(let message):
             ContentUnavailableView {
                 Label("Couldn't load the library", systemImage: "exclamationmark.triangle")
@@ -43,6 +47,7 @@ struct LibraryView: View {
                 }
             }
             .listStyle(.plain)
+            .refreshable { _ = await viewModel.handleAction(.refresh) }
         }
     }
 }

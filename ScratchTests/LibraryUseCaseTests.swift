@@ -90,4 +90,38 @@ struct LibraryUseCaseTests {
         try await useCase(signedIn: false).loadFirstPage()
         #expect(gateway.requests.isEmpty)
     }
+
+    @Test func noNextPageStartsWhileAReloadRuns() async throws {
+        gateway.all = Track.numbered(150)
+        let useCase = useCase()
+        try await useCase.loadFirstPage()
+        try await useCase.loadNextPage()
+
+        let hold = gateway.holdNextRequest()
+        let reload = Task { try await useCase.loadFirstPage() }
+        for await _ in hold.entered { break }
+        try await useCase.loadNextPage()
+        hold.release()
+        try await reload.value
+
+        #expect(gateway.requests.map(\.offset) == [0, 100, 0])
+        try await useCase.loadNextPage()
+        #expect(useCase.tracks.map(\.id) == Track.numbered(150).map(\.id))
+    }
+
+    @Test func aNextPageThatFailsAfterAReloadIsForgotten() async throws {
+        gateway.all = Track.numbered(150)
+        let useCase = useCase()
+        try await useCase.loadFirstPage()
+
+        let hold = gateway.holdNextRequest()
+        let next = Task { try await useCase.loadNextPage() }
+        for await _ in hold.entered { break }
+        try await useCase.loadFirstPage()
+        gateway.error = .unreachable
+        hold.release()
+
+        try await next.value
+        #expect(useCase.tracks.count == 100)
+    }
 }

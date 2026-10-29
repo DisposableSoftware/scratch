@@ -163,7 +163,7 @@ if [ -n "${view_files// /}" ]; then
     code_lacks "${A}(let|var)[ \t]+viewModel[ \t]*:" |
     report views_submit_actions "a View's ViewModel property must be called viewModel" | emit
   echo "$index" | in_files "$view_files" | code_has "${A}viewModel[.][A-Za-z_][A-Za-z0-9_]*[ \t]*[(]" |
-    code_lacks "${A}viewModel[.](submitAction|binding)[ \t]*[(]" |
+    code_lacks "${A}viewModel[.](submitAction|handleAction|binding)[ \t]*[(]" |
     report views_submit_actions "calls a ViewModel method; submit an action instead" | emit
   # A trailing-closure call, unless the brace opens the body of an if, guard, while, switch or for.
   echo "$index" | in_files "$view_files" | code_has "${A}viewModel[.][A-Za-z_][A-Za-z0-9_]*[ \t]*[{]" |

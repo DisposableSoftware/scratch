@@ -18,7 +18,7 @@ Scratch follows the layered architecture in `~/Notes/Tech Notes/Work Notes/Archi
 
 | ID | Requirement | Status | Verified by |
 |----|-------------|--------|-------------|
-| `ARCH-8` | Each screen has an `…Action` enum, and its View talks to its ViewModel only by submitting actions (`handleAction(_:)`) and reading published state. A ViewModel exposes no other method to its View. | done | `test-arch-lint.sh: view_calls_method, view_trailing_closure_call, view_assigns_state, view_mutates_state, view_binds_directly, view_property_not_named_viewmodel` |
+| `ARCH-8` | Each screen has an `…Action` enum, and its View talks to its ViewModel only by submitting actions (`handleAction(_:)`) and reading published state. A ViewModel exposes no other method to its View. | done | `test-arch-lint.sh: view_calls_method, view_trailing_closure_call, view_assigns_state, view_mutates_state, view_binds_directly, view_property_not_named_viewmodel, view_awaits_handle_action` |
 | `ARCH-9` | Each ViewModel declares its dependencies as `typealias UseCases = Has… & Has…` of single-requirement `Has*` protocols, and receives one `useCases` object. | done | `test-arch-lint.sh: viewmodel_without_usecases, viewmodel_extra_dependency, has_protocol_two_requirements` |
 | `ARCH-10` | ViewModels and shared state objects are `@MainActor` `ObservableObject`s with `@Published` properties, as in the note. | done | `test-arch-lint.sh: viewmodel_not_observable, struct_viewmodel, nonisolated_viewmodel, state_not_observable, unpublished_state, actor_state, observation_macro` |
 
@@ -49,4 +49,5 @@ Scratch follows the layered architecture in `~/Notes/Tech Notes/Work Notes/Archi
 - The unit tests run inside the app. When the app is hosting tests (`XCTestConfigurationFilePath` is set), it doesn't restore a saved server or route, so the test run never reaches a real server.
 - `AppContainer` is a struct, as in the note. The note's `build` uses a `viewFactory` without saying where it comes from. Here `AppViewFactory` is a class that receives the finished container, because the ViewModels it builds need the use cases that the routing use case belongs to. The cycle this makes (factory, container, routing use case, factory) lives as long as the app. `AllUseCases` isn't class-bound, so it can't be held weakly.
 - The note leaves `SideEffect` open. Here it has only `.none`, and `submitAction(_:)` runs each action in its own task. Add cases, or serialize actions, when a screen needs them, and give that change its own row.
+- A View submits with `viewModel.submitAction(_:)`. Where SwiftUI needs to await the work, as `.refreshable` does to keep its spinner up, it calls `await viewModel.handleAction(_:)` instead. Today that drops the `SideEffect`, which is only ever `.none`. When `SideEffect` gains cases, both paths must handle them.
 - `viewModel.binding(_:to:)` is how a control writes: the binding reads published state and submits an action on set, so `ARCH-8` holds.

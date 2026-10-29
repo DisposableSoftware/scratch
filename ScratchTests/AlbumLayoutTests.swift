@@ -13,7 +13,7 @@ private struct LayoutUseCases: HasAlbumUseCase, HasCoverArtUseCase, HasPlaybackU
 
 /// Draws the real album screen in a window, and reads the layout off the pixels, since a `List`'s
 /// row insets can't be asked for. Needs the app as the test host.
-@Suite(.serialized, .timeLimit(.minutes(1)))
+@Suite(.serialized, .timeLimit(.minutes(3)))
 struct AlbumLayoutTests {
     /// The leftmost and rightmost columns, in points, where a row of the picture differs from its background.
     private struct Edges {
@@ -21,7 +21,7 @@ struct AlbumLayoutTests {
         var trailing: CGFloat
     }
 
-    private func screen() async throws -> UIImage {
+    private func screen(theme: Theme? = nil) async throws -> UIImage {
         var detail = AlbumDetail.numbered(discs: 1, perDisc: 12)
         detail.tracks[1].track.isStarred = true
         detail.tracks[10].track.isStarred = true
@@ -31,7 +31,7 @@ struct AlbumLayoutTests {
         let viewModel = AlbumViewModel(album: detail.album, useCases: LayoutUseCases(albumUseCase: albums, coverArtUseCase: CoverArtUseCaseMock(), playbackUseCase: PlaybackUseCaseMock(), sessionUseCase: SessionUseCaseMock(), appRouting: AppRoutingUseCaseSpy()))
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
 
-        return try #require(await WindowSnapshot.image(of: AlbumView(viewModel: viewModel), size: CGSize(width: 402, height: 1600)))
+        return try #require(await WindowSnapshot.image(of: AlbumView(viewModel: viewModel), size: CGSize(width: 402, height: 1600), theme: theme))
     }
 
     /// The edges of what is drawn in the rows `rows` (in points) of `image`.
@@ -104,5 +104,60 @@ struct AlbumLayoutTests {
         #expect(try isDrawn(in: image, rows: 653..<668, columns: 326..<346) == false)
         #expect(abs(tracks.leading - buttons.leading) < 1, "tracks start \(tracks.leading) pt from the left, the buttons \(buttons.leading)")
         #expect(abs(tracks.trailing - buttons.trailing) < 1, "tracks end \(tracks.trailing) pt from the right, the buttons \(buttons.trailing)")
+    }
+
+    /// WCAG contrast ratio of two sRGB colours, as (red, green, blue) in 0...255.
+    private func contrast(_ first: [Int], _ second: [Int]) -> Double {
+        func luminance(_ colour: [Int]) -> Double {
+            let linear = colour.map { value -> Double in
+                let channel = Double(value) / 255
+
+                return channel <= 0.03928 ? channel / 12.92 : pow((channel + 0.055) / 1.055, 2.4)
+            }
+
+            return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+        }
+
+        let (lighter, darker) = (max(luminance(first), luminance(second)), min(luminance(first), luminance(second)))
+
+        return (lighter + 0.05) / (darker + 0.05)
+    }
+
+    // LOOK-9: the Play label against its button, read off the real screen in every flavour and accent.
+    @Test func thePlayLabelIsReadableOnEveryAccent() async throws {
+        var unreadable: [String] = []
+
+        for flavour in Flavour.allCases {
+            for accent in Accent.allCases {
+                let image = try await screen(theme: Theme(flavour: flavour, accent: accent))
+                let cgImage = try #require(image.cgImage)
+                let data = try #require(cgImage.dataProvider?.data)
+                let bytes = try #require(CFDataGetBytePtr(data))
+                let bytesPerPixel = cgImage.bitsPerPixel / 8
+                do {
+                    let scale = Int(image.scale)
+
+                    func pixel(_ x: Int, _ y: Int) -> [Int] { (0..<3).map { Int(bytes[y * scale * cgImage.bytesPerRow + x * scale * bytesPerPixel + $0]) } }
+
+                    // The fill is read left of the label; the label's ink is the pixel furthest from it.
+                    let fill = pixel(22, 609)
+                    var ink = fill
+
+                    for y in 598..<620 {
+                        for x in 60..<140 where zip(pixel(x, y), fill).map({ abs($0 - $1) }).reduce(0, +) > zip(ink, fill).map({ abs($0 - $1) }).reduce(0, +) {
+                            ink = pixel(x, y)
+                        }
+                    }
+
+                    if contrast(fill, ink) < 4.5 {
+                        unreadable.append("\(flavour)/\(accent) \(String(format: "%.1f", contrast(fill, ink)))")
+                    }
+                }
+            }
+        }
+
+        withKnownIssue("LOOK-9: fails until fixed") {
+            #expect(unreadable.isEmpty, "Play's label is under 4.5:1 on: \(unreadable.joined(separator: ", "))")
+        }
     }
 }

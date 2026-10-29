@@ -1,19 +1,27 @@
 # Product
 
-_What Scratch is, who it is for, and the problem it solves, in a short paragraph._
+Scratch is a small iOS player for a [Navidrome](https://www.navidrome.org) server. It connects to the user's own server, lists its tracks, and streams them, with control over how the server transcodes them. It is for one person and one server, and stays small.
 
 ## Requirements
 
 | ID | Requirement | Status |
 |----|-------------|--------|
 | `PROD-1` | Every change follows the spec-first workflow in `CLAUDE.md`. | done (ongoing constraint) |
-
-Add the project's goals here as further `PROD` rows.
+| `PROD-2` | Runs on iPhone with iOS 27 or later. | planned |
+| `PROD-3` | Talks to the server only through the [OpenSubsonic API](https://opensubsonic.netlify.app) (Subsonic API 1.16.1 plus OpenSubsonic extensions), so any OpenSubsonic server works, with Navidrome as the reference. | planned |
+| `PROD-4` | Follows the Container / UseCase / Router / Gateway architecture strictly (see [architecture.md](architecture.md)). | planned |
 
 ## Non-goals
 
-- _What Scratch deliberately won't do, so requests can be checked against it._
+- Offline downloads and caching beyond what the system does for streams.
+- More than one server at a time.
+- Editing the library: playlists, ratings, stars, tags.
+- Scrobbling, lyrics, radio, podcasts, video.
+- CarPlay, iPad layouts, watchOS, macOS.
+- Navidrome's native (web UI) API. It is undocumented and changes between releases.
 
 ## Stack constraints
 
-- _Language, frameworks and platforms, and the rules for adding dependencies._
+- Swift 6 language mode with strict concurrency, SwiftUI, AVFoundation, MediaPlayer. Toolchain: Xcode 27.1, Swift 6.4.
+- One app target and one unit-test target in a checked-in `Scratch.xcodeproj`. No Swift packages, local or remote, and no third-party dependencies.
+- Ask before adding any dependency or target.

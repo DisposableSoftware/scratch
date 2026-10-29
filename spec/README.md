@@ -7,6 +7,11 @@ This folder is the source of truth for what Scratch does. The code implements th
 | File | Prefix | Covers |
 |------|--------|--------|
 | [product.md](product.md) | `PROD` | Goals, non-goals, platform and stack constraints |
+| [architecture.md](architecture.md) | `ARCH` | How the Container / UseCase / Router / Gateway layers apply, and what the lint enforces |
+| [server.md](server.md) | `SRV` | Connecting to a server, authentication, saved credentials, sign out |
+| [library.md](library.md) | `LIB` | The track list and cover art |
+| [playback.md](playback.md) | `PLAY` | The queue, the player, background audio and interruptions |
+| [transcoding.md](transcoding.md) | `TRANS` | Stream format and bitrate settings |
 | [tooling.md](tooling.md) | `TOOL` | The workflow's own scripts: spec lint, checks, releases |
 | [roadmap.md](roadmap.md) | — | The order of planned work, which `/implement` follows |
 

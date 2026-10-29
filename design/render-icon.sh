@@ -24,3 +24,6 @@ context.draw(image, in: CGRect(x: 0, y: 0, width: 1024, height: 1024))
 CGImageDestinationAddImage(destination, context.makeImage()!, nil)
 guard CGImageDestinationFinalize(destination) else { fatalError("could not write the icon") }
 SWIFT
+
+# The README's icon (docs/icon.svg) is the same artwork with rounded corners; the app's own icon stays square.
+sed 's|<rect width="1024" height="1024" fill="#313244"/>|<rect width="1024" height="1024" rx="229" fill="#313244"/>|' design/AppIcon.svg > docs/icon.svg

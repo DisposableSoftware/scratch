@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Scratch (LOOK-8): Catppuccin mocha, flat, no gradients. A record with one scratch.
+       Colours: surface0 #313244, crust #11111b, surface1 #45475a, mauve #cba6f7, base #1e1e2e, text #cdd6f4. -->
+  <rect width="1024" height="1024" rx="229" fill="#313244"/>
+  <circle cx="512" cy="512" r="400" fill="#11111b"/>
+  <circle cx="512" cy="512" r="330" fill="none" stroke="#45475a" stroke-width="10"/>
+  <circle cx="512" cy="512" r="262" fill="none" stroke="#45475a" stroke-width="10"/>
+
+  <g fill="none" stroke="#cdd6f4" stroke-linecap="round">
+    <path d="M610 190 C 680 280, 730 380, 770 500" stroke-width="30"/>
+    <path d="M700 160 C 740 220, 780 290, 810 360" stroke-width="18"/>
+  </g>
+
+  <circle cx="512" cy="512" r="170" fill="#cba6f7"/>
+  <circle cx="512" cy="512" r="30" fill="#1e1e2e"/>
+</svg>

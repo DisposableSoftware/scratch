@@ -1,4 +1,4 @@
-<p align="center"><img src="Scratch/Assets.xcassets/AppIcon.appiconset/AppIcon.png" width="128" alt="Scratch app icon"></p>
+<p align="center"><img src="docs/icon.svg" width="96" alt="Scratch icon"></p>
 
 <h1 align="center">Scratch</h1>
 

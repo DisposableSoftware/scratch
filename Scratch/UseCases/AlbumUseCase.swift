@@ -102,7 +102,15 @@ final class DefaultAlbumUseCase: AlbumUseCase {
 
     func album(id: Album.ID) async throws(ServerError) -> AlbumDetail? {
         guard let server = sessionState.server else { return nil }
-        var detail = try await albumGateway.album(id: id, server: server)
+        var detail: AlbumDetail
+        do {
+            detail = try await albumGateway.album(id: id, server: server)
+        } catch {
+            // A failure for a server signed out of meanwhile doesn't matter any more, and mustn't
+            // sign out whoever signed in since.
+            guard sessionState.server == server else { return nil }
+            throw error
+        }
         // The server's order, but by disc and track number; a track with no number keeps its place
         // after the numbered ones, and ties keep the server's order.
         detail.tracks = detail.tracks.enumerated()

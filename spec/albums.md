@@ -33,7 +33,7 @@ The Albums tab, and the screen for one album. Tracks and their art are the same 
 | `ALB-13` | **Play** plays the album from its first track and queues the rest in order. | done | `AlbumViewModelTests`; tapping Play on the real screen is in the verification backlog |
 | `ALB-14` | **Shuffle** plays all of the album's tracks once, in a random order (`PLAY-9`). | done | `AlbumViewModelTests`, `PlaybackUseCaseTests`; tapping Shuffle on the real screen is in the verification backlog |
 | `ALB-15` | While the album loads its screen shows a progress indicator, and a load error shows its message with **Retry**. | done | `AlbumViewModelTests` |
-| `ALB-16` | An album or Albums-tab request that the server rejects as unauthorised (Subsonic error 40 or 41) returns the user to setup with the URL and username filled in, as for the track list (`SRV-6`). | planned | `AlbumsViewModelTests`, `AlbumViewModelTests`; `manual:` live test: a stale-credential album request is rejected |
+| `ALB-16` | An album or Albums-tab request that the server rejects as unauthorised (Subsonic error 40 or 41) returns the user to setup with the URL and username filled in, as for the track list (`SRV-6`). | done | `AlbumsViewModelTests`, `AlbumViewModelTests`, `AlbumUseCaseTests`; `LiveServerTests.staleCredentialsAreRejectedByAlbumRequests` checks a real stale album request is rejected |
 
 ## Implementation notes
 

@@ -8,6 +8,9 @@
 #   LIB-1, LIB-5: that library lists the server's tracks with title, artist, album, duration and art.
 # Credentials come from the environment and are never written anywhere:
 #   SCRATCH_SERVER=… SCRATCH_USER=… SCRATCH_PASSWORD=… scripts/manual/live-connect.sh [OUT_DIR]
+# Navidrome allows only a few failed sign-ins in a short window (five in twenty seconds by default),
+# and the suite makes three on purpose. Run it again within twenty seconds and a valid sign-in may be
+# turned away with "wrong username or password"; wait and rerun.
 # Set SCRATCH_SIMULATOR to use another device than "iPhone 17". The app is uninstalled from that
 # simulator before and after, so any data it had there is lost.
 set -euo pipefail

@@ -258,8 +258,9 @@ final class AlbumGatewayMock: AlbumGateway {
     var albumError: ServerError?
     var albumGate: (() async -> Void)?
     private(set) var albumRequests: [Album.ID] = []
-    /// Fail every album request after this many have been made.
+    /// Fail every album request after this many have been made, with `failAfterError`.
     var failAfterRequests: Int?
+    var failAfterError = ServerError.unreachable
     /// Answer every page from the start, as a server that ignores the offset would.
     var ignoresOffset = false
     var gate: (() async -> Void)?
@@ -296,7 +297,7 @@ final class AlbumGatewayMock: AlbumGateway {
         requests.append((offset, count))
         if let gate { await gate() }
         if let error { throw error }
-        if let failAfterRequests, requests.count > failAfterRequests { throw .unreachable }
+        if let failAfterRequests, requests.count > failAfterRequests { throw failAfterError }
         return Array(all.dropFirst(ignoresOffset ? 0 : offset).prefix(count))
     }
 

@@ -184,6 +184,25 @@ struct LiveServerTests {
         }
     }
 
+    /// ALB-16 against the real server: an album request signed with credentials it no longer
+    /// accepts comes back as a rejection, which sends the app to setup. One bad request is enough,
+    /// since every request goes through the same client, and Navidrome allows only a few failed
+    /// sign-ins in a short window (five in twenty seconds by default): this suite makes three, and
+    /// a fourth would lock the valid sign-ins out.
+    @Test func staleCredentialsAreRejectedByAlbumRequests() async throws {
+        let address = try ServerAddress.parse(LiveServer.address)
+        let stale = SavedServer(
+            account: ServerAccount(baseURL: address, username: LiveServer.username),
+            credentials: SubsonicCredentials.derive(username: LiveServer.username, password: LiveServer.password + "-old")
+        )
+        do {
+            _ = try await RemoteAlbumGateway(networkSession: URLSession.shared).albums(offset: 0, count: 10, server: stale)
+            Issue.record("the server accepted stale credentials")
+        } catch {
+            #expect(error.rejectsCredentials, "\(error)")
+        }
+    }
+
     @Test func connectsAndSavesTheServer() async throws {
         try await container.connectUseCase.connect(address: LiveServer.address, username: LiveServer.username, password: LiveServer.password)
 

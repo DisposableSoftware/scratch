@@ -20,9 +20,13 @@ struct AlbumsViewModelTests {
     private let gateway = AlbumGatewayMock()
     private let art = CoverArtUseCaseMock()
     private let coordinator = CoordinatorSpy()
+    private let session = SessionUseCaseMock()
+    private let routing = AppRoutingUseCaseSpy()
     private var viewModel: AlbumsViewModel {
         let albums = DefaultAlbumUseCase(albumGateway: gateway, sessionState: SessionState(server: .sample), albumsState: AlbumsState())
-        return AlbumsViewModel(useCases: AlbumsUseCases(albumUseCase: albums, coverArtUseCase: art, coordinator: coordinator))
+        return AlbumsViewModel(useCases: AlbumsUseCases(
+            albumUseCase: albums, coverArtUseCase: art, sessionUseCase: session, appRouting: routing, coordinator: coordinator
+        ))
     }
     private func png() -> Data? { UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData() }
 
@@ -251,6 +255,67 @@ struct AlbumsViewModelTests {
         let viewModel = viewModel
         _ = await viewModel.handleAction(.albumTapped("nope"))
         #expect(coordinator.destinations.isEmpty)
+    }
+
+    // ALB-16
+
+    @Test(arguments: [ServerError.wrongCredentials, .failed(code: 41, message: "Token authentication not supported")])
+    func aRejectedFirstLoadGoesBackToSetup(error: ServerError) async {
+        gateway.error = error
+        let viewModel = viewModel
+
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
+        #expect(session.rejections == 1 && routing.steps == [.library])
+        #expect(viewModel.phase == .loading)
+    }
+
+    @Test func aRejectedFavouritesRequestGoesBackToSetup() async {
+        gateway.all = Album.numbered(3)
+        gateway.starredError = .wrongCredentials
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        #expect(session.rejections == 1 && routing.steps == [.library])
+    }
+
+    @Test func aRejectedNextPageGoesBackToSetupWithoutAnErrorUnderTheGrid() async {
+        gateway.all = Album.numbered(150)
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        gateway.error = .wrongCredentials
+
+        _ = await viewModel.handleAction(.albumAppeared("a99"))
+
+        #expect(session.rejections == 1 && routing.steps == [.library] && viewModel.loadMoreError == nil)
+    }
+
+    @Test func aRejectionWhileFillingTheGapGoesBackToSetup() async {
+        // Every album of the first page is a favourite, so the next page is taken at once, and
+        // that one is turned away.
+        gateway.all = Album.numbered(250)
+        gateway.starred = Array(gateway.all.prefix(100))
+        gateway.failAfterRequests = 1
+        gateway.failAfterError = .wrongCredentials
+
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
+        #expect(session.rejections == 1 && routing.steps == [.library])
+    }
+
+    @Test func aRejectedRefreshGoesBackToSetup() async {
+        gateway.all = Album.numbered(3)
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        gateway.error = .wrongCredentials
+
+        _ = await viewModel.handleAction(.refresh)
+
+        #expect(session.rejections == 1 && routing.steps == [.library])
+    }
+
+    @Test func otherErrorsDontSignOut() async {
+        gateway.error = .failed(code: 70, message: "Not found")
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        #expect(session.rejections == 0 && routing.steps.isEmpty)
     }
 
     @Test func anEmptyServerSaysSo() async {

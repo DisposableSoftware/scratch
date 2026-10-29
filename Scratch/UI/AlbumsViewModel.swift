@@ -110,8 +110,15 @@ final class AlbumsViewModel: RoutingViewModel {
             albums = useCases.albumUseCase.albums
             phase = albums.isEmpty && favourites.isEmpty ? .empty : .loaded
         } catch {
+            if error.rejectsCredentials { return await reauthenticate() }
             phase = .failed(Self.message(for: error))
         }
+    }
+
+    /// ALB-16: the server stopped accepting the saved sign-in; back to setup to sign in again.
+    private func reauthenticate() async {
+        useCases.sessionUseCase.credentialsRejected()
+        await useCases.appRouting.navigateToNext(from: .library, with: AppFlowData())
     }
 
     private func loadNextPage() async {
@@ -123,6 +130,7 @@ final class AlbumsViewModel: RoutingViewModel {
             try await useCases.albumUseCase.loadNextPage()
             albums = useCases.albumUseCase.albums
         } catch {
+            if error.rejectsCredentials { return await reauthenticate() }
             loadMoreError = Self.message(for: error)
         }
     }

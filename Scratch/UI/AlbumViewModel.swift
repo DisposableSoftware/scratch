@@ -14,7 +14,8 @@ enum AlbumAction: Equatable {
 
 /// One album's screen (ALB-9 to ALB-15): cover, info, Play, and the tracks by disc.
 final class AlbumViewModel: ViewModel {
-    typealias UseCases = HasAlbumUseCase & HasCoverArtUseCase & HasPlaybackUseCase
+    typealias UseCases = HasAlbumUseCase & HasCoverArtUseCase & HasPlaybackUseCase & HasSessionUseCase
+        & HasAppRoutingUseCase
 
     enum Phase: Equatable {
         case loading
@@ -83,8 +84,15 @@ final class AlbumViewModel: ViewModel {
             sections = Self.sections(for: detail)
             phase = tracks.isEmpty ? .empty : .loaded
         } catch {
+            if error.rejectsCredentials { return await reauthenticate() }
             phase = .failed(Self.message(for: error))
         }
+    }
+
+    /// ALB-16: the server stopped accepting the saved sign-in; back to setup to sign in again.
+    private func reauthenticate() async {
+        useCases.sessionUseCase.credentialsRejected()
+        await useCases.appRouting.navigateToNext(from: .library, with: AppFlowData())
     }
 
     /// Fetches the cover at the size the screen shows it. A size about as big as the one held is

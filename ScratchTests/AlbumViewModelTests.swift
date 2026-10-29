@@ -3,10 +3,12 @@ import Testing
 import UIKit
 @testable import Scratch
 
-private struct AlbumUseCases: HasAlbumUseCase, HasCoverArtUseCase, HasPlaybackUseCase {
+private struct AlbumUseCases: HasAlbumUseCase, HasCoverArtUseCase, HasPlaybackUseCase, HasSessionUseCase, HasAppRoutingUseCase {
     let albumUseCase: AlbumUseCase
     let coverArtUseCase: CoverArtUseCase
     let playbackUseCase: PlaybackUseCase
+    let sessionUseCase: SessionUseCase
+    let appRouting: AppRoutingUseCase
 }
 
 @Suite(.timeLimit(.minutes(1)))
@@ -14,11 +16,13 @@ struct AlbumViewModelTests {
     private let gateway = AlbumGatewayMock()
     private let art = CoverArtUseCaseMock()
     private let playback = PlaybackUseCaseMock()
+    private let session = SessionUseCaseMock()
+    private let routing = AppRoutingUseCaseSpy()
     private func viewModel(_ detail: AlbumDetail? = nil, album: Album? = nil, signedIn: Bool = true) -> AlbumViewModel {
         if let detail { gateway.details[detail.album.id] = detail }
         let albums = DefaultAlbumUseCase(albumGateway: gateway, sessionState: SessionState(server: signedIn ? .sample : nil), albumsState: AlbumsState())
         let shown = album ?? detail?.album ?? Album.numbered(1)[0]
-        return AlbumViewModel(album: shown, useCases: AlbumUseCases(albumUseCase: albums, coverArtUseCase: art, playbackUseCase: playback))
+        return AlbumViewModel(album: shown, useCases: AlbumUseCases(albumUseCase: albums, coverArtUseCase: art, playbackUseCase: playback, sessionUseCase: session, appRouting: routing))
     }
     private func png() -> Data? { UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData() }
 
@@ -207,6 +211,31 @@ struct AlbumViewModelTests {
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
         #expect(gateway.albumRequests.count == 1)
+    }
+
+    // ALB-16
+
+    @Test(arguments: [ServerError.wrongCredentials, .failed(code: 41, message: "Token authentication not supported")])
+    func aRejectedAlbumGoesBackToSetup(error: ServerError) async {
+        gateway.albumError = error
+        let viewModel = viewModel(.numbered(discs: 1, perDisc: 2))
+
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
+        #expect(session.rejections == 1 && routing.steps == [.library])
+        // The screen is being replaced by setup, so it shows no error of its own.
+        #expect(viewModel.phase == .loading)
+    }
+
+    @Test func otherErrorsStayOnTheAlbumScreen() async {
+        gateway.albumError = .unreachable
+        let viewModel = viewModel(.numbered(discs: 1, perDisc: 2))
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        #expect(session.rejections == 0 && routing.steps.isEmpty)
+        guard case .failed = viewModel.phase else {
+            Issue.record("expected failed, got \(viewModel.phase)")
+            return
+        }
     }
 
     // The cover

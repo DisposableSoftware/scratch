@@ -374,6 +374,21 @@ struct AlbumUseCaseTests {
         #expect(try await load.value == nil)
     }
 
+    @Test func anAlbumFailureForAServerSignedOutOfIsDropped() async throws {
+        gateway.details["al1"] = AlbumDetail.numbered(discs: 1, perDisc: 2)
+        let session = SessionState(server: .sample)
+        let useCase = DefaultAlbumUseCase(albumGateway: gateway, sessionState: session, albumsState: albumsState)
+        let hold = gateway.holdNextAlbumRequest()
+
+        let load = Task { try await useCase.album(id: "al1") }
+        for await _ in hold.entered { break }
+        gateway.albumError = .wrongCredentials
+        session.server = nil
+        hold.release()
+
+        #expect(try await load.value == nil)
+    }
+
     @Test func aMissingAlbumIsAnError() async {
         await #expect(throws: ServerError.failed(code: 70, message: "Album not found")) {
             try await useCase().album(id: "nope")

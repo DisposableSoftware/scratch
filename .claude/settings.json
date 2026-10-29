@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(scripts/check.sh:*)",
+      "Bash(scripts/spec-lint.sh:*)",
+      "Bash(scripts/test-tooling.sh:*)",
+      "Bash(scripts/release-check.sh:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git add:*)",
+      "Bash(git worktree list:*)"
+    ]
+  }
+}

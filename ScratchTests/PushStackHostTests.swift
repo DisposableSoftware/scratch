@@ -93,6 +93,15 @@ struct PushStackHostTests {
         #expect(!host.handle(push("playlist:p1")))
     }
 
+    // MIX-10
+
+    @Test func aMixIsPushedOntoTheMeTabsStack() {
+        let host = host("album", "mix")
+
+        #expect(host.handle(push("mix:hearts")))
+        #expect(host.paths["mix"]?.map(\.key) == ["mix:hearts"] && host.paths["album"]?.isEmpty == true)
+    }
+
     @Test func theMainScreenIsBuiltInsideTheHostsStacks() {
         let port = StackPortSpy()
         let factory = AppViewFactory()
@@ -104,6 +113,6 @@ struct PushStackHostTests {
             return
         }
 
-        #expect(port.kinds == ["album", "playlist"])
+        #expect(port.kinds == ["album", "playlist", "mix"])
     }
 }

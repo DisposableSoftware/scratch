@@ -62,3 +62,17 @@ struct CoverArtGatewayTests {
         }
     }
 }
+
+@Suite(.serialized, .timeLimit(.minutes(1)))
+struct LibraryMixFieldsTests {
+    // MIX-5
+
+    @Test func aTrackCarriesItsPlaysYearAndGenre() async throws {
+        let body = #"{"subsonic-response":{"status":"ok","version":"1.16.1","searchResult3":{"song":[{"id":"a","playCount":12,"year":2001,"genres":[{"name":"Rock"}]},{"id":"b","genre":"Jazz"}]}}}"#
+        let gateway = RemoteLibraryGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })
+
+        let tracks = try await gateway.tracks(offset: 0, count: 100, server: .sample)
+
+        #expect(tracks.map(\.playCount) == [12, nil] && tracks.map(\.year) == [2001, nil] && tracks.map(\.genre) == ["Rock", "Jazz"])
+    }
+}

@@ -41,6 +41,10 @@ protocol HasPlaylistUseCase {
     var playlistUseCase: PlaylistUseCase { get }
 }
 
+protocol HasMixUseCase {
+    var mixUseCase: MixUseCase { get }
+}
+
 protocol HasDisplayUseCase {
     var displayUseCase: DisplayUseCase { get }
 }
@@ -56,3 +60,4 @@ typealias AllUseCases = HasCoordinator
     & HasAlbumUseCase
     & HasDisplayUseCase
     & HasPlaylistUseCase
+    & HasMixUseCase

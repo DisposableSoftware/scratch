@@ -11,4 +11,9 @@ struct Track: Equatable, Identifiable {
 
     /// Whether the user has starred it on the server (LIB-7). Only shown, never changed.
     var isStarred = false
+
+    /// What the server counts, for the mixes (MIX-5).
+    var playCount: Int?
+    var year: Int?
+    var genre: String?
 }

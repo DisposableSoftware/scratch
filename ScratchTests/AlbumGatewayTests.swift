@@ -145,3 +145,63 @@ struct AlbumGatewayTests {
         }
     }
 }
+
+@Suite(.serialized, .timeLimit(.minutes(1)))
+struct MixSourceGatewayTests {
+    // MIX-5
+
+    @Test func starredSongsComeWithTheirPlaysYearAndGenre() async throws {
+        let body = #"""
+        {"subsonic-response":{"status":"ok","version":"1.16.1","starred2":{
+          "album":[{"id":"a"}],
+          "song":[
+            {"id":"s1","title":"Scars","artist":"Mitsuda","album":"Chrono Cross","duration":212,"starred":"2026-02-06T11:05:42-05:00","playCount":778,"year":2010,"genres":[{"name":"Trip-Hop"},{"name":"Ambient"}]},
+            {"id":"s2","title":"Old","genre":"Rock","year":1999},
+            {"id":"s3","title":"Bare","genres":[]}
+          ]}}}
+        """#
+        let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })
+
+        let tracks = try await gateway.starredTracks(server: .sample)
+
+        #expect(tracks.map(\.id) == ["s1", "s2", "s3"])
+        #expect(tracks[0].playCount == 778 && tracks[0].year == 2010 && tracks[0].genre == "Trip-Hop" && tracks[0].isStarred)
+        #expect(tracks[1].genre == "Rock" && tracks[1].playCount == nil)
+        #expect(tracks[2].genre == nil)
+    }
+
+    @Test func aServerWithNoStarredSongsGivesNone() async throws {
+        let body = #"{"subsonic-response":{"status":"ok","version":"1.16.1","starred2":{}}}"#
+        let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })
+
+        #expect(try await gateway.starredTracks(server: .sample).isEmpty)
+    }
+
+    @Test func frequentAlbumsAreAskedForByPlayCount() async throws {
+        let body = #"{"subsonic-response":{"status":"ok","version":"1.16.1","albumList2":{"album":[{"id":"a","name":"Fairytale"}]}}}"#
+        let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })
+
+        let albums = try await gateway.frequentAlbums(count: 10, server: .sample)
+        let query = try #require(StubURLProtocol.requests.first?.url?.query)
+
+        #expect(albums.map(\.id) == ["a"])
+        #expect(query.contains("type=frequent") && query.contains("size=10"))
+    }
+
+    @Test func anAlbumsReleaseDateIsItsMonthAndDayWhenTheServerHasThem() async throws {
+        let body = #"""
+        {"subsonic-response":{"status":"ok","version":"1.16.1","albumList2":{"album":[
+          {"id":"a","releaseDate":{"year":2010,"month":10,"day":29}},
+          {"id":"b","releaseDate":{}},
+          {"id":"c","releaseDate":{"year":1999}},
+          {"id":"d"}
+        ]}}}
+        """#
+        let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })
+
+        let albums = try await gateway.albums(offset: 0, count: 100, server: .sample)
+
+        #expect(albums.map(\.releaseMonth) == [10, nil, nil, nil])
+        #expect(albums.map(\.releaseDay) == [29, nil, nil, nil])
+    }
+}

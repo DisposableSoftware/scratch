@@ -67,9 +67,10 @@ struct SessionUseCaseTests {
     private let session = SessionState()
     private let library = LibraryState()
     private let albums = AlbumsState()
+    private let mixes = MixesState()
 
     private var useCase: DefaultSessionUseCase {
-        DefaultSessionUseCase(credentialGateway: storage, playback: playback, sessionState: session, libraryState: library, albumsState: albums)
+        DefaultSessionUseCase(credentialGateway: storage, playback: playback, sessionState: session, libraryState: library, albumsState: albums, mixesState: mixes)
     }
 
     @Test func restoresTheSavedServer() {
@@ -93,6 +94,7 @@ struct SessionUseCaseTests {
         albums.albums = Album.numbered(3)
         albums.hasMoreAlbums = false
         albums.nextOffset = 100
+        mixes.mixes = [Mix(kind: .hearts, name: "Hearts", description: "", tracks: Track.numbered(2))]
 
         useCase.signOut()
 
@@ -100,6 +102,7 @@ struct SessionUseCaseTests {
         #expect(storage.stored == nil && session.server == nil && useCase.account == nil)
         #expect(library.tracks.isEmpty && library.hasMoreTracks)
         #expect(albums.albums.isEmpty && albums.hasMoreAlbums && albums.nextOffset == 0)
+        #expect(mixes.mixes.isEmpty)
         #expect(useCase.rejectedAccount == nil)
     }
 

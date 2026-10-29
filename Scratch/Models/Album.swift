@@ -11,4 +11,8 @@ nonisolated struct Album: Equatable, Identifiable {
     var genre: String?
     /// Whether the user has starred it on the server (ALB-3).
     var isStarred: Bool
+
+    /// The month and day the album was released, when the server has them (MIX-5).
+    var releaseMonth: Int?
+    var releaseDay: Int?
 }

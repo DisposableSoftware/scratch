@@ -14,6 +14,7 @@ struct AppContainer: AllUseCases {
     let albumUseCase: AlbumUseCase
     let displayUseCase: DisplayUseCase
     let playlistUseCase: PlaylistUseCase
+    let mixUseCase: MixUseCase
 }
 
 extension AppContainer {
@@ -28,6 +29,7 @@ extension AppContainer {
         let sessionState = SessionState()
         let libraryState = LibraryState()
         let albumsState = AlbumsState()
+        let mixesState = MixesState()
         let displayState = DisplayState()
         let playbackState = PlaybackState()
 
@@ -37,6 +39,7 @@ extension AppContainer {
         let libraryGateway = RemoteLibraryGateway(networkSession: networkSession)
         let albumGateway = RemoteAlbumGateway(networkSession: networkSession)
         let playlistGateway = RemotePlaylistGateway(networkSession: networkSession)
+        let mixModelGateway = OnDeviceMixModelGateway()
         let coverArtGateway = RemoteCoverArtGateway(networkSession: networkSession)
         let audioPlayer = AVPlayerAudioGateway()
         let nowPlaying = MPNowPlayingGateway()
@@ -60,6 +63,7 @@ extension AppContainer {
             albumsState: albumsState
         )
         let playlistUseCase = DefaultPlaylistUseCase(playlistGateway: playlistGateway, sessionState: sessionState)
+        let mixUseCase = DefaultMixUseCase(albumGateway: albumGateway, modelGateway: mixModelGateway, sessionState: sessionState, mixesState: mixesState)
         let displayUseCase = DefaultDisplayUseCase(settingsGateway: settingsGateway, displayState: displayState)
         let coverArtUseCase = DefaultCoverArtUseCase(coverArtGateway: coverArtGateway, sessionState: sessionState)
         let transcodingUseCase = DefaultTranscodingUseCase(settingsGateway: settingsGateway, networkGateway: networkGateway)
@@ -75,7 +79,8 @@ extension AppContainer {
             playback: playbackUseCase,
             sessionState: sessionState,
             libraryState: libraryState,
-            albumsState: albumsState
+            albumsState: albumsState,
+            mixesState: mixesState
         )
 
         // 4. Routers
@@ -99,7 +104,8 @@ extension AppContainer {
             transcodingUseCase: transcodingUseCase,
             albumUseCase: albumUseCase,
             displayUseCase: displayUseCase,
-            playlistUseCase: playlistUseCase
+            playlistUseCase: playlistUseCase,
+            mixUseCase: mixUseCase
         )
         viewFactory.useCases = container
 

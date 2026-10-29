@@ -10,6 +10,12 @@ protocol AlbumGateway {
 
     /// One album and its tracks, in the order the server gives.
     func album(id: Album.ID, server: SavedServer) async throws(ServerError) -> AlbumDetail
+
+    /// Every track the user has starred, in the order the server gives (MIX-5).
+    func starredTracks(server: SavedServer) async throws(ServerError) -> [Track]
+
+    /// The albums played most, up to `count` (MIX-5).
+    func frequentAlbums(count: Int, server: SavedServer) async throws(ServerError) -> [Album]
 }
 
 final class RemoteAlbumGateway: AlbumGateway {
@@ -48,6 +54,24 @@ final class RemoteAlbumGateway: AlbumGateway {
         )
     }
 
+    /// `getStarred2` lists the starred songs in the same request as the albums.
+    func starredTracks(server: SavedServer) async throws(ServerError) -> [Track] {
+        let payload = try await client.send(SubsonicRequest(method: "getStarred2"), to: server, as: StarredPayload.self)
+
+        return (payload.starred2.song ?? []).map(\.albumTrack.track)
+    }
+
+    /// `getAlbumList2` by play count.
+    func frequentAlbums(count: Int, server: SavedServer) async throws(ServerError) -> [Album] {
+        let request = SubsonicRequest(method: "getAlbumList2", parameters: [
+            URLQueryItem(name: "type", value: "frequent"),
+            URLQueryItem(name: "size", value: String(count)),
+        ])
+        let payload = try await client.send(request, to: server, as: AlbumListPayload.self)
+
+        return (payload.albumList2.album ?? []).map(\.album)
+    }
+
     /// `getStarred2` lists the starred albums in one request.
     func starredAlbums(server: SavedServer) async throws(ServerError) -> [Album] {
         let payload = try await client.send(SubsonicRequest(method: "getStarred2"), to: server, as: StarredPayload.self)
@@ -82,6 +106,18 @@ private struct AlbumDetailPayload: Decodable {
     let album: Detail
 }
 
+/// A genre as OpenSubsonic lists it, `genres: [{"name": …}]`.
+struct GenreEntry: Decodable {
+    let name: String?
+
+    /// The first genre's name, or the older single `genre`; nil when there is none.
+    static func name(_ genres: [GenreEntry]?, _ genre: String?) -> String? {
+        let name = genres?.compactMap(\.name).first { !$0.isEmpty } ?? genre
+
+        return name.flatMap { $0.isEmpty ? nil : $0 }
+    }
+}
+
 /// A track as `getAlbum` lists it.
 struct SongEntry: Decodable {
     let id: String
@@ -94,6 +130,10 @@ struct SongEntry: Decodable {
     let track: Int?
     let discNumber: Int?
     let starred: String?
+    let playCount: Int?
+    let year: Int?
+    let genre: String?
+    let genres: [GenreEntry]?
 
     var albumTrack: AlbumTrack {
         AlbumTrack(
@@ -104,7 +144,10 @@ struct SongEntry: Decodable {
                 album: album ?? "",
                 duration: duration,
                 coverArtID: coverArt.flatMap { $0.isEmpty ? nil : $0 },
-                isStarred: starred != nil
+                isStarred: starred != nil,
+                playCount: playCount,
+                year: year,
+                genre: GenreEntry.name(genres, genre)
             ),
             disc: discNumber ?? 1,
             number: track
@@ -115,6 +158,7 @@ struct SongEntry: Decodable {
 private struct StarredPayload: Decodable {
     struct Starred: Decodable {
         let album: [AlbumEntry]?
+        let song: [SongEntry]?
     }
 
     let starred2: Starred
@@ -140,6 +184,12 @@ struct AlbumEntry: Decodable {
     let year: Int?
     let genre: String?
     let starred: String?
+    let releaseDate: ReleaseDate?
+
+    struct ReleaseDate: Decodable {
+        let month: Int?
+        let day: Int?
+    }
 
     var album: Album {
         Album(
@@ -151,7 +201,9 @@ struct AlbumEntry: Decodable {
             duration: duration,
             year: year,
             genre: genre,
-            isStarred: starred != nil
+            isStarred: starred != nil,
+            releaseMonth: releaseDate?.month,
+            releaseDay: releaseDate?.day
         )
     }
 }

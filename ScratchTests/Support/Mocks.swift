@@ -374,6 +374,28 @@ final class AlbumGatewayMock: AlbumGateway {
         return detail
     }
 
+    /// What `starredTracks` returns, in the order given (MIX-5).
+    var starredTrackList: [Track] = []
+    var starredTracksError: ServerError?
+
+    /// What `frequentAlbums` returns, cut to the count asked for.
+    var frequent: [Album] = []
+    var frequentError: ServerError?
+    private(set) var frequentRequests: [Int] = []
+
+    func starredTracks(server: SavedServer) async throws(ServerError) -> [Track] {
+        if let starredTracksError { throw starredTracksError }
+
+        return starredTrackList
+    }
+
+    func frequentAlbums(count: Int, server: SavedServer) async throws(ServerError) -> [Album] {
+        frequentRequests.append(count)
+        if let frequentError { throw frequentError }
+
+        return Array(frequent.prefix(count))
+    }
+
     func starredAlbums(server: SavedServer) async throws(ServerError) -> [Album] {
         starredRequests += 1
 
@@ -457,3 +479,21 @@ extension PlaylistDetail {
         return PlaylistDetail(playlist: Playlist(id: id, name: "Road trip", owner: "weston", coverArtID: "pc-\(id)", songCount: tracks.count, duration: 7200), tracks: tracks)
     }
 }
+
+final class MixModelGatewayMock: MixModelGateway {
+    var isAvailable = true
+
+    /// What the model answers, given what it was asked.
+    var answer: (MixKind, [Track], Int) throws -> MixCuration = { _, shortlist, limit in
+        MixCuration(name: "A mix", description: "A line.", picks: Array(1...max(1, min(shortlist.count, limit))))
+    }
+    private(set) var asked: [(kind: MixKind, shortlist: [Track], limit: Int)] = []
+
+    func curate(kind: MixKind, shortlist: [Track], limit: Int) async throws -> MixCuration {
+        asked.append((kind, shortlist, limit))
+
+        return try answer(kind, shortlist, limit)
+    }
+}
+
+struct ModelFailure: Error {}

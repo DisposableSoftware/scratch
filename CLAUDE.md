@@ -95,6 +95,11 @@ Scratch/UI/               AppRoutingUseCase + ViewFactory, AppViewFactory, Setup
 Scratch/UI/               MainView (Albums, Playlists, Songs tabs, now-playing bar as bottom accessory)   ALB-1, PLAY-2, LIB-6
 Scratch/UI/               AlbumsView(Model): the grid, favourites, paging, states, covers   ALB-2…7
 Scratch/UI/               AlbumView(Model), AlbumRows: cover, info, discs, Play, Shuffle, track taps   ALB-8…16
+Scratch/UI/               MainViewModel (tab bar: Me shows while the model is available, now-playing bar), MixesView(Model), MixView(Model)   MIX-1…4, MIX-10…12
+Scratch/Models/           Mix, MixKind; Track/Album gain plays, year, genre, release date   MIX-2, MIX-5
+Scratch/State/            MixesState (model availability, the mixes made)               MIX-1, MIX-9
+Scratch/Gateways/         OnDeviceMixModelGateway (FoundationModels; the only file that imports it); AlbumGateway gains starredTracks, frequentAlbums   MIX-5, MIX-6
+Scratch/UseCases/         MixUseCase (shortlists by rule, the model's picks, fallback)   MIX-5…9
 Scratch/UI/               PlaylistsView(Model), PlaylistView(Model): the grid, the playlist screen, CollectionHeader shared with AlbumView   PLST-1…11
 Scratch/Models/           Playlist, PlaylistDetail                                       PLST-1, PLST-7
 Scratch/Gateways/         RemotePlaylistGateway (getPlaylists, getPlaylist)             PLST-1, PLST-7

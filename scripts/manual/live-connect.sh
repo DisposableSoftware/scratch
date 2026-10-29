@@ -7,6 +7,7 @@
 #   ALB-17, ALB-18: the Albums grid at 5, 1 and 2 per row, from the saved setting.
 #   LOOK-1 to LOOK-4: the Albums grid in each flavour with an accent (look-*-albums.png).
 #   PLST-1, PLST-5, PLST-7: the playlists by name, one playlist's tracks, and screenshots of the grid and the playlist (plst*.png).
+#   MIX-5 to MIX-8, MIX-10: mixes made from hearts and plays, with the real model if the device has one (mix*.png).
 #   LIB-1, LIB-5: that library lists the server's tracks with title, artist, album, duration and art.
 # Credentials come from the environment and are never written anywhere:
 #   SCRATCH_SERVER=… SCRATCH_USER=… SCRATCH_PASSWORD=… scripts/manual/live-connect.sh [OUT_DIR]

@@ -135,7 +135,7 @@ final class PlaylistViewModel: ViewModel {
         return parts.compactMap { $0 }.joined(separator: " · ")
     }
 
-    private static func rows(for tracks: [Track]) -> [PlaylistRow] {
+    static func rows(for tracks: [Track]) -> [PlaylistRow] {
         tracks.enumerated().map { index, track in
             PlaylistRow(id: index, line: AlbumRow(
                 id: track.id,

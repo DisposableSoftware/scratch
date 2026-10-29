@@ -240,6 +240,41 @@ struct LiveServerTests {
         }
     }
 
+    /// MIX-5 to MIX-8, MIX-10 against the real server: the mixes are made from the user's hearts
+    /// and plays, by the real model if this device has one and by the rules if not. With
+    /// SCRATCH_SNAPSHOT_DIR set, the Me tab and a mix's screen are saved.
+    @Test func mixesAreMadeFromHeartsAndPlays() async throws {
+        try await container.connectUseCase.connect(address: LiveServer.address, username: LiveServer.username, password: LiveServer.password)
+        container.mixUseCase.refreshAvailability()
+
+        print("mix model available: \(container.mixUseCase.state.isModelAvailable)")
+        try await container.mixUseCase.makeMixes()
+
+        let mixes = container.mixUseCase.state.mixes
+
+        for mix in mixes { print("mix \(mix.kind): \(mix.name) | \(mix.description) | \(mix.tracks.count) tracks") }
+
+        #expect(mixes.map(\.kind).contains(.hearts) || mixes.map(\.kind).contains(.mostPlayed), "the server has no hearts or plays to mix")
+        #expect(mixes.allSatisfy { !$0.tracks.isEmpty && $0.tracks.count <= 25 && Set($0.tracks.map(\.id)).count == $0.tracks.count })
+
+        guard let directory = LiveServer.snapshotDirectory, let first = mixes.first else { return }
+
+        let tab = MixesViewModel(useCases: container)
+        _ = await tab.handleAction(.lifecycle(.viewDidAppear))
+
+        for mix in mixes { _ = await tab.handleAction(.artworkNeeded(coverArtID: mix.tracks.first?.coverArtID ?? "", pixelSize: 216)) }
+
+        let screen = MixViewModel(mix: first, useCases: container)
+        _ = await screen.handleAction(.artworkNeeded(pixelSize: 1080))
+
+        for (name, image) in [
+            ("mix2-me", await WindowSnapshot.image(of: MixesView(viewModel: tab), size: CGSize(width: 402, height: 874))),
+            ("mix10-mix", await WindowSnapshot.image(of: MixView(viewModel: screen), size: CGSize(width: 402, height: 874))),
+        ] {
+            try #require(image?.pngData()).write(to: URL(fileURLWithPath: directory).appending(path: "\(name).png"))
+        }
+    }
+
     /// ALB-16 against the real server: an album request signed with credentials it no longer
     /// accepts comes back as a rejection, which sends the app to setup. One bad request is enough,
     /// since every request goes through the same client, and Navidrome allows only a few failed

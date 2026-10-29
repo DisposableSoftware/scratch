@@ -1,6 +1,6 @@
 # Product
 
-Scratch is a small iOS player for a [Navidrome](https://www.navidrome.org) server. It connects to the user's own server, lists its tracks, and streams them, with control over how the server transcodes them. It is for one person and one server, and stays small.
+Scratch is a small iOS player for a [Navidrome](https://www.navidrome.org) server. It connects to the user's own server, shows its albums and tracks, and streams them, with control over how the server transcodes them. It is for one person and one server, and stays small.
 
 ## Requirements
 

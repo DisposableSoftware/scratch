@@ -2,9 +2,8 @@
 
 The order of approved work: `planned` requirements, and `partial` ones with a known bug from `/bug`. Change it here when priorities change. `/implement` works through this file: the verification backlog first, then the requirements in the order listed.
 
-1. `TRANS-6`, `PLAY-3`: quality in the player, which completes it.
-2. `LIB-6`, `SRV-6`, `SRV-7`: the settings sheet, re-authentication and sign out.
-3. `ARCH-16`: confirm every Router and UseCase has tests.
+1. `LIB-6`, `SRV-6`, `SRV-7`: the settings sheet, re-authentication and sign out.
+2. `ARCH-16`: confirm every Router and UseCase has tests.
 
 ## Verification backlog
 

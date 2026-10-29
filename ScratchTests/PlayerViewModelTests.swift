@@ -120,4 +120,21 @@ struct PlayerViewModelTests {
 
         #expect(!viewModel.isScrubbing && viewModel.position == 11)
     }
+
+    @Test func showsTheQualityAskedForTheTrack() {
+        playback.play(Track.numbered(2), startingAt: 0)
+        #expect(viewModel.quality == TranscodingSettings.defaults.wifi)
+        player.send(.failed)
+        #expect(viewModel.quality == TranscodingSettings.defaults.wifi)
+    }
+
+    @Test(arguments: [
+        (StreamQuality(format: .mp3, maxBitRate: 192), "MP3 · 192 kbps"),
+        (StreamQuality(format: .aac, maxBitRate: nil), "AAC"),
+        (StreamQuality(format: .original, maxBitRate: nil), "Original"),
+        (StreamQuality(format: .original, maxBitRate: 96), "Original"),
+    ])
+    func qualityLabels(quality: StreamQuality, expected: String) {
+        #expect(quality.label == expected)
+    }
 }

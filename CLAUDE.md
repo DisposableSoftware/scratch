@@ -114,7 +114,7 @@ Scratch/Models/           StreamQuality, TranscodingSettings, NetworkKind       
 Scratch/Gateways/         UserDefaultsSettingsGateway, PathMonitorNetworkGateway, SubsonicRequest.stream   TRANS-3…5
 Scratch/UseCases/         TranscodingUseCase (settings, quality for the next track)     TRANS-1…5
 Scratch/UI/               SettingsView(Model): transcoding per network                   LIB-6, TRANS-1, TRANS-2
-Scratch/UI/               PlayerViewModel (mirrors PlaybackState), NowPlayingBar, PlayerView   PLAY-2, PLAY-3, PLAY-8
+Scratch/UI/               PlayerViewModel (mirrors PlaybackState), NowPlayingBar, PlayerView   PLAY-2, PLAY-3, PLAY-8, TRANS-6
 ScratchTests/SnapshotTests  skipped unless snapshots.sh passes a directory in
 scripts/manual/snapshots.sh  renders the bar and player (playing, failed) to PNGs
 scripts/manual/live-connect.sh  SRV-3/SRV-5 against a real server; credentials from the environment only

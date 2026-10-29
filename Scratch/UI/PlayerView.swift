@@ -73,6 +73,16 @@ struct PlayerView: View {
                 Text(viewModel.track?.title ?? "").font(.title2.bold()).lineLimit(2)
                 Text(viewModel.track?.artist ?? "").foregroundStyle(.secondary)
                 Text(viewModel.track?.album ?? "").font(.subheadline).foregroundStyle(.secondary)
+                if let quality = viewModel.quality {
+                    Text(quality.label)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(.quaternary, in: Capsule())
+                        .padding(.top, 4)
+                        .accessibilityLabel("Quality: \(quality.label)")
+                }
             }
             .multilineTextAlignment(.center)
             if viewModel.status == .failed {
@@ -137,6 +147,14 @@ private func playPauseSymbol(_ viewModel: PlayerViewModel) -> String {
     case .playing, .loading: "pause.fill"
     case .failed: "arrow.clockwise"
     case .paused, .stopped: "play.fill"
+    }
+}
+
+extension StreamQuality {
+    /// As the player shows it (TRANS-6): "MP3 · 192 kbps", "AAC", "Original".
+    var label: String {
+        guard let maxBitRate else { return format.label }
+        return "\(format.label) · \(maxBitRate) kbps"
     }
 }
 

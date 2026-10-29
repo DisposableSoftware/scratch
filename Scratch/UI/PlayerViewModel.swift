@@ -34,6 +34,8 @@ final class PlayerViewModel: RoutingViewModel {
     @Published private(set) var track: Track?
     @Published private(set) var status = PlaybackStatus.stopped
     @Published private(set) var duration: TimeInterval?
+    /// What was asked of the server for this track (TRANS-6).
+    @Published private(set) var quality: StreamQuality?
     /// Where the scrubber and the times show, which follows playback except while scrubbing.
     @Published private(set) var position: TimeInterval = 0
     @Published private(set) var isScrubbing = false
@@ -57,6 +59,7 @@ final class PlayerViewModel: RoutingViewModel {
             .assign(to: &$track)
         state.$status.assign(to: &$status)
         state.$duration.assign(to: &$duration)
+        state.$quality.assign(to: &$quality)
         state.$elapsed.combineLatest($isScrubbing)
             .filter { !$0.1 }
             .map(\.0)

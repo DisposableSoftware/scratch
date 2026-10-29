@@ -9,7 +9,7 @@ The server does the transcoding. Scratch chooses what to ask for on each `stream
 | `TRANS-3` | Format and bitrate are set separately for Wi-Fi and for cellular, and a track uses the setting for the network it starts on. Defaults: Wi-Fi Original/Unlimited, cellular MP3/192 kbps. | done | `PlaybackUseCaseTests`, `TranscodingSettingsTests` |
 | `TRANS-4` | The `stream` request carries `format` (`raw` for Original, else `mp3` or `aac`) and, for MP3 and AAC, `maxBitRate` (left out for Unlimited), plus `estimateContentLength=true`. | done | `StreamURLTests`; `manual:` `scripts/manual/live-connect.sh` checks the content type served for MP3 and AAC, and that each quality plays and seeks |
 | `TRANS-5` | Settings persist across launches. A change applies from the next track; the current track keeps playing as it is. | done | `TranscodingSettingsTests`, `SettingsGatewayTests`, `PlaybackUseCaseTests` |
-| `TRANS-6` | The player shows the quality requested for the current track, e.g. `MP3 · 192 kbps`, `AAC`, or `Original`. | planned | `PlayerViewModelTests` |
+| `TRANS-6` | The player shows the quality requested for the current track, e.g. `MP3 · 192 kbps`, `AAC`, or `Original`. | done | `PlayerViewModelTests`, `PlaybackUseCaseTests`; `manual:` `scripts/manual/snapshots.sh` renders the player with its quality |
 
 ## Implementation notes
 

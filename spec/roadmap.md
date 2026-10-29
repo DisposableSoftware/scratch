@@ -2,7 +2,7 @@
 
 The order of approved work: `planned` requirements, and `partial` ones with a known bug from `/bug`. Change it here when priorities change. `/implement` works through this file: the verification backlog first, then the requirements in the order listed.
 
-None.
+1. `ALB-19`: the album screen's track numbers start 9 pt inside the margin the buttons use (the number column is right-aligned in a 28 pt minimum width; they should be left-aligned).
 
 ## Verification backlog
 

@@ -30,6 +30,7 @@ extension AppContainer {
         let libraryGateway = RemoteLibraryGateway(networkSession: networkSession)
         let coverArtGateway = RemoteCoverArtGateway(networkSession: networkSession)
         let audioPlayer = AVPlayerAudioGateway()
+        let nowPlaying = MPNowPlayingGateway()
 
         // 3. UseCases
         let connectUseCase = DefaultConnectUseCase(
@@ -46,6 +47,7 @@ extension AppContainer {
         let coverArtUseCase = DefaultCoverArtUseCase(coverArtGateway: coverArtGateway, sessionState: sessionState)
         let playbackUseCase = DefaultPlaybackUseCase(
             audioPlayer: audioPlayer,
+            nowPlaying: nowPlaying,
             sessionState: sessionState,
             playbackState: playbackState
         )

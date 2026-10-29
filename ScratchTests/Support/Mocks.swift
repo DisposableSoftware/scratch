@@ -160,3 +160,12 @@ final class PlaybackUseCaseMock: PlaybackUseCase {
     func previous() {}
     func seek(to seconds: TimeInterval) {}
 }
+
+final class NowPlayingGatewayMock: NowPlayingGateway {
+    var onCommand: ((RemoteCommand) -> Void)?
+    private(set) var updates: [NowPlayingInfo?] = []
+    var last: NowPlayingInfo? { updates.last ?? nil }
+
+    func update(_ info: NowPlayingInfo?) { updates.append(info) }
+    func send(_ command: RemoteCommand) { onCommand?(command) }
+}

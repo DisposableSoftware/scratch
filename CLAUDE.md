@@ -106,8 +106,10 @@ Scratch/UseCases/         LibraryUseCase (paging), CoverArtUseCase              
 Scratch/UI/               LibraryView(Model): rows, phases, prefetch, art, tap to play   LIB-1…5, PLAY-1
 Scratch/Models/           PlaybackStatus, AudioPlayerEvent
 Scratch/State/            PlaybackState (queue, current index, status, time)            PLAY-1
-Scratch/Gateways/         AVPlayerAudioGateway (stream URL, AVPlayer → events)           PLAY-1, PLAY-8
-Scratch/UseCases/         PlaybackUseCase (queue, next/previous, end, failure rules)     PLAY-1, PLAY-4, PLAY-5, PLAY-8
+Scratch/Gateways/         AVPlayerAudioGateway (stream URL, AVPlayer + audio session → events)   PLAY-1, PLAY-6, PLAY-7, PLAY-8
+Scratch/Gateways/         MPNowPlayingGateway (lock screen info, remote commands)        PLAY-6
+Scratch/Info.plist        background audio (PLAY-6), arbitrary loads for plain-http servers (SRV-2)
+Scratch/UseCases/         PlaybackUseCase (queue, end, failure, interruption, lock screen rules)   PLAY-1, PLAY-4…8
 Scratch/UI/               PlayerViewModel (mirrors PlaybackState), NowPlayingBar, PlayerView   PLAY-2, PLAY-3, PLAY-8
 ScratchTests/SnapshotTests  skipped unless snapshots.sh passes a directory in
 scripts/manual/snapshots.sh  renders the bar and player (playing, failed) to PNGs

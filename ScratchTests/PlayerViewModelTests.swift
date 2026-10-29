@@ -18,7 +18,7 @@ struct PlayerViewModelTests {
     private let viewModel: PlayerViewModel
 
     init() {
-        playback = DefaultPlaybackUseCase(audioPlayer: player, sessionState: SessionState(server: .sample), playbackState: PlaybackState())
+        playback = DefaultPlaybackUseCase(audioPlayer: player, nowPlaying: NowPlayingGatewayMock(), sessionState: SessionState(server: .sample), playbackState: PlaybackState())
         viewModel = PlayerViewModel(useCases: PlayerUseCases(playbackUseCase: playback, coverArtUseCase: art, coordinator: coordinator))
     }
 

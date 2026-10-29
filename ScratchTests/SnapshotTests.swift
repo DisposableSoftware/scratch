@@ -16,7 +16,7 @@ struct SnapshotTests {
 
     private func viewModel(failed: Bool) async -> PlayerViewModel {
         let player = AudioPlayerGatewayMock()
-        let playback = DefaultPlaybackUseCase(audioPlayer: player, sessionState: SessionState(server: .sample), playbackState: PlaybackState())
+        let playback = DefaultPlaybackUseCase(audioPlayer: player, nowPlaying: NowPlayingGatewayMock(), sessionState: SessionState(server: .sample), playbackState: PlaybackState())
         let art = CoverArtUseCaseMock()
         art.data = UIGraphicsImageRenderer(size: CGSize(width: 600, height: 600)).image { context in
             UIColor.systemTeal.setFill()

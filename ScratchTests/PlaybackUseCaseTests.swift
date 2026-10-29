@@ -4,10 +4,11 @@ import Testing
 
 struct PlaybackUseCaseTests {
     private let player = AudioPlayerGatewayMock()
+    private let lockScreen = NowPlayingGatewayMock()
     private let state = PlaybackState()
     private let tracks = Track.numbered(4)
     private func useCase(signedIn: Bool = true) -> DefaultPlaybackUseCase {
-        DefaultPlaybackUseCase(audioPlayer: player, sessionState: SessionState(server: signedIn ? .sample : nil), playbackState: state)
+        DefaultPlaybackUseCase(audioPlayer: player, nowPlaying: lockScreen, sessionState: SessionState(server: signedIn ? .sample : nil), playbackState: state)
     }
 
     @Test func playsTheTappedTrackAndQueuesTheRest() {
@@ -196,5 +197,167 @@ struct PlaybackUseCaseTests {
         useCase.seek(to: 42)
 
         #expect(state.elapsed == 42 && player.calls.last == .seek(42))
+    }
+
+    // PLAY-6
+
+    @Test func theLockScreenShowsTheTrackAndWhetherItPlays() {
+        let useCase = useCase()
+        useCase.play(tracks, startingAt: 1)
+        #expect(lockScreen.last == NowPlayingInfo(title: "Song 1", artist: "Artist", album: "Album", duration: 200, elapsed: 0, isPlaying: false))
+
+        player.send(.ready(duration: 210))
+        #expect(lockScreen.last?.isPlaying == true && lockScreen.last?.duration == 210)
+
+        player.send(.time(30))
+        let published = lockScreen.updates.count
+        player.send(.time(31))
+        #expect(lockScreen.updates.count == published)
+
+        useCase.togglePlayPause()
+        #expect(lockScreen.last?.isPlaying == false && lockScreen.last?.elapsed == 31)
+        useCase.seek(to: 90)
+        #expect(lockScreen.last?.elapsed == 90)
+    }
+
+    @Test func lockScreenCommandsDriveThePlayer() {
+        let useCase = useCase()
+        useCase.play(tracks, startingAt: 0)
+        player.send(.ready(duration: nil))
+
+        lockScreen.send(.pause)
+        #expect(state.status == .paused)
+        lockScreen.send(.pause)
+        #expect(state.status == .paused)
+        lockScreen.send(.play)
+        #expect(state.status == .playing)
+        lockScreen.send(.togglePlayPause)
+        #expect(state.status == .paused)
+        lockScreen.send(.next)
+        #expect(state.currentTrack?.id == "t1")
+        lockScreen.send(.previous)
+        #expect(state.currentTrack?.id == "t0")
+        player.send(.ready(duration: nil))
+        lockScreen.send(.seek(77))
+        #expect(player.calls.last == .seek(77) && state.elapsed == 77)
+        _ = useCase
+    }
+
+    // PLAY-7
+
+    @Test func anInterruptionPausesAndResumesWhenTheSystemSaysSo() {
+        let useCase = useCase()
+        useCase.play(tracks, startingAt: 0)
+        player.send(.ready(duration: nil))
+
+        player.send(.interrupted)
+        #expect(state.status == .paused)
+        player.send(.interruptionEnded(shouldResume: true))
+        #expect(state.status == .playing && player.calls.last == .play)
+        _ = useCase
+    }
+
+    @Test func anInterruptionStaysPausedWhenTheSystemDoesntSaySo() {
+        let useCase = useCase()
+        useCase.play(tracks, startingAt: 0)
+        player.send(.ready(duration: nil))
+
+        player.send(.interrupted)
+        player.send(.interruptionEnded(shouldResume: false))
+
+        #expect(state.status == .paused)
+        _ = useCase
+    }
+
+    @Test func anInterruptionWhilePausedDoesntStartPlayback() {
+        let useCase = useCase()
+        useCase.play(tracks, startingAt: 0)
+        player.send(.ready(duration: nil))
+        useCase.togglePlayPause()
+
+        player.send(.interrupted)
+        player.send(.interruptionEnded(shouldResume: true))
+
+        #expect(state.status == .paused)
+    }
+
+    @Test func pausingDuringAnInterruptionCancelsTheResume() {
+        let useCase = useCase()
+        useCase.play(tracks, startingAt: 0)
+        player.send(.ready(duration: nil))
+        player.send(.interrupted)
+
+        lockScreen.send(.pause)
+        useCase.next()
+        player.send(.ready(duration: nil))
+        useCase.togglePlayPause()
+        player.send(.interruptionEnded(shouldResume: true))
+
+        #expect(state.status == .paused)
+    }
+
+    @Test func losingTheHeadphonesPauses() {
+        let useCase = useCase()
+        useCase.play(tracks, startingAt: 0)
+        player.send(.ready(duration: nil))
+
+        player.send(.outputLost)
+
+        #expect(state.status == .paused && player.calls.last == .pause)
+        _ = useCase
+    }
+
+    @Test func aTrackThatFailsDuringAnInterruptionDoesntComeBack() {
+        let useCase = useCase()
+        useCase.play(tracks, startingAt: 0)
+        player.send(.ready(duration: nil))
+        player.send(.interrupted)
+        player.send(.failed)
+
+        player.send(.interruptionEnded(shouldResume: true))
+
+        #expect(state.status == .failed)
+        #expect(!player.calls.contains(.play))
+        _ = useCase
+    }
+
+    @Test func losingTheHeadphonesDuringAnInterruptionCancelsTheResume() {
+        let useCase = useCase()
+        useCase.play(tracks, startingAt: 0)
+        player.send(.ready(duration: nil))
+        player.send(.interrupted)
+        player.send(.outputLost)
+
+        player.send(.interruptionEnded(shouldResume: true))
+
+        #expect(state.status == .paused)
+        _ = useCase
+    }
+
+    @Test func endingTheQueueDuringAnInterruptionCancelsTheResume() {
+        let useCase = useCase()
+        useCase.play(tracks, startingAt: 3)
+        player.send(.ready(duration: nil))
+        player.send(.interrupted)
+        useCase.next()
+
+        player.send(.interruptionEnded(shouldResume: true))
+
+        #expect(state.status == .paused)
+    }
+
+    @Test func theLockScreenClockStandsStillWhileBuffering() {
+        let useCase = useCase()
+        useCase.play(tracks, startingAt: 0)
+        player.send(.ready(duration: nil))
+        player.currentTime = 64
+
+        player.send(.buffering(true))
+        #expect(lockScreen.last?.isPlaying == false && lockScreen.last?.elapsed == 64)
+        #expect(state.status == .playing)
+
+        player.send(.buffering(false))
+        #expect(lockScreen.last?.isPlaying == true)
+        _ = useCase
     }
 }

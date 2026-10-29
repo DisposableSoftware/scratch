@@ -1,0 +1,134 @@
+import Foundation
+import Testing
+import UIKit
+@testable import Scratch
+
+private struct LibraryUseCases: HasLibraryUseCase, HasCoverArtUseCase {
+    let libraryUseCase: LibraryUseCase
+    let coverArtUseCase: CoverArtUseCase
+}
+
+@Suite(.timeLimit(.minutes(1)))
+struct LibraryViewModelTests {
+    private let gateway = LibraryGatewayMock()
+    private let art = CoverArtUseCaseMock()
+    private var viewModel: LibraryViewModel {
+        let library = DefaultLibraryUseCase(libraryGateway: gateway, sessionState: SessionState(server: .sample), libraryState: LibraryState())
+        return LibraryViewModel(useCases: LibraryUseCases(libraryUseCase: library, coverArtUseCase: art))
+    }
+
+    @Test func showsTheFirstPageWithItsDetails() async {
+        gateway.all = Track.numbered(3)
+        let viewModel = viewModel
+        #expect(viewModel.phase == .loading)
+
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
+        #expect(viewModel.phase == .loaded)
+        #expect(viewModel.tracks == Track.numbered(3))
+    }
+
+    @Test func anEmptyLibrarySaysSo() async {
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        #expect(viewModel.phase == .empty)
+    }
+
+    @Test func aFailedLoadShowsWhyAndRetries() async {
+        gateway.error = .unreachable
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        guard case .failed(let message) = viewModel.phase else {
+            Issue.record("expected failed, got \(viewModel.phase)")
+            return
+        }
+        #expect(message.contains("Couldn't reach the server"))
+
+        gateway.error = nil
+        gateway.all = Track.numbered(2)
+        _ = await viewModel.handleAction(.retry)
+        #expect(viewModel.phase == .loaded && viewModel.tracks.count == 2)
+    }
+
+    @Test func rowsNearTheEndLoadTheNextPage() async {
+        gateway.all = Track.numbered(150)
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
+        _ = await viewModel.handleAction(.rowAppeared("t10"))
+        #expect(viewModel.tracks.count == 100)
+        _ = await viewModel.handleAction(.rowAppeared("t85"))
+        #expect(viewModel.tracks.count == 150)
+        #expect(gateway.requests.map(\.offset) == [0, 100])
+    }
+
+    @Test func aFailedNextPageKeepsTheListAndOffersRetry() async {
+        gateway.all = Track.numbered(150)
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        gateway.error = .unreachable
+
+        _ = await viewModel.handleAction(.rowAppeared("t99"))
+        #expect(viewModel.phase == .loaded && viewModel.tracks.count == 100)
+        #expect(viewModel.loadMoreError != nil)
+
+        gateway.error = nil
+        _ = await viewModel.handleAction(.retry)
+        #expect(viewModel.tracks.count == 150 && viewModel.loadMoreError == nil)
+    }
+
+    @Test func artworkIsFetchedOncePerCoverAndSize() async throws {
+        art.data = try #require(UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData())
+        let viewModel = viewModel
+
+        _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c1", pixelSize: 144))
+        _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c1", pixelSize: 144))
+
+        #expect(art.requests.count == 1)
+        #expect(art.requests.first?.pixelSize == 144)
+        #expect(viewModel.artwork["c1"] != nil)
+    }
+
+    @Test func aFailedCoverIsAskedForAgain() async throws {
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c1", pixelSize: 144))
+        #expect(viewModel.artwork["c1"] == nil)
+
+        art.data = try #require(UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData())
+        _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c1", pixelSize: 144))
+
+        #expect(art.requests.count == 2)
+        #expect(viewModel.artwork["c1"] != nil)
+    }
+
+    @Test func keepsOnlyTheMostRecentCovers() async throws {
+        art.data = try #require(UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData())
+        let viewModel = viewModel
+        for index in 0...LibraryViewModel.artworkLimit {
+            _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c\(index)", pixelSize: 144))
+        }
+
+        #expect(viewModel.artwork.count == LibraryViewModel.artworkLimit)
+        #expect(viewModel.artwork["c0"] == nil)
+
+        // The evicted cover is fetched again when its row comes back.
+        _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c0", pixelSize: 144))
+        #expect(viewModel.artwork["c0"] != nil)
+    }
+
+    @Test func overlappingFirstLoadsDontFlashEmpty() async {
+        gateway.all = Track.numbered(3)
+        let hold = gateway.holdNextRequest()
+        let viewModel = viewModel
+
+        let first = Task { await viewModel.handleAction(.lifecycle(.viewDidAppear)) }
+        for await _ in hold.entered { break }
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        #expect(viewModel.phase == .loading)
+        hold.release()
+        _ = await first.value
+
+        #expect(viewModel.phase == .loaded && viewModel.tracks.count == 3)
+        #expect(gateway.requests.count == 1)
+    }
+}

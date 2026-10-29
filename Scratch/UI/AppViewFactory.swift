@@ -16,7 +16,7 @@ final class AppViewFactory: ViewFactory {
         case .setup:
             return .root(AnyView(SetupView(viewModel: SetupViewModel(useCases: useCases))))
         case .library:
-            return .root(AnyView(LibraryView()))
+            return .root(AnyView(LibraryView(viewModel: LibraryViewModel(useCases: useCases))))
         }
     }
 }

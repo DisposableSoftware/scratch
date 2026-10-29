@@ -83,3 +83,48 @@ extension SavedServer {
         credentials: SubsonicCredentials(username: "me", salt: "salt", token: "token")
     )
 }
+
+final class LibraryGatewayMock: LibraryGateway {
+    /// Pages are cut from this list by offset and count.
+    var all: [Track] = []
+    var error: ServerError?
+    /// Lets a test hold a request open while it does something else.
+    var gate: (() async -> Void)?
+
+    /// Holds the next request open. `entered` yields once that request is inside the gateway;
+    /// `release` lets it finish. Later requests aren't held.
+    func holdNextRequest() -> (entered: AsyncStream<Void>, release: () -> Void) {
+        let (entered, signalEntered) = AsyncStream.makeStream(of: Void.self)
+        let (held, release) = AsyncStream.makeStream(of: Void.self)
+        gate = { [weak self] in
+            self?.gate = nil
+            signalEntered.yield()
+            for await _ in held { break }
+        }
+        return (entered, { release.yield(); release.finish() })
+    }
+    private(set) var requests: [(offset: Int, count: Int)] = []
+
+    func tracks(offset: Int, count: Int, server: SavedServer) async throws(ServerError) -> [Track] {
+        requests.append((offset, count))
+        if let gate { await gate() }
+        if let error { throw error }
+        return Array(all.dropFirst(offset).prefix(count))
+    }
+}
+
+final class CoverArtUseCaseMock: CoverArtUseCase {
+    var data: Data?
+    private(set) var requests: [(id: String, pixelSize: Int)] = []
+
+    func coverArt(id: String, pixelSize: Int) async -> Data? {
+        requests.append((id, pixelSize))
+        return data
+    }
+}
+
+extension Track {
+    static func numbered(_ count: Int) -> [Track] {
+        (0..<count).map { Track(id: "t\($0)", title: "Song \($0)", artist: "Artist", album: "Album", duration: 200, coverArtID: "c\($0)") }
+    }
+}

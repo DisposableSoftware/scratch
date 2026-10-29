@@ -17,7 +17,17 @@ protocol HasSessionUseCase {
     var sessionUseCase: SessionUseCase { get }
 }
 
+protocol HasLibraryUseCase {
+    var libraryUseCase: LibraryUseCase { get }
+}
+
+protocol HasCoverArtUseCase {
+    var coverArtUseCase: CoverArtUseCase { get }
+}
+
 typealias AllUseCases = HasCoordinator
     & HasAppRoutingUseCase
     & HasConnectUseCase
     & HasSessionUseCase
+    & HasLibraryUseCase
+    & HasCoverArtUseCase

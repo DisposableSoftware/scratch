@@ -99,6 +99,11 @@ Scratch/Gateways/         NetworkSession (+ same-origin redirects), SubsonicClie
 Scratch/Gateways/         RemoteServerGateway (ping), KeychainCredentialGateway          SRV-3, SRV-5
 Scratch/UseCases/         ConnectUseCase, SessionUseCase (restore at launch)             SRV-3, SRV-5
 Scratch/Models/           AppEnvironment (.live storage), ServerError/ConnectError/StorageError
+Scratch/Models/           Track                                                          LIB-1
+Scratch/State/            LibraryState (tracks loaded so far)                           LIB-2
+Scratch/Gateways/         RemoteLibraryGateway (search3), RemoteCoverArtGateway (getCoverArt + NSCache)  LIB-2, LIB-5
+Scratch/UseCases/         LibraryUseCase (paging), CoverArtUseCase                       LIB-2, LIB-5
+Scratch/UI/               LibraryView(Model): rows, phases, prefetch, art                LIB-1, LIB-2, LIB-4, LIB-5
 scripts/manual/live-connect.sh  SRV-3/SRV-5 against a real server; credentials from the environment only
 Scratch/Info.plist        background audio, arbitrary loads (merged with generated keys)
 ScratchTests/             Swift Testing suites; Support/ holds mocks, StubURLProtocol, TestContainer   ARCH-16

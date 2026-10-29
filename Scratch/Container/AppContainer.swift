@@ -7,6 +7,8 @@ struct AppContainer: AllUseCases {
     let appRouting: AppRoutingUseCase
     let connectUseCase: ConnectUseCase
     let sessionUseCase: SessionUseCase
+    let libraryUseCase: LibraryUseCase
+    let coverArtUseCase: CoverArtUseCase
 }
 
 extension AppContainer {
@@ -18,10 +20,13 @@ extension AppContainer {
     ) -> AppContainer {
         // 1. Shared state
         let sessionState = SessionState()
+        let libraryState = LibraryState()
 
         // 2. Gateways
         let serverGateway = RemoteServerGateway(networkSession: networkSession)
         let credentialGateway = KeychainCredentialGateway(environment: environment)
+        let libraryGateway = RemoteLibraryGateway(networkSession: networkSession)
+        let coverArtGateway = RemoteCoverArtGateway(networkSession: networkSession)
 
         // 3. UseCases
         let connectUseCase = DefaultConnectUseCase(
@@ -30,6 +35,12 @@ extension AppContainer {
             sessionState: sessionState
         )
         let sessionUseCase = DefaultSessionUseCase(credentialGateway: credentialGateway, sessionState: sessionState)
+        let libraryUseCase = DefaultLibraryUseCase(
+            libraryGateway: libraryGateway,
+            sessionState: sessionState,
+            libraryState: libraryState
+        )
+        let coverArtUseCase = DefaultCoverArtUseCase(coverArtGateway: coverArtGateway, sessionState: sessionState)
 
         // 4. Routers
         let viewFactory = AppViewFactory()
@@ -44,7 +55,9 @@ extension AppContainer {
             coordinator: coordinator,
             appRouting: appRouting,
             connectUseCase: connectUseCase,
-            sessionUseCase: sessionUseCase
+            sessionUseCase: sessionUseCase,
+            libraryUseCase: libraryUseCase,
+            coverArtUseCase: coverArtUseCase
         )
         viewFactory.useCases = container
         return container

@@ -6,6 +6,7 @@ import Foundation
 nonisolated final class StubURLProtocol: URLProtocol {
     enum Reply {
         case http(status: Int, body: String)
+        case image(String)
         case redirect(to: String)
         case failure(URLError.Code)
     }
@@ -30,6 +31,13 @@ nonisolated final class StubURLProtocol: URLProtocol {
         case .http(let status, let body):
             let response = HTTPURLResponse(url: request.url ?? URL(fileURLWithPath: "/"), statusCode: status, httpVersion: nil, headerFields: nil)
             if let response {
+                client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            }
+            client?.urlProtocol(self, didLoad: Data(body.utf8))
+            client?.urlProtocolDidFinishLoading(self)
+        case .image(let body):
+            if let url = request.url,
+               let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: ["Content-Type": "image/png"]) {
                 client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
             }
             client?.urlProtocol(self, didLoad: Data(body.utf8))

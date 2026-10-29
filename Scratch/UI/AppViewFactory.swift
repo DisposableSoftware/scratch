@@ -19,9 +19,11 @@ final class AppViewFactory: ViewFactory {
             return .root(AnyView(SetupView(viewModel: SetupViewModel(useCases: useCases))))
         case .library:
             let albums = AnyView(AlbumsView(viewModel: AlbumsViewModel(useCases: useCases)))
+            let playlists = AnyView(PlaylistsView(viewModel: PlaylistsViewModel(useCases: useCases)))
             return .root(AnyView(MainView(
                 viewModel: PlayerViewModel(useCases: useCases),
-                albums: navigationStack?.stack(root: albums) ?? albums,
+                albums: navigationStack?.stack(root: albums, pushing: "album") ?? albums,
+                playlists: navigationStack?.stack(root: playlists, pushing: "playlist") ?? playlists,
                 songs: LibraryView(viewModel: LibraryViewModel(useCases: useCases))
             )))
         }

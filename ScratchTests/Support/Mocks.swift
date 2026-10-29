@@ -394,7 +394,7 @@ extension Album {
 
 /// A stack that is just its root: nothing is ever pushed in tests.
 struct NavigationStackPortStub: NavigationStackPort {
-    func stack(root: AnyView) -> AnyView { root }
+    func stack(root: AnyView, pushing kind: String) -> AnyView { root }
 }
 
 extension AlbumDetail {
@@ -412,5 +412,48 @@ extension AlbumDetail {
         }
 
         return AlbumDetail(album: album, tracks: tracks, discTitles: titles)
+    }
+}
+
+final class PlaylistGatewayMock: PlaylistGateway {
+    /// What `playlists` returns, in the order given.
+    var all: [Playlist] = []
+
+    /// What `playlist(id:)` returns, by playlist.
+    var details: [Playlist.ID: PlaylistDetail] = [:]
+    var error: ServerError?
+    var detailError: ServerError?
+    private(set) var requests = 0
+    private(set) var detailRequests: [Playlist.ID] = []
+
+    func playlists(server: SavedServer) async throws(ServerError) -> [Playlist] {
+        requests += 1
+        if let error { throw error }
+
+        return all
+    }
+
+    func playlist(id: Playlist.ID, server: SavedServer) async throws(ServerError) -> PlaylistDetail {
+        detailRequests.append(id)
+        if let detailError { throw detailError }
+        guard let detail = details[id] else { throw ServerError.failed(code: 70, message: "not found") }
+
+        return detail
+    }
+}
+
+extension Playlist {
+    static func numbered(_ count: Int) -> [Playlist] {
+        (0..<count).map { Playlist(id: "p\($0)", name: "Playlist \($0)", owner: "weston", coverArtID: "pc\($0)", songCount: 10, duration: 2400) }
+    }
+}
+
+extension PlaylistDetail {
+    /// A playlist of `count` tracks. A song can come twice: the last track repeats the first.
+    static func numbered(_ count: Int, id: String = "p1", repeatingTheFirst: Bool = false) -> PlaylistDetail {
+        var tracks = (1...count).map { Track(id: "t\($0)", title: "Track \($0)", artist: "Artist \($0)", album: "Album", duration: 200, coverArtID: "al") }
+        if repeatingTheFirst { tracks.append(tracks[0]) }
+
+        return PlaylistDetail(playlist: Playlist(id: id, name: "Road trip", owner: "weston", coverArtID: "pc-\(id)", songCount: tracks.count, duration: 7200), tracks: tracks)
     }
 }

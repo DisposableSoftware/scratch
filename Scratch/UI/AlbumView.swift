@@ -4,8 +4,6 @@ import SwiftUI
 /// Albums tab's stack, which gives it the navigation bar and the back button.
 struct AlbumView: View {
     @ObservedObject var viewModel: AlbumViewModel
-    @Environment(\.displayScale) private var displayScale
-    @Environment(\.theme) private var theme
 
     var body: some View {
         List {
@@ -21,56 +19,16 @@ struct AlbumView: View {
     }
 
     private var header: some View {
-        VStack(spacing: 16) {
-            Color.clear
-                .aspectRatio(1, contentMode: .fit)
-                .overlay { CoverArt(image: viewModel.cover).accessibilityHidden(true) }
-                .frame(maxWidth: 360)
-
-                // The cover is fetched at the width it is shown at.
-                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in
-                    guard width > 0 else { return }
-
-                    viewModel.submitAction(.artworkNeeded(pixelSize: Int((width * displayScale).rounded())))
-                }
-            VStack(spacing: 4) {
-                Text(viewModel.album.name)
-                    .font(.title2.bold())
-                    .multilineTextAlignment(.center)
-
-                if !viewModel.album.artist.isEmpty {
-                    Text(viewModel.album.artist)
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-                }
-
-                if !viewModel.details.isEmpty {
-                    Text(viewModel.details)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .multilineTextAlignment(.center)
-            HStack(spacing: 12) {
-                Button {
-                    viewModel.submitAction(.playTapped)
-                } label: {
-                    Label("Play", systemImage: "play.fill")
-                        .frame(maxWidth: .infinity)
-                        .foregroundStyle(theme.onAccent)
-                }
-                .buttonStyle(.borderedProminent)
-                Button {
-                    viewModel.submitAction(.shuffleTapped)
-                } label: {
-                    Label("Shuffle", systemImage: "shuffle")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-            }
-            .disabled(viewModel.phase != .loaded)
-        }
-        .frame(maxWidth: .infinity)
+        CollectionHeader(
+            cover: viewModel.cover,
+            title: viewModel.album.name,
+            subtitle: viewModel.album.artist,
+            details: viewModel.details,
+            actionsEnabled: viewModel.phase == .loaded,
+            artworkNeeded: { viewModel.submitAction(.artworkNeeded(pixelSize: $0)) },
+            play: { viewModel.submitAction(.playTapped) },
+            shuffle: { viewModel.submitAction(.shuffleTapped) }
+        )
     }
 
     @ViewBuilder private var content: some View {
@@ -117,7 +75,7 @@ struct AlbumView: View {
     }
 }
 
-private struct TrackLine: View {
+struct TrackLine: View {
     let row: AlbumRow
 
     var body: some View {

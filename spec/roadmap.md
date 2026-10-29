@@ -2,25 +2,15 @@
 
 The order of approved work: `planned` requirements, and `partial` ones with a known bug from `/bug`. Change it here when priorities change. `/implement` works through this file: the verification backlog first, then the requirements in the order listed.
 
-1. `ALB-1`: the tab bar gains Playlists.
-2. `PLST-1`: the Playlists grid, by name with cover, name and track count.
-3. `PLST-2`: its columns follow Albums per row.
-4. `PLST-3`: progress, error with Retry, empty.
-5. `PLST-4`: pull to refresh.
-6. `PLST-5`: covers.
-7. `PLST-6`: tap to push the playlist, back returns.
-8. `PLST-7`: the playlist screen.
-9. `PLST-8`: tap a track, Play, Shuffle.
-10. `PLST-9`: hearts, margins, Play's label.
-11. `PLST-10`: the playlist screen's progress, error and empty states.
-12. `PLST-11`: unauthorised returns to setup.
+None.
 
 ## Verification backlog
 
 Built requirements that are not fully verified. Clear these before starting new planned work.
 
+- `PLST-6`, `PLST-8`: in the simulator, tap Playlists, tap a playlist and check its screen is pushed once even on a double tap and only on the Playlists tab, that the back swipe returns to the grid at the same place, that an album pushed on the Albums tab is still there when you come back to it, that tapping a track plays it and the next tracks follow, that Play starts the first track, and that Shuffle plays the playlist through once in a random order.
 - `LIB-7`: in the simulator, on a server with a starred song, open Songs and check the heart shows left of that song's duration, in the accent colour, and not on unstarred songs.
-- `ALB-1`, `PLAY-2`, `LIB-6`: in the simulator, launch signed in and check Albums is first and tapping Songs loads the track list; start a track and check the now-playing bar shows above the tab bar on both tabs, that tapping it opens the player and that its buttons are reachable with VoiceOver; sign out and check the bar goes; open settings from both tabs.
+- `ALB-1`, `PLAY-2`, `LIB-6`: in the simulator, launch signed in and check Albums is first and tapping Songs loads the track list and Playlists its grid; start a track and check the now-playing bar shows above the tab bar on both tabs, that tapping it opens the player and that its buttons are reachable with VoiceOver; sign out and check the bar goes; open settings from both tabs.
 - `ALB-8`, `ALB-12`, `ALB-13`, `ALB-14`: in the simulator, tap an album in the grid, check its screen is pushed once even on a double tap, that the back swipe returns to the grid at the same place, that tapping a track plays it and the next tracks follow, that Play starts the first track, and that Shuffle starts a random one and plays the album through once in that order.
 - `LOOK-5`, `LOOK-6`: in the simulator, open settings, pick another flavour and accent, and check the app (and the open sheet) change at once, that Latte turns the app light and the others dark whatever the simulator's setting, and that the choices are still there after a relaunch.
 - `ALB-18`, `ALB-17`: in the simulator, scroll the Albums grid partway, open settings, change albums per row, close the sheet, and check the grid is still loaded with the same covers and the choice sticks after a relaunch.

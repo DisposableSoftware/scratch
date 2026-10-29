@@ -92,12 +92,16 @@ Scratch/Container/        AppContainer, Has* protocols                          
 Scratch/Routing/          AppStep + AppFlowData, AppRouter (pure)                       ARCH-11, SRV-1
 Scratch/UI/               ViewModel, Coordinator + NavigationDestination, NavigationRoute + RoutingViewModel   ARCH-8, ARCH-10, ARCH-12, ARCH-13
 Scratch/UI/               AppRoutingUseCase + ViewFactory, AppViewFactory, SetupView(Model), LibraryView     ARCH-11, SRV-1, SRV-3
-Scratch/UI/               MainView (Albums + Songs tabs, now-playing bar as bottom accessory)   ALB-1, PLAY-2, LIB-6
+Scratch/UI/               MainView (Albums, Playlists, Songs tabs, now-playing bar as bottom accessory)   ALB-1, PLAY-2, LIB-6
 Scratch/UI/               AlbumsView(Model): the grid, favourites, paging, states, covers   ALB-2…7
 Scratch/UI/               AlbumView(Model), AlbumRows: cover, info, discs, Play, Shuffle, track taps   ALB-8…16
+Scratch/UI/               PlaylistsView(Model), PlaylistView(Model): the grid, the playlist screen, CollectionHeader shared with AlbumView   PLST-1…11
+Scratch/Models/           Playlist, PlaylistDetail                                       PLST-1, PLST-7
+Scratch/Gateways/         RemotePlaylistGateway (getPlaylists, getPlaylist)             PLST-1, PLST-7
+Scratch/UseCases/         PlaylistUseCase (by name, sign-out races)                      PLST-1, PLST-7, PLST-11
 Scratch/UI/               FavouriteHeart: the read-only mark on a starred track   LIB-7, ALB-20
 Scratch/UI/               NavigationStackPort (Port: the host's stack for `.push` screens)   ALB-8, ARCH-15
-Scratch/App/              PushStackHost: the stack's path, `.push` handler               ALB-8
+Scratch/App/              PushStackHost: one path per tab (by the key's kind), `.push` handler   ALB-8, PLST-6
 Scratch/Models/           AlbumDetail, AlbumTrack, AlbumDisc                             ALB-9, ALB-10
 Scratch/Models/           Album, AlbumsPerRow (1…5, default 2)                           ALB-2, ALB-17
 Scratch/State/            DisplayState (albums per row, flavour, accent); DisplayUseCase saves them   ALB-17, ALB-18, LOOK-6

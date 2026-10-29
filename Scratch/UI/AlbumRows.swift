@@ -18,3 +18,9 @@ struct AlbumSection: Equatable, Identifiable {
     var header: String?
     var rows: [AlbumRow]
 }
+
+/// A track in a playlist: it is told apart by its place, since a playlist can hold a song twice.
+struct PlaylistRow: Equatable, Identifiable {
+    var id: Int
+    var line: AlbumRow
+}

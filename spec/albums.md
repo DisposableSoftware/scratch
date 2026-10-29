@@ -6,7 +6,7 @@ The Albums tab, and the screen for one album. Tracks and their art are the same 
 
 | ID | Requirement | Status | Verified by |
 |----|-------------|--------|-------------|
-| `ALB-1` | Once signed in, the app's main screen is a tab bar with **Albums**, **Playlists** and **Songs**, in that order, and it opens on Albums. Songs is the track list of `LIB-1`, and Playlists is `PLST-1`. | planned | `manual:` live screenshot of a signed-in launch: Albums first with all three tabs; tapping Songs and Playlists is in the verification backlog |
+| `ALB-1` | Once signed in, the app's main screen is a tab bar with **Albums**, **Playlists** and **Songs**, in that order, and it opens on Albums. Songs is the track list of `LIB-1`, and Playlists is `PLST-1`. | partial: not tapped in the simulator yet; see the verification backlog | `PushStackHostTests` (the main screen is built with both tabs' stacks); `manual:` live screenshot of a signed-in launch: Albums first; tapping Songs and Playlists is in the verification backlog |
 
 ## The Albums grid
 
@@ -52,7 +52,7 @@ The Albums tab, and the screen for one album. Tracks and their art are the same 
 - The favourites and the first page must both load: if either fails, the tab shows the error with Retry.
 - Disc titles come from `getAlbum`'s `discTitles`, matched by disc number. A track without a `discNumber` is on disc 1.
 - A pushed screen is a `NavigationDestination` (a `.push` case) that goes through the Coordinator, like the sheets (`ARCH-12`, `ARCH-13`). Views have no `NavigationLink`, so the stack's path is owned by the host in `App/`, and the album screen is built by a ViewModel-local Route from the Albums ViewModel.
-- A `.push` carries a key naming its screen (`album:<id>`), and the host ignores a push whose key is the screen already on top, so a double tap pushes one screen. The same album can be pushed again once something else is on top.
+- A `.push` carries a key naming its screen (`album:<id>`, `playlist:<id>`); each tab's stack takes the keys of its own kind, so a push lands on one tab only (`PLST-6`), and the host ignores a push whose key is the screen already on top, so a double tap pushes one screen. The same album can be pushed again once something else is on top.
 - The album screen shows the grid's cover and info at once, loads the tracks and refreshes the info from `getAlbum`, and loads again each time it's pushed (nothing is cached). A second appearance while it loads waits for the first. Its cover is fetched at the width it's shown at, with the same keep-smaller, refetch-larger, fetch-after rules as the grid's. The album's name is in the navigation bar and again under the cover.
 - Play is disabled until the tracks have loaded. An album with no tracks says so.
 - Tab selection is the container's own state, not a route: nothing navigates between tabs. A tab loads when it is first shown, so Songs no longer loads at launch.

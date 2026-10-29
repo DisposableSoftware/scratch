@@ -202,6 +202,44 @@ struct LiveServerTests {
         }
     }
 
+    /// PLST-1, PLST-5, PLST-7 against the real server: the playlists come by name, and one opens
+    /// with its tracks. With SCRATCH_SNAPSHOT_DIR set, the grid and a playlist's screen are saved.
+    @Test func playlistsListAndShowTheirTracks() async throws {
+        try await container.connectUseCase.connect(address: LiveServer.address, username: LiveServer.username, password: LiveServer.password)
+
+        guard let playlists = try await container.playlistUseCase.playlists(), let first = playlists.first(where: { ($0.songCount ?? 0) > 0 }) else {
+            Issue.record("the server has no playlist with tracks")
+            return
+        }
+
+        let names = playlists.map(\.name)
+
+        #expect(names == names.sorted { $0.localizedStandardCompare($1) == .orderedAscending })
+
+        let detail = try #require(try await container.playlistUseCase.playlist(id: first.id))
+
+        #expect(detail.tracks.count == first.songCount)
+        #expect(detail.tracks.allSatisfy { !$0.id.isEmpty })
+
+        guard let directory = LiveServer.snapshotDirectory else { return }
+
+        let grid = PlaylistsViewModel(useCases: container)
+        _ = await grid.handleAction(.lifecycle(.viewDidAppear))
+
+        for playlist in playlists { _ = await grid.handleAction(.artworkNeeded(coverArtID: playlist.coverArtID ?? "", pixelSize: 540)) }
+
+        let screen = PlaylistViewModel(playlist: first, useCases: container)
+        _ = await screen.handleAction(.lifecycle(.viewDidAppear))
+        _ = await screen.handleAction(.artworkNeeded(pixelSize: 1080))
+
+        for (name, image) in [
+            ("plst1-playlists", await WindowSnapshot.image(of: PlaylistsView(viewModel: grid), size: CGSize(width: 402, height: 874))),
+            ("plst7-playlist", await WindowSnapshot.image(of: PlaylistView(viewModel: screen), size: CGSize(width: 402, height: 874))),
+        ] {
+            try #require(image?.pngData()).write(to: URL(fileURLWithPath: directory).appending(path: "\(name).png"))
+        }
+    }
+
     /// ALB-16 against the real server: an album request signed with credentials it no longer
     /// accepts comes back as a rejection, which sends the app to setup. One bad request is enough,
     /// since every request goes through the same client, and Navidrome allows only a few failed

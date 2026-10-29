@@ -36,6 +36,45 @@ struct AlbumsViewModelTests {
         #expect(viewModel.columns == 2)
     }
 
+    @Test func favouritesAreShownAboveTheOthers() async {
+        gateway.all = Album.numbered(10)
+        gateway.starred = [gateway.all[2]]
+        let viewModel = viewModel
+
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
+        #expect(viewModel.phase == .loaded)
+        #expect(viewModel.favourites.map(\.id) == ["a2"])
+        #expect(viewModel.albums.count == 9 && !viewModel.albums.contains { $0.id == "a2" })
+    }
+
+    @Test func aServerWithOnlyFavouritesIsNotEmpty() async {
+        gateway.all = Album.numbered(2)
+        gateway.starred = gateway.all
+        let viewModel = viewModel
+
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
+        #expect(viewModel.phase == .loaded && viewModel.favourites.count == 2 && viewModel.albums.isEmpty)
+    }
+
+    @Test func aFailedFavouritesRequestShowsTheError() async {
+        gateway.all = Album.numbered(3)
+        gateway.starredError = .unreachable
+        let viewModel = viewModel
+
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
+        guard case .failed(let message) = viewModel.phase else {
+            Issue.record("expected failed, got \(viewModel.phase)")
+            return
+        }
+        #expect(message.contains("Couldn't reach the server"))
+        gateway.starredError = nil
+        _ = await viewModel.handleAction(.retry)
+        #expect(viewModel.phase == .loaded)
+    }
+
     @Test func anEmptyServerSaysSo() async {
         let viewModel = viewModel
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))

@@ -135,6 +135,21 @@ struct LiveServerTests {
         #expect(Set(first.map(\.id)).isDisjoint(with: second.map(\.id)))
     }
 
+    /// ALB-3 against the real server: the starred albums come first, by name, and aren't repeated.
+    @Test func favouritesComeFirstAndAreNotRepeated() async throws {
+        try await container.connectUseCase.connect(address: LiveServer.address, username: LiveServer.username, password: LiveServer.password)
+
+        try await container.albumUseCase.loadFirstPage()
+
+        let favourites = container.albumUseCase.favourites
+        let names = favourites.map { $0.name }
+        let ordered = names.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+        let others = Set(container.albumUseCase.albums.map { $0.id })
+        #expect(favourites.allSatisfy { $0.isStarred })
+        #expect(names == ordered)
+        #expect(Set(favourites.map { $0.id }).isDisjoint(with: others))
+    }
+
     @Test func connectsAndSavesTheServer() async throws {
         try await container.connectUseCase.connect(address: LiveServer.address, username: LiveServer.username, password: LiveServer.password)
 

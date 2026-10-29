@@ -233,12 +233,21 @@ final class SessionUseCaseMock: SessionUseCase {
 final class AlbumGatewayMock: AlbumGateway {
     /// Pages are cut from this list by offset and count.
     var all: [Album] = []
+    /// What `starredAlbums` returns, in the order given.
+    var starred: [Album] = []
     var error: ServerError?
+    var starredError: ServerError?
+    /// Fail every album request after this many have been made.
+    var failAfterRequests: Int?
+    /// Answer every page from the start, as a server that ignores the offset would.
+    var ignoresOffset = false
     var gate: (() async -> Void)?
+    var starredGate: (() async -> Void)?
     private(set) var requests: [(offset: Int, count: Int)] = []
+    private(set) var starredRequests = 0
 
-    /// Holds the next request open. `entered` yields once that request is inside the gateway;
-    /// `release` lets it finish. Later requests aren't held.
+    /// Holds the next album request open. `entered` yields once that request is inside the
+    /// gateway; `release` lets it finish. Later requests aren't held.
     func holdNextRequest() -> (entered: AsyncStream<Void>, release: () -> Void) {
         let (entered, signalEntered) = AsyncStream.makeStream(of: Void.self)
         let (held, release) = AsyncStream.makeStream(of: Void.self)
@@ -250,11 +259,33 @@ final class AlbumGatewayMock: AlbumGateway {
         return (entered, { release.yield(); release.finish() })
     }
 
+    /// The same for the next favourites request.
+    func holdNextStarredRequest() -> (entered: AsyncStream<Void>, release: () -> Void) {
+        let (entered, signalEntered) = AsyncStream.makeStream(of: Void.self)
+        let (held, release) = AsyncStream.makeStream(of: Void.self)
+        starredGate = { [weak self] in
+            self?.starredGate = nil
+            signalEntered.yield()
+            for await _ in held { break }
+        }
+        return (entered, { release.yield(); release.finish() })
+    }
+
     func albums(offset: Int, count: Int, server: SavedServer) async throws(ServerError) -> [Album] {
         requests.append((offset, count))
         if let gate { await gate() }
         if let error { throw error }
-        return Array(all.dropFirst(offset).prefix(count))
+        if let failAfterRequests, requests.count > failAfterRequests { throw .unreachable }
+        return Array(all.dropFirst(ignoresOffset ? 0 : offset).prefix(count))
+    }
+
+    func starredAlbums(server: SavedServer) async throws(ServerError) -> [Album] {
+        starredRequests += 1
+        // The answer is what the server held when asked, not when it finishes.
+        let answer = starred
+        if let starredGate { await starredGate() }
+        if let starredError { throw starredError }
+        return answer
     }
 }
 

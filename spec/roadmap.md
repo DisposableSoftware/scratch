@@ -2,13 +2,12 @@
 
 The order of approved work: `planned` requirements, and `partial` ones with a known bug from `/bug`. Change it here when priorities change. `/implement` works through this file: the verification backlog first, then the requirements in the order listed.
 
-1. `ALB-3`, `ALB-4`: the Favourites section, and the All Albums header that goes with it.
-2. `ALB-5`: pull to refresh on Albums.
-3. `ALB-17`, `ALB-18`: the albums-per-row setting.
-4. `ALB-8`, `ALB-9`, `ALB-10`, `ALB-11`, `ALB-15`: the album screen, pushed from the grid, with its info, discs, track rows and states.
-5. `ALB-12`, `ALB-13`: tapping a track and Play.
-6. `PLAY-9`, `ALB-14`: shuffle.
-7. `ALB-16`: a rejected album request returns to setup.
+1. `ALB-5`: pull to refresh on Albums.
+2. `ALB-17`, `ALB-18`: the albums-per-row setting.
+3. `ALB-8`, `ALB-9`, `ALB-10`, `ALB-11`, `ALB-15`: the album screen, pushed from the grid, with its info, discs, track rows and states.
+4. `ALB-12`, `ALB-13`: tapping a track and Play.
+5. `PLAY-9`, `ALB-14`: shuffle.
+6. `ALB-16`: a rejected album request returns to setup.
 
 ## Verification backlog
 

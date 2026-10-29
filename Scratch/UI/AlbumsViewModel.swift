@@ -39,6 +39,9 @@ final class AlbumsViewModel: RoutingViewModel {
     var coordinator: Coordinator { useCases.coordinator }
 
     @Published private(set) var phase = Phase.loading
+    /// The starred albums, shown above the rest (ALB-3).
+    @Published private(set) var favourites: [Album] = []
+    /// The other albums.
     @Published private(set) var albums: [Album] = []
     @Published private(set) var columns = 2
     @Published private(set) var isLoadingMore = false
@@ -60,7 +63,7 @@ final class AlbumsViewModel: RoutingViewModel {
     func handleAction(_ action: AlbumsAction) async -> SideEffect {
         switch action {
         case .lifecycle(.viewDidAppear):
-            if albums.isEmpty { await loadFirstPage() }
+            if albums.isEmpty && favourites.isEmpty { await loadFirstPage() }
         case .retry:
             if phase == .loaded { await loadNextPage() } else { await loadFirstPage() }
         case .albumAppeared(let id):
@@ -82,8 +85,9 @@ final class AlbumsViewModel: RoutingViewModel {
         loadMoreError = nil
         do {
             try await useCases.albumUseCase.loadFirstPage()
+            favourites = useCases.albumUseCase.favourites
             albums = useCases.albumUseCase.albums
-            phase = albums.isEmpty ? .empty : .loaded
+            phase = albums.isEmpty && favourites.isEmpty ? .empty : .loaded
         } catch {
             phase = .failed(Self.message(for: error))
         }

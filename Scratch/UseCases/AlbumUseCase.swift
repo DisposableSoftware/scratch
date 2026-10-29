@@ -1,9 +1,14 @@
-/// The albums: loading them from the start and a page at a time (ALB-4).
+import Foundation
+
+/// The albums: the favourites, and the others a page at a time (ALB-3, ALB-4).
 protocol AlbumUseCase {
+    /// The starred albums, by name.
+    var favourites: [Album] { get }
+    /// The other albums, in the server's order.
     var albums: [Album] { get }
     var hasMoreAlbums: Bool { get }
 
-    /// Loads the first page, replacing whatever was loaded.
+    /// Loads the favourites and the first page, replacing whatever was loaded. Both must load.
     func loadFirstPage() async throws(ServerError)
     /// Loads the page after the last one, unless the server has run out or a load is running.
     func loadNextPage() async throws(ServerError)
@@ -11,6 +16,9 @@ protocol AlbumUseCase {
 
 final class DefaultAlbumUseCase: AlbumUseCase {
     static let pageSize = 100
+    /// Most pages taken in a row to find an album that isn't a favourite, so a server that ignores
+    /// the offset can't keep a load running for good.
+    static let maxGapPages = 10
 
     private let albumGateway: AlbumGateway
     private let sessionState: SessionState
@@ -26,6 +34,7 @@ final class DefaultAlbumUseCase: AlbumUseCase {
         self.albumsState = albumsState
     }
 
+    var favourites: [Album] { albumsState.favourites }
     var albums: [Album] { albumsState.albums }
     var hasMoreAlbums: Bool { albumsState.hasMoreAlbums }
 
@@ -35,19 +44,43 @@ final class DefaultAlbumUseCase: AlbumUseCase {
         let current = generation
         loadingFirstPage = true
         defer { if current == generation { loadingFirstPage = false } }
+
+        // The favourites and the first page load together.
+        let gateway = albumGateway
+        let starredTask = Task { () async -> Result<[Album], ServerError> in
+            do throws(ServerError) {
+                return .success(try await gateway.starredAlbums(server: server))
+            } catch {
+                return .failure(error)
+            }
+        }
         let page: [Album]
+        let starred: [Album]
         do {
             page = try await albumGateway.albums(offset: 0, count: Self.pageSize, server: server)
+            starred = try await starredTask.value.get()
         } catch {
+            starredTask.cancel()
             guard current == generation, sessionState.server == server else { return }
             throw error
         }
         // A page for a server signed out of meanwhile, or from before a reload, is dropped.
         guard current == generation, sessionState.server == server else { return }
+
+        let favourites = Self.byName(starred)
+        let favouriteIDs = Set(favourites.map(\.id))
         var seen = Set<Album.ID>()
-        albumsState.albums = page.filter { seen.insert($0.id).inserted }
+        albumsState.favourites = favourites
+        albumsState.albums = page.filter { !favouriteIDs.contains($0.id) && seen.insert($0.id).inserted }
         albumsState.hasMoreAlbums = page.count == Self.pageSize
         albumsState.nextOffset = page.count
+
+        // A page of nothing but favourites shows nothing new, so nothing would ask for the next.
+        var gapPages = 0
+        while albumsState.albums.isEmpty, albumsState.hasMoreAlbums, gapPages < Self.maxGapPages {
+            gapPages += 1
+            guard try await appendNextPage(server: server, generation: current) != nil else { return }
+        }
     }
 
     func loadNextPage() async throws(ServerError) {
@@ -56,18 +89,38 @@ final class DefaultAlbumUseCase: AlbumUseCase {
         loadingNextPage = true
         defer { loadingNextPage = false }
         let current = generation
+        for _ in 0..<Self.maxGapPages {
+            guard let added = try await appendNextPage(server: server, generation: current) else { return }
+            // A page of nothing but favourites adds nothing to scroll to, so take the next too.
+            if added > 0 || !albumsState.hasMoreAlbums { return }
+        }
+    }
+
+    /// Fetches the page after the last and adds what isn't a favourite or already shown. Returns
+    /// how many it added, or nil if the page is for a reload or a server since left, and dropped.
+    private func appendNextPage(server: SavedServer, generation current: Int) async throws(ServerError) -> Int? {
         let page: [Album]
         do {
             page = try await albumGateway.albums(offset: albumsState.nextOffset, count: Self.pageSize, server: server)
         } catch {
-            guard current == generation, sessionState.server == server else { return }
+            guard current == generation, sessionState.server == server else { return nil }
             throw error
         }
-        guard current == generation, sessionState.server == server else { return }
+        guard current == generation, sessionState.server == server else { return nil }
         // If the server's order shifted between pages, an album can come round again.
-        let known = Set(albumsState.albums.map(\.id))
-        albumsState.albums += page.filter { !known.contains($0.id) }
+        var known = Set(albumsState.albums.map(\.id)).union(albumsState.favourites.map(\.id))
+        let added = page.filter { known.insert($0.id).inserted }
+        albumsState.albums += added
         albumsState.hasMoreAlbums = page.count == Self.pageSize
         albumsState.nextOffset += page.count
+        return added.count
+    }
+
+    private static func byName(_ albums: [Album]) -> [Album] {
+        var seen = Set<Album.ID>()
+        return albums.filter { seen.insert($0.id).inserted }.sorted {
+            let order = $0.name.localizedStandardCompare($1.name)
+            return order == .orderedSame ? $0.id < $1.id : order == .orderedAscending
+        }
     }
 }

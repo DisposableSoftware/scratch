@@ -41,8 +41,25 @@ struct AlbumsView: View {
         case .loaded:
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: spacing, alignment: .top), count: viewModel.columns), spacing: spacing) {
-                    ForEach(viewModel.albums) { album in
-                        AlbumCell(album: album, viewModel: viewModel)
+                    if !viewModel.favourites.isEmpty {
+                        Section {
+                            ForEach(viewModel.favourites) { album in
+                                AlbumCell(album: album, viewModel: viewModel)
+                            }
+                        } header: {
+                            SectionHeader(title: "Favourites")
+                        }
+                    }
+                    Section {
+                        ForEach(viewModel.albums) { album in
+                            AlbumCell(album: album, viewModel: viewModel)
+                        }
+                    } header: {
+                        // The header tells the sections apart, so it needs a section above it, and
+                        // albums below it.
+                        if !viewModel.favourites.isEmpty && !viewModel.albums.isEmpty {
+                            SectionHeader(title: "All Albums")
+                        }
                     }
                 }
                 .padding(.horizontal, spacing)
@@ -60,6 +77,18 @@ struct AlbumsView: View {
                 }
             }
         }
+    }
+}
+
+private struct SectionHeader: View {
+    let title: String
+
+    var body: some View {
+        Text(title)
+            .font(.title3.bold())
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 8)
+            .accessibilityAddTraits(.isHeader)
     }
 }
 

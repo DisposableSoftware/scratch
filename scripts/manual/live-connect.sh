@@ -20,10 +20,12 @@ xcrun simctl bootstatus "$device" -b >/dev/null
 # Start from a clean app: no saved server.
 xcrun simctl uninstall "$device" lol.weston.scratch 2>/dev/null || true
 
+# Diagnostics collection is off: after a passing run xcodebuild has sat in `simctl diagnose` for
+# its full ten minutes, which looked like a hung script.
 # xcodebuild hands TEST_RUNNER_-prefixed variables to the test process without the prefix.
 TEST_RUNNER_SCRATCH_SERVER=$SCRATCH_SERVER TEST_RUNNER_SCRATCH_USER=$SCRATCH_USER TEST_RUNNER_SCRATCH_PASSWORD=$SCRATCH_PASSWORD \
   xcodebuild -project Scratch.xcodeproj -scheme Scratch -destination "platform=iOS Simulator,name=$device" \
-  -derivedDataPath build -only-testing:ScratchTests/LiveServerTests test 2>&1 |
+  -derivedDataPath build -collect-test-diagnostics never -only-testing:ScratchTests/LiveServerTests test 2>&1 |
   { grep -E '✔|✘|passed|failed|error:' || true; } | { grep -v IDESchemeActionSDKRecord || true; }
 
 # The test run left the saved server in the app's container; launching should go to the library.

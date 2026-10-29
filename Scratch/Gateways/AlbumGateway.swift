@@ -4,6 +4,8 @@ import Foundation
 protocol AlbumGateway {
     /// One page of every album, ordered by name.
     func albums(offset: Int, count: Int, server: SavedServer) async throws(ServerError) -> [Album]
+    /// Every album the user has starred, in the order the server gives.
+    func starredAlbums(server: SavedServer) async throws(ServerError) -> [Album]
 }
 
 final class RemoteAlbumGateway: AlbumGateway {
@@ -23,6 +25,20 @@ final class RemoteAlbumGateway: AlbumGateway {
         let payload = try await client.send(request, to: server, as: AlbumListPayload.self)
         return (payload.albumList2.album ?? []).map(\.album)
     }
+
+    /// `getStarred2` lists the starred albums in one request.
+    func starredAlbums(server: SavedServer) async throws(ServerError) -> [Album] {
+        let payload = try await client.send(SubsonicRequest(method: "getStarred2"), to: server, as: StarredPayload.self)
+        return (payload.starred2.album ?? []).map(\.album)
+    }
+}
+
+private struct StarredPayload: Decodable {
+    struct Starred: Decodable {
+        let album: [AlbumEntry]?
+    }
+
+    let starred2: Starred
 }
 
 private struct AlbumListPayload: Decodable {

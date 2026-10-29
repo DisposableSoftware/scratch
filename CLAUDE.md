@@ -35,7 +35,7 @@ scripts/arch-lint.sh                  # the architecture rules in spec/architect
 scripts/test-arch-lint.sh             # tests for arch-lint, one break of each rule
 ```
 
-`scripts/check.sh` builds the app and runs `ScratchTests` on the iPhone 17 simulator (iOS 27.0). Set `SCRATCH_SIMULATOR` to use another device. Directly:
+`scripts/check.sh` builds the app and runs `ScratchTests` on the iPhone 17 simulator (iOS 27.0). Every `xcodebuild test` here passes `-collect-test-diagnostics never`: after a failed run, `xcodebuild` otherwise sits in `simctl diagnose` for ten minutes. Set `SCRATCH_SIMULATOR` to use another device. Directly:
 
 ```sh
 xcodebuild -project Scratch.xcodeproj -scheme Scratch \
@@ -93,11 +93,11 @@ Scratch/Routing/          AppStep + AppFlowData, AppRouter (pure)               
 Scratch/UI/               ViewModel, Coordinator + NavigationDestination, NavigationRoute + RoutingViewModel   ARCH-8, ARCH-10, ARCH-12, ARCH-13
 Scratch/UI/               AppRoutingUseCase + ViewFactory, AppViewFactory, SetupView(Model), LibraryView     ARCH-11, SRV-1, SRV-3
 Scratch/UI/               MainView (Albums + Songs tabs, now-playing bar as bottom accessory)   ALB-1, PLAY-2, LIB-6
-Scratch/UI/               AlbumsView(Model): the grid, paging, states, covers            ALB-2, ALB-4, ALB-6, ALB-7
+Scratch/UI/               AlbumsView(Model): the grid, favourites, paging, states, covers   ALB-2…4, ALB-6, ALB-7
 Scratch/Models/           Album                                                          ALB-2
 Scratch/State/            AlbumsState (albums shown, next offset)                       ALB-4
-Scratch/Gateways/         RemoteAlbumGateway (getAlbumList2 by name)                     ALB-2, ALB-4
-Scratch/UseCases/         AlbumUseCase (paging, reload and sign-out races)               ALB-4
+Scratch/Gateways/         RemoteAlbumGateway (getAlbumList2 by name, getStarred2)        ALB-2, ALB-3, ALB-4
+Scratch/UseCases/         AlbumUseCase (favourites + paging, reload and sign-out races)  ALB-3, ALB-4
 Scratch/State/            SessionState (the signed-in ServerAccount)                    SRV-1
 Scratch/Models/           ServerAddress (URL parsing), SubsonicCredentials (salt+token)  SRV-2, SRV-4
 Scratch/Gateways/         SubsonicRequest: every server URL, signed                      PROD-3, SRV-4

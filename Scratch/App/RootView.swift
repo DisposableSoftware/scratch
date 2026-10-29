@@ -4,6 +4,11 @@ import SwiftUI
 struct RootView: View {
     @ObservedObject var presenter: RootPresenter
 
+    /// The flavour and accent (LOOK-2, LOOK-4), applied to everything below, sheets included.
+    @ObservedObject var display: DisplayState
+
+    private var theme: Theme { Theme(flavour: display.flavour, accent: display.accent) }
+
     var body: some View {
         Group {
             if let screen = presenter.screen {
@@ -24,6 +29,9 @@ struct RootView: View {
         } message: { alert in
             Text(alert.message)
         }
+        .tint(theme.accent)
+        .preferredColorScheme(theme.colorScheme)
+        .environment(\.theme, theme)
     }
 
     private var sheetShown: Binding<Bool> {

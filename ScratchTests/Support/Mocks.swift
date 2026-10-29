@@ -226,6 +226,8 @@ final class NetworkGatewayStub: NetworkGateway {
 final class SettingsGatewayMock: SettingsGateway {
     private(set) var saved: TranscodingSettings?
     var savedAlbumsPerRow: Int?
+    var savedFlavour: Flavour?
+    var savedAccent: Accent?
 
     func transcoding() -> TranscodingSettings? { saved }
 
@@ -234,15 +236,35 @@ final class SettingsGatewayMock: SettingsGateway {
     func albumsPerRow() -> Int? { savedAlbumsPerRow }
 
     func saveAlbumsPerRow(_ count: Int) { savedAlbumsPerRow = count }
+
+    func flavour() -> Flavour? { savedFlavour }
+
+    func saveFlavour(_ flavour: Flavour) { savedFlavour = flavour }
+
+    func accent() -> Accent? { savedAccent }
+
+    func saveAccent(_ accent: Accent) { savedAccent = accent }
 }
 
 final class DisplayUseCaseMock: DisplayUseCase {
     let state = DisplayState()
     private(set) var calls: [Int] = []
+    private(set) var flavours: [Flavour] = []
+    private(set) var accents: [Accent] = []
 
     func setAlbumsPerRow(_ count: Int) {
         calls.append(count)
         state.albumsPerRow = count
+    }
+
+    func setFlavour(_ flavour: Flavour) {
+        flavours.append(flavour)
+        state.flavour = flavour
+    }
+
+    func setAccent(_ accent: Accent) {
+        accents.append(accent)
+        state.accent = accent
     }
 }
 

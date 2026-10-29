@@ -23,6 +23,16 @@ struct SettingsView: View {
                     .pickerStyle(.segmented)
                 }
 
+                Section("Appearance") {
+                    Picker("Flavour", selection: viewModel.binding(\.flavour, to: { .flavourChanged($0) })) {
+                        ForEach(Flavour.allCases, id: \.self) { flavour in
+                            Text(flavour.label).tag(flavour)
+                        }
+                    }
+
+                    accentSwatches
+                }
+
                 qualitySection(.wifi, title: "On Wi-Fi", quality: viewModel.transcoding.wifi)
                 qualitySection(.cellular, title: "On cellular", quality: viewModel.transcoding.cellular)
                 Section {
@@ -38,6 +48,26 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    /// The accents, each drawn as the chosen flavour draws it (LOOK-5).
+    private var accentSwatches: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 14) {
+            ForEach(Accent.allCases, id: \.self) { accent in
+                let chosen = accent == viewModel.accent
+
+                Button { viewModel.submitAction(.accentChanged(accent)) } label: {
+                    Circle()
+                        .fill(Color(accent, in: viewModel.flavour))
+                        .frame(width: 28, height: 28)
+                        .overlay { if chosen { Circle().stroke(.primary, lineWidth: 2).padding(-4) } }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(accent.label)
+                .accessibilityAddTraits(chosen ? .isSelected : [])
+            }
+        }
+        .padding(.vertical, 6)
     }
 
     private func qualitySection(_ network: NetworkKind, title: String, quality: StreamQuality) -> some View {

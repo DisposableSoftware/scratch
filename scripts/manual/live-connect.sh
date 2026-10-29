@@ -5,6 +5,7 @@
 #   SRV-5: launching the app afterwards opens the library, not setup (screenshot).
 #   ALB-9 to ALB-12: an album's tracks in disc order, and screenshots of its screen (alb9-*.png).
 #   ALB-17, ALB-18: the Albums grid at 5, 1 and 2 per row, from the saved setting.
+#   LOOK-1 to LOOK-4: the Albums grid in each flavour with an accent (look-*-albums.png).
 #   LIB-1, LIB-5: that library lists the server's tracks with title, artist, album, duration and art.
 # Credentials come from the environment and are never written anywhere:
 #   SCRATCH_SERVER=… SCRATCH_USER=… SCRATCH_PASSWORD=… scripts/manual/live-connect.sh [OUT_DIR]
@@ -49,6 +50,16 @@ for per_row in 5 1 2; do
   xcrun simctl io "$device" screenshot "$out/alb17-$per_row-per-row.png" >/dev/null 2>&1
 done
 echo "screenshots: $out/alb17-{5,1,2}-per-row.png (expect that many covers per row)"
+
+# LOOK-1 to LOOK-4: the grid in each flavour with an accent, read from the setting at launch. Latte
+# should be light and the others dark, whatever the simulator's own appearance is.
+for pair in mocha:mauve latte:blue frappe:peach macchiato:teal; do
+  xcrun simctl terminate "$device" lol.weston.scratch 2>/dev/null || true
+  xcrun simctl launch "$device" lol.weston.scratch -settings.flavour "${pair%%:*}" -settings.accent "${pair##*:}" >/dev/null
+  sleep 6
+  xcrun simctl io "$device" screenshot "$out/look-${pair%%:*}-albums.png" >/dev/null 2>&1
+done
+echo "screenshots: $out/look-{mocha,latte,frappe,macchiato}-albums.png (expect dark, light, dark, dark with the accent on the tab bar)"
 
 # Leave no signed-in app behind: unit tests run inside it, and must never reach a real server.
 xcrun simctl terminate "$device" lol.weston.scratch 2>/dev/null || true

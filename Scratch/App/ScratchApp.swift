@@ -23,7 +23,7 @@ struct ScratchApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView(presenter: presenter)
+            RootView(presenter: presenter, display: container.displayUseCase.state)
                 .task {
                     // Unit tests run inside the app; it stays on its spinner, signed out and offline.
                     guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }

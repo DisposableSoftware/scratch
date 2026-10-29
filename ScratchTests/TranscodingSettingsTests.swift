@@ -127,4 +127,19 @@ struct SettingsViewModelTests {
 
         #expect(display.calls == [4] && viewModel.albumsPerRow == 4)
     }
+
+    // LOOK-5
+
+    @Test func theFlavourAndAccentChoicesReachTheUseCaseAndComeBack() async {
+        let display = DisplayUseCaseMock()
+        let viewModel = SettingsViewModel(useCases: SettingsUseCases(transcodingUseCase: TranscodingUseCaseMock(), coordinator: CoordinatorSpy(), displayUseCase: display))
+
+        #expect(viewModel.flavour == .mocha && viewModel.accent == .mauve)
+
+        _ = await viewModel.handleAction(.flavourChanged(.latte))
+        _ = await viewModel.handleAction(.accentChanged(.green))
+
+        #expect(display.flavours == [.latte] && display.accents == [.green])
+        #expect(viewModel.flavour == .latte && viewModel.accent == .green)
+    }
 }

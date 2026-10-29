@@ -16,7 +16,6 @@ private struct AlbumsUseCases: HasAlbumUseCase, HasCoverArtUseCase, HasPlaybackU
 }
 
 @Suite(.timeLimit(.minutes(1)))
-
 struct AlbumsViewModelTests {
     private let gateway = AlbumGatewayMock()
     private let art = CoverArtUseCaseMock()

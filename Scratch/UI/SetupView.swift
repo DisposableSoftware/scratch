@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SetupView: View {
     @ObservedObject var viewModel: SetupViewModel
+    @Environment(\.theme) private var theme
 
     var body: some View {
         NavigationStack {
@@ -47,7 +48,7 @@ struct SetupView: View {
                 } footer: {
                     if let message = viewModel.errorMessage {
                         Text(message)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(theme.error)
                     }
                 }
             }

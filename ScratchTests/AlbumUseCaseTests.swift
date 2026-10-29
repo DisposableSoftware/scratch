@@ -2,7 +2,6 @@ import Testing
 @testable import Scratch
 
 @Suite(.timeLimit(.minutes(1)))
-
 struct AlbumUseCaseTests {
     private let gateway = AlbumGatewayMock()
     private let albumsState = AlbumsState()

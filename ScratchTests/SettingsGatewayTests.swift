@@ -66,4 +66,51 @@ struct SettingsGatewayTests {
 
         #expect(UserDefaultsSettingsGateway(environment: environment).albumsPerRow() == 4)
     }
+
+    // LOOK-6
+
+    @Test func flavourAndAccentRoundTripAcrossInstances() {
+        let environment = AppEnvironment.fresh()
+        defer { environment.remove() }
+
+        #expect(UserDefaultsSettingsGateway(environment: environment).flavour() == nil)
+        #expect(UserDefaultsSettingsGateway(environment: environment).accent() == nil)
+        UserDefaultsSettingsGateway(environment: environment).saveFlavour(.macchiato)
+        UserDefaultsSettingsGateway(environment: environment).saveAccent(.sky)
+
+        #expect(UserDefaultsSettingsGateway(environment: environment).flavour() == .macchiato)
+        #expect(UserDefaultsSettingsGateway(environment: environment).accent() == .sky)
+    }
+
+    @Test func aNameFromALaunchArgumentIsTheChoice() {
+        // What `-settings.flavour latte` puts in the defaults.
+        let environment = AppEnvironment.fresh()
+        defer { environment.remove() }
+        environment.defaults.set("latte", forKey: "settings.flavour")
+        environment.defaults.set("blue", forKey: "settings.accent")
+
+        #expect(UserDefaultsSettingsGateway(environment: environment).flavour() == .latte)
+        #expect(UserDefaultsSettingsGateway(environment: environment).accent() == .blue)
+    }
+
+    @Test(arguments: ["", "Mocha", "solarized", "red", "3"])
+    func aNameTheAppDoesntKnowCountsAsNothingSaved(name: String) {
+        let environment = AppEnvironment.fresh()
+        defer { environment.remove() }
+        environment.defaults.set(name, forKey: "settings.flavour")
+        environment.defaults.set(name, forKey: "settings.accent")
+
+        #expect(UserDefaultsSettingsGateway(environment: environment).flavour() == nil)
+        #expect(UserDefaultsSettingsGateway(environment: environment).accent() == nil)
+    }
+
+    @Test func somethingThatIsNotAStringCountsAsNothingSaved() {
+        let environment = AppEnvironment.fresh()
+        defer { environment.remove() }
+        environment.defaults.set(Data([1, 2, 3]), forKey: "settings.flavour")
+        environment.defaults.set(["mauve"], forKey: "settings.accent")
+
+        #expect(UserDefaultsSettingsGateway(environment: environment).flavour() == nil)
+        #expect(UserDefaultsSettingsGateway(environment: environment).accent() == nil)
+    }
 }

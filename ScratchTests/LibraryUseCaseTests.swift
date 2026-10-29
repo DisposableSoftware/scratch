@@ -2,7 +2,6 @@ import Testing
 @testable import Scratch
 
 @Suite(.timeLimit(.minutes(1)))
-
 struct LibraryUseCaseTests {
     private let gateway = LibraryGatewayMock()
     private let library = LibraryState()

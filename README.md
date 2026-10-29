@@ -47,6 +47,15 @@ The unit tests run on the iPhone 17 simulator. `scripts/manual/live-connect.sh` 
 against a real server; it reads the address and login from environment variables, never
 from files.
 
+## Credits
+
+The colours are [Catppuccin](https://catppuccin.com), a community-driven pastel theme. The
+palette is by the [Catppuccin organisation](https://github.com/catppuccin/catppuccin) and its
+contributors, and is not ours; we only use it. The values are in
+[`design/catppuccin/`](design/catppuccin), with a link back to the
+[official palette](https://catppuccin.com/palette). Catppuccin is MIT-licensed. How the app
+looks follows the DisposableSoftware [style guide](https://github.com/DisposableSoftware/style-guide).
+
 ## License
 
 MIT, see [LICENSE](LICENSE).

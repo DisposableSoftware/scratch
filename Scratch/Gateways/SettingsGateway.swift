@@ -7,11 +7,19 @@ protocol SettingsGateway {
 
     func albumsPerRow() -> Int?
     func saveAlbumsPerRow(_ count: Int)
+
+    func flavour() -> Flavour?
+    func saveFlavour(_ flavour: Flavour)
+
+    func accent() -> Accent?
+    func saveAccent(_ accent: Accent)
 }
 
 final class UserDefaultsSettingsGateway: SettingsGateway {
     private static let transcodingKey = "settings.transcoding"
     private static let albumsPerRowKey = "settings.albumsPerRow"
+    private static let flavourKey = "settings.flavour"
+    private static let accentKey = "settings.accent"
     private let defaults: UserDefaults
 
     init(environment: AppEnvironment) {
@@ -38,5 +46,23 @@ final class UserDefaultsSettingsGateway: SettingsGateway {
 
     func saveAlbumsPerRow(_ count: Int) {
         defaults.set(count, forKey: Self.albumsPerRowKey)
+    }
+
+    /// A saved name, which is also what a `-settings.flavour NAME` launch argument arrives as. A name
+    /// the app doesn't know counts as nothing saved (LOOK-6).
+    func flavour() -> Flavour? {
+        defaults.string(forKey: Self.flavourKey).flatMap(Flavour.init(rawValue:))
+    }
+
+    func saveFlavour(_ flavour: Flavour) {
+        defaults.set(flavour.rawValue, forKey: Self.flavourKey)
+    }
+
+    func accent() -> Accent? {
+        defaults.string(forKey: Self.accentKey).flatMap(Accent.init(rawValue:))
+    }
+
+    func saveAccent(_ accent: Accent) {
+        defaults.set(accent.rawValue, forKey: Self.accentKey)
     }
 }

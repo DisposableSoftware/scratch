@@ -10,7 +10,6 @@ private struct PlayerUseCases: HasPlaybackUseCase, HasCoverArtUseCase, HasCoordi
 }
 
 @Suite(.timeLimit(.minutes(1)))
-
 struct PlayerViewModelTests {
     private let player = AudioPlayerGatewayMock()
     private let art = CoverArtUseCaseMock()

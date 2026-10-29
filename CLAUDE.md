@@ -99,7 +99,9 @@ Scratch/UI/               NavigationStackPort (Port: the host's stack for `.push
 Scratch/App/              PushStackHost: the stack's path, `.push` handler               ALB-8
 Scratch/Models/           AlbumDetail, AlbumTrack, AlbumDisc                             ALB-9, ALB-10
 Scratch/Models/           Album, AlbumsPerRow (1…5, default 2)                           ALB-2, ALB-17
-Scratch/State/            DisplayState (albums per row); DisplayUseCase saves it        ALB-17, ALB-18
+Scratch/State/            DisplayState (albums per row, flavour, accent); DisplayUseCase saves them   ALB-17, ALB-18, LOOK-6
+Scratch/Models/           Flavour, Accent, Palette (Catppuccin values; design/catppuccin/*.css are the published copies)   LOOK-1, LOOK-7
+Scratch/UI/               Theme (accent, red, light/dark from the flavour; `\.theme`); RootView applies tint + colour scheme   LOOK-2…4
 Scratch/State/            AlbumsState (albums shown, next offset)                       ALB-4
 Scratch/Gateways/         RemoteAlbumGateway (getAlbumList2 by name, getStarred2)        ALB-2, ALB-3, ALB-4
 Scratch/UseCases/         AlbumUseCase (favourites + paging, reload and sign-out races)  ALB-3, ALB-4
@@ -124,7 +126,7 @@ Scratch/UseCases/         PlaybackUseCase (queue, shuffle, end, failure, interru
 Scratch/Models/           StreamQuality, TranscodingSettings, NetworkKind               TRANS-1…3
 Scratch/Gateways/         UserDefaultsSettingsGateway, PathMonitorNetworkGateway, SubsonicRequest.stream   TRANS-3…5
 Scratch/UseCases/         TranscodingUseCase (settings, quality for the next track)     TRANS-1…5
-Scratch/UI/               SettingsView(Model): server and sign out, transcoding per network   LIB-6, SRV-7, TRANS-1, TRANS-2
+Scratch/UI/               SettingsView(Model): server and sign out, albums per row, flavour and accent, transcoding per network   LIB-6, SRV-7, TRANS-1, TRANS-2, LOOK-5
 Scratch/UI/               PlayerViewModel (mirrors PlaybackState), NowPlayingBar, PlayerView   PLAY-2, PLAY-3, PLAY-8, TRANS-6
 ScratchTests/SnapshotTests  skipped unless snapshots.sh passes a directory in
 scripts/manual/snapshots.sh  renders the bar and player (playing, failed) to PNGs

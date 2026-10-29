@@ -5,6 +5,7 @@ import SwiftUI
 struct NowPlayingBar: View {
     @ObservedObject var viewModel: PlayerViewModel
     @Environment(\.displayScale) private var displayScale
+    @Environment(\.theme) private var theme
 
     private static let artSide: CGFloat = 40
 
@@ -23,7 +24,7 @@ struct NowPlayingBar: View {
                             Text(track.title).lineLimit(1)
                             Text(viewModel.status == .failed ? "Couldn't play this track" : track.artist)
                                 .font(.subheadline)
-                                .foregroundStyle(viewModel.status == .failed ? .red : .secondary)
+                                .foregroundStyle(viewModel.status == .failed ? theme.error : .secondary)
                                 .lineLimit(1)
                         }
 
@@ -52,6 +53,7 @@ struct NowPlayingBar: View {
 /// The player sheet (PLAY-3).
 struct PlayerView: View {
     @ObservedObject var viewModel: PlayerViewModel
+    @Environment(\.theme) private var theme
     @Environment(\.displayScale) private var displayScale
 
     private static let artSide: CGFloat = 300
@@ -89,7 +91,7 @@ struct PlayerView: View {
             if viewModel.status == .failed {
                 Label("Couldn't play this track. Press play to try again.", systemImage: "exclamationmark.triangle")
                     .font(.subheadline)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(theme.error)
             }
 
             VStack(spacing: 4) {

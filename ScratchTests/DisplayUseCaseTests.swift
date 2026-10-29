@@ -54,4 +54,42 @@ struct DisplayUseCaseTests {
 
         #expect(state.albumsPerRow == AlbumsPerRow.default)
     }
+
+    // LOOK-1, LOOK-6
+
+    @Test func mochaWithMauveUntilTheUserSaysOtherwise() {
+        _ = useCase
+
+        #expect(state.flavour == .mocha && state.accent == .mauve)
+    }
+
+    @Test func savedChoicesComeBackAtStart() {
+        gateway.savedFlavour = .latte
+        gateway.savedAccent = .peach
+        _ = useCase
+
+        #expect(state.flavour == .latte && state.accent == .peach)
+    }
+
+    @Test func theChoicesAreSavedAndAppliedAtOnce() {
+        let useCase = useCase
+
+        useCase.setFlavour(.frappe)
+        useCase.setAccent(.teal)
+
+        #expect(state.flavour == .frappe && state.accent == .teal)
+        #expect(gateway.savedFlavour == .frappe && gateway.savedAccent == .teal)
+
+        let restarted = DefaultDisplayUseCase(settingsGateway: gateway, displayState: DisplayState())
+
+        #expect(restarted.state.flavour == .frappe && restarted.state.accent == .teal)
+    }
+
+    @Test func nothingReadableSavedMeansMochaAndMauve() {
+        gateway.savedFlavour = nil
+        gateway.savedAccent = nil
+        _ = useCase
+
+        #expect(state.flavour == Flavour.default && state.accent == Accent.default)
+    }
 }

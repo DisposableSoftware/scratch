@@ -6,7 +6,6 @@ import Testing
 /// Connects to a real server. Skipped unless scripts/manual/live-connect.sh passes one in, so the
 /// normal test run never touches the network. Credentials come only from the environment.
 @Suite(.serialized, .enabled(if: LiveServer.configured), .timeLimit(.minutes(1)))
-
 struct LiveServerTests {
     /// The app's own storage, so a launch afterwards finds the saved server (SRV-5).
     private let container = AppContainer.build(coordinator: CoordinatorSpy(), networkSession: URLSession.shared, environment: .live, navigationStack: NavigationStackPortStub())

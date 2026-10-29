@@ -16,7 +16,6 @@ private struct LibraryUseCases: HasLibraryUseCase, HasCoverArtUseCase, HasPlayba
 }
 
 @Suite(.timeLimit(.minutes(1)))
-
 struct LibraryViewModelTests {
     private let gateway = LibraryGatewayMock()
     private let art = CoverArtUseCaseMock()

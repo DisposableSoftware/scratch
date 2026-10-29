@@ -20,6 +20,7 @@ final class AppCoordinator: Coordinator {
         for handler in handlers where handler.handle(destination) {
             return
         }
+
         assertionFailure("No handler registered for \(destination)")
     }
 }
@@ -35,9 +36,11 @@ final class RootPresenter: ObservableObject, DestinationHandler {
         case .push:
             // The navigation stack takes these (PushStackHost).
             return false
+
         case .root(let view):
             sheet = nil
             screen = view
+
         case .sheet(let view):
             sheet = view
         case .dismissSheet:
@@ -45,6 +48,7 @@ final class RootPresenter: ObservableObject, DestinationHandler {
         case .alert(let content):
             alert = content
         }
+
         return true
     }
 }

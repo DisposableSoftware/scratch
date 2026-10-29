@@ -24,10 +24,13 @@ struct SubsonicRequest: Equatable {
             URLQueryItem(name: "id", value: trackID),
             URLQueryItem(name: "format", value: quality.format.rawValue),
         ]
+
         if quality.format != .original, let maxBitRate = quality.maxBitRate {
             parameters.append(URLQueryItem(name: "maxBitRate", value: String(maxBitRate)))
         }
+
         parameters.append(URLQueryItem(name: "estimateContentLength", value: "true"))
+
         return SubsonicRequest(method: "stream", parameters: parameters)
     }
 
@@ -36,6 +39,7 @@ struct SubsonicRequest: Equatable {
         guard var components = URLComponents(url: endpoint, resolvingAgainstBaseURL: false) else {
             throw .unbuildableURL
         }
+
         let items = [
             URLQueryItem(name: "u", value: credentials.username),
             URLQueryItem(name: "t", value: credentials.token),
@@ -50,7 +54,9 @@ struct SubsonicRequest: Equatable {
             else { throw .unbuildableURL }
             return URLQueryItem(name: name, value: value)
         }
+
         guard let url = components.url else { throw .unbuildableURL }
+
         return url
     }
 }

@@ -12,6 +12,7 @@ nonisolated struct StreamQuality: Equatable, Codable {
     var format: Format {
         didSet { if format == .original { maxBitRate = nil } }
     }
+
     /// kbps; nil means no limit. Always nil for Original, which the server can't cap (TRANS-2).
     var maxBitRate: Int? {
         didSet { if format == .original { maxBitRate = nil } }

@@ -34,6 +34,7 @@ struct AlbumsView: View {
                     ContentUnavailableView("No albums", systemImage: "square.grid.2x2", description: Text("The server has no albums yet."))
                 }
                 .refreshable { _ = await viewModel.handleAction(.refresh) }
+
         case .failed(let message):
             ContentUnavailableView {
                 Label("Couldn't load the albums", systemImage: "exclamationmark.triangle")
@@ -42,6 +43,7 @@ struct AlbumsView: View {
             } actions: {
                 Button("Retry") { viewModel.submitAction(.retry) }
             }
+
         case .loaded:
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: spacing, alignment: .top), count: viewModel.columns), spacing: spacing) {
@@ -54,6 +56,7 @@ struct AlbumsView: View {
                             SectionHeader(title: "Favourites")
                         }
                     }
+
                     Section {
                         ForEach(viewModel.albums) { album in
                             AlbumCell(album: album, viewModel: viewModel)
@@ -67,6 +70,7 @@ struct AlbumsView: View {
                     }
                 }
                 .padding(.horizontal, spacing)
+
                 if viewModel.isLoadingMore {
                     ProgressView()
                         .frame(maxWidth: .infinity)
@@ -117,9 +121,11 @@ private struct AlbumCell: View {
             Color.clear
                 .aspectRatio(1, contentMode: .fit)
                 .overlay { CoverArt(image: album.coverArtID.flatMap { viewModel.artwork[$0] }).accessibilityHidden(true) }
+
                 // The cover is fetched at the width this cell gives it (ALB-7).
                 .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in
                     guard let id = album.coverArtID, width > 0 else { return }
+
                     viewModel.submitAction(.artworkNeeded(coverArtID: id, pixelSize: Int((width * displayScale).rounded())))
                 }
             Text(album.name)

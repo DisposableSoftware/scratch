@@ -23,6 +23,7 @@ final class SetupViewModel: ViewModel {
 
     init(useCases: UseCases) {
         self.useCases = useCases
+
         // SRV-6: back here because the server stopped accepting the saved credentials.
         if let account = useCases.sessionUseCase.rejectedAccount {
             serverURL = account.baseURL.absoluteString
@@ -42,14 +43,17 @@ final class SetupViewModel: ViewModel {
         case .connect:
             await connect()
         }
+
         return .none
     }
 
     private func connect() async {
         guard !isConnecting else { return }
+
         isConnecting = true
         errorMessage = nil
         defer { isConnecting = false }
+
         do {
             try await useCases.connectUseCase.connect(address: serverURL, username: username, password: password)
             await useCases.appRouting.navigateToNext(from: .setup, with: AppFlowData())

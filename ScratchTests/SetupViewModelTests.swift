@@ -14,6 +14,7 @@ struct SetupViewModelTests {
 
     @Test func startsEmptyAndTakesEachField() async {
         let viewModel = viewModel
+
         #expect(viewModel.serverURL.isEmpty && viewModel.username.isEmpty && viewModel.password.isEmpty)
 
         _ = await viewModel.handleAction(.serverURLChanged("music.example.com"))
@@ -49,6 +50,7 @@ struct SetupViewModelTests {
         (ConnectError.invalidAddress(.empty), "Enter the server's address"),
         (ConnectError.server(.failed(code: 50, message: "Nope")), "The server said: Nope"),
     ])
+
     func aFailedConnectStaysOnSetupAndSaysWhy(error: ConnectError, expected: String) async {
         connect.error = error
         let viewModel = viewModel
@@ -73,6 +75,7 @@ struct SetupViewModelTests {
     @Test func aFirstSetupStartsEmpty() {
         let session = SessionUseCaseMock()
         let viewModel = SetupViewModel(useCases: SetupUseCases(connectUseCase: connect, appRouting: routing, sessionUseCase: session))
+
         #expect(viewModel.serverURL.isEmpty && viewModel.errorMessage == nil)
     }
 }

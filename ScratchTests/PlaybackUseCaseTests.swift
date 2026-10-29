@@ -8,11 +8,13 @@ struct PlaybackUseCaseTests {
     private let transcoding = TranscodingUseCaseMock()
     private let state = PlaybackState()
     private let tracks = Track.numbered(4)
+
     private func useCase(signedIn: Bool = true, shuffle: (([Track]) -> [Track])? = nil) -> DefaultPlaybackUseCase {
         let session = SessionState(server: signedIn ? .sample : nil)
         guard let shuffle else {
             return DefaultPlaybackUseCase(audioPlayer: player, nowPlaying: lockScreen, transcoding: transcoding, sessionState: session, playbackState: state)
         }
+
         return DefaultPlaybackUseCase(audioPlayer: player, nowPlaying: lockScreen, transcoding: transcoding, sessionState: session, playbackState: state, shuffle: shuffle)
     }
 
@@ -26,6 +28,7 @@ struct PlaybackUseCaseTests {
         #expect(player.loads == ["t1"])
 
         player.send(.ready(duration: 200))
+
         #expect(state.status == .playing && state.duration == 200)
     }
 
@@ -111,8 +114,10 @@ struct PlaybackUseCaseTests {
         player.send(.ready(duration: nil))
 
         useCase.togglePlayPause()
+
         #expect(state.status == .paused && player.calls.last == .pause)
         useCase.togglePlayPause()
+
         #expect(state.status == .playing && player.calls.last == .play)
     }
 
@@ -140,6 +145,7 @@ struct PlaybackUseCaseTests {
 
     @Test func nothingPlaysSignedOut() {
         useCase(signedIn: false).play(tracks, startingAt: 0)
+
         #expect(player.loads.isEmpty)
         #expect(state.queue.isEmpty && state.currentTrack == nil)
     }
@@ -176,10 +182,12 @@ struct PlaybackUseCaseTests {
         useCase.next()
         player.send(.failed)
         useCase.previous()
+
         #expect(state.currentTrack?.id == "t0" && state.status == .loading)
 
         player.send(.failed)
         useCase.previous()
+
         #expect(state.currentTrack?.id == "t0" && state.status == .loading)
         #expect(player.loads == ["t0", "t1", "t0", "t0"])
     }
@@ -209,19 +217,24 @@ struct PlaybackUseCaseTests {
     @Test func theLockScreenShowsTheTrackAndWhetherItPlays() {
         let useCase = useCase()
         useCase.play(tracks, startingAt: 1)
+
         #expect(lockScreen.last == NowPlayingInfo(title: "Song 1", artist: "Artist", album: "Album", duration: 200, elapsed: 0, isPlaying: false))
 
         player.send(.ready(duration: 210))
+
         #expect(lockScreen.last?.isPlaying == true && lockScreen.last?.duration == 210)
 
         player.send(.time(30))
         let published = lockScreen.updates.count
         player.send(.time(31))
+
         #expect(lockScreen.updates.count == published)
 
         useCase.togglePlayPause()
+
         #expect(lockScreen.last?.isPlaying == false && lockScreen.last?.elapsed == 31)
         useCase.seek(to: 90)
+
         #expect(lockScreen.last?.elapsed == 90)
     }
 
@@ -231,19 +244,26 @@ struct PlaybackUseCaseTests {
         player.send(.ready(duration: nil))
 
         lockScreen.send(.pause)
+
         #expect(state.status == .paused)
         lockScreen.send(.pause)
+
         #expect(state.status == .paused)
         lockScreen.send(.play)
+
         #expect(state.status == .playing)
         lockScreen.send(.togglePlayPause)
+
         #expect(state.status == .paused)
         lockScreen.send(.next)
+
         #expect(state.currentTrack?.id == "t1")
         lockScreen.send(.previous)
+
         #expect(state.currentTrack?.id == "t0")
         player.send(.ready(duration: nil))
         lockScreen.send(.seek(77))
+
         #expect(player.calls.last == .seek(77) && state.elapsed == 77)
         _ = useCase
     }
@@ -256,8 +276,10 @@ struct PlaybackUseCaseTests {
         player.send(.ready(duration: nil))
 
         player.send(.interrupted)
+
         #expect(state.status == .paused)
         player.send(.interruptionEnded(shouldResume: true))
+
         #expect(state.status == .playing && player.calls.last == .play)
         _ = useCase
     }
@@ -358,10 +380,12 @@ struct PlaybackUseCaseTests {
         player.currentTime = 64
 
         player.send(.buffering(true))
+
         #expect(lockScreen.last?.isPlaying == false && lockScreen.last?.elapsed == 64)
         #expect(state.status == .playing)
 
         player.send(.buffering(false))
+
         #expect(lockScreen.last?.isPlaying == true)
         _ = useCase
     }
@@ -385,6 +409,7 @@ struct PlaybackUseCaseTests {
         let aac = StreamQuality(format: .aac, maxBitRate: 128)
 
         transcoding.update(TranscodingSettings(wifi: aac, cellular: aac))
+
         #expect(player.loads == ["t0"])
         #expect(state.quality == TranscodingSettings.defaults.wifi)
         useCase.next()
@@ -423,12 +448,15 @@ struct PlaybackUseCaseTests {
         player.send(.ready(duration: nil))
 
         useCase.next()
+
         #expect(state.currentTrack?.id == "t0")
         useCase.next()
+
         #expect(state.currentTrack?.id == "t3")
         player.send(.ready(duration: nil))
         player.send(.time(1))
         useCase.previous()
+
         #expect(state.currentTrack?.id == "t0")
         #expect(player.loads == ["t2", "t0", "t3", "t0"])
     }
@@ -482,6 +510,7 @@ struct PlaybackUseCaseTests {
     @Test func nothingIsShuffledWithoutTracksOrSignedOut() {
         useCase().playShuffled([])
         useCase(signedIn: false).playShuffled(tracks)
+
         #expect(state.queue.isEmpty && player.loads.isEmpty)
     }
 }

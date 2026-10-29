@@ -31,6 +31,7 @@ struct LibraryView: View {
                     ContentUnavailableView("No tracks", systemImage: "music.note.list", description: Text("The server has no songs yet."))
                 }
                 .refreshable { _ = await viewModel.handleAction(.refresh) }
+
         case .failed(let message):
             ContentUnavailableView {
                 Label("Couldn't load the library", systemImage: "exclamationmark.triangle")
@@ -39,6 +40,7 @@ struct LibraryView: View {
             } actions: {
                 Button("Retry") { viewModel.submitAction(.retry) }
             }
+
         case .loaded:
             List {
                 ForEach(viewModel.tracks) { track in
@@ -50,6 +52,7 @@ struct LibraryView: View {
                     .buttonStyle(.plain)
                     .onAppear { viewModel.submitAction(.rowAppeared(track.id)) }
                 }
+
                 if viewModel.isLoadingMore {
                     ProgressView()
                         .frame(maxWidth: .infinity)
@@ -90,7 +93,9 @@ private struct TrackRow: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
+
             Spacer()
+
             if let duration = track.duration {
                 Text(Duration.seconds(duration).formatted(.time(pattern: .minuteSecond)))
                     .font(.subheadline)

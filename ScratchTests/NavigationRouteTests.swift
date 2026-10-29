@@ -6,7 +6,9 @@ import Testing
 /// A ViewModel shaped like the note's CartViewModel, with a `Has*` composition for its UseCases.
 private final class SampleViewModel: RoutingViewModel {
     typealias UseCases = HasCoordinator
+
     enum Action { case openDetail }
+
     enum Route: NavigationRoute {
         case detail
 

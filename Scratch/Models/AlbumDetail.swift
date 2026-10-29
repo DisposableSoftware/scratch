@@ -1,6 +1,7 @@
 /// A track as an album lists it: with the disc and the number it has on it.
 struct AlbumTrack: Equatable, Identifiable {
     var track: Track
+
     /// A track the server gives no disc is on disc 1.
     var disc: Int
     var number: Int?
@@ -11,6 +12,7 @@ struct AlbumTrack: Equatable, Identifiable {
 /// One disc of an album.
 struct AlbumDisc: Equatable, Identifiable {
     var number: Int
+
     /// The disc's own name, when the server has one.
     var title: String?
     var tracks: [AlbumTrack]
@@ -21,8 +23,10 @@ struct AlbumDisc: Equatable, Identifiable {
 /// One album with its tracks (ALB-9, ALB-10).
 struct AlbumDetail: Equatable {
     var album: Album
+
     /// In disc and track order.
     var tracks: [AlbumTrack]
+
     /// Disc names by disc number.
     var discTitles: [Int: String]
 

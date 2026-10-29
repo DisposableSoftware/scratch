@@ -16,6 +16,7 @@ struct DefaultAppRoutingUseCase: AppRoutingUseCase {
 
     func navigateToNext(from step: AppStep, with data: AppFlowData) async {
         guard let next = router.nextStep(from: step, with: data) else { return }
+
         let destination = viewFactory.destination(for: next, with: data)
         await coordinator.navigateTo(destination)
     }

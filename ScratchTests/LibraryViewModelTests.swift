@@ -16,12 +16,14 @@ private struct LibraryUseCases: HasLibraryUseCase, HasCoverArtUseCase, HasPlayba
 }
 
 @Suite(.timeLimit(.minutes(1)))
+
 struct LibraryViewModelTests {
     private let gateway = LibraryGatewayMock()
     private let art = CoverArtUseCaseMock()
     private let playback = PlaybackUseCaseMock()
     private let session = SessionUseCaseMock()
     private let routing = AppRoutingUseCaseSpy()
+
     private var viewModel: LibraryViewModel {
         let library = DefaultLibraryUseCase(libraryGateway: gateway, sessionState: SessionState(server: .sample), libraryState: LibraryState())
         return LibraryViewModel(useCases: LibraryUseCases(libraryUseCase: library, coverArtUseCase: art, playbackUseCase: playback, sessionUseCase: session, appRouting: routing))
@@ -30,6 +32,7 @@ struct LibraryViewModelTests {
     @Test func showsTheFirstPageWithItsDetails() async {
         gateway.all = Track.numbered(3)
         let viewModel = viewModel
+
         #expect(viewModel.phase == .loading)
 
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
@@ -41,6 +44,7 @@ struct LibraryViewModelTests {
     @Test func anEmptyLibrarySaysSo() async {
         let viewModel = viewModel
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(viewModel.phase == .empty)
     }
 
@@ -52,11 +56,13 @@ struct LibraryViewModelTests {
             Issue.record("expected failed, got \(viewModel.phase)")
             return
         }
+
         #expect(message.contains("Couldn't reach the server"))
 
         gateway.error = nil
         gateway.all = Track.numbered(2)
         _ = await viewModel.handleAction(.retry)
+
         #expect(viewModel.phase == .loaded && viewModel.tracks.count == 2)
     }
 
@@ -66,8 +72,10 @@ struct LibraryViewModelTests {
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
 
         _ = await viewModel.handleAction(.rowAppeared("t10"))
+
         #expect(viewModel.tracks.count == 100)
         _ = await viewModel.handleAction(.rowAppeared("t85"))
+
         #expect(viewModel.tracks.count == 150)
         #expect(gateway.requests.map(\.offset) == [0, 100])
     }
@@ -79,11 +87,13 @@ struct LibraryViewModelTests {
         gateway.error = .unreachable
 
         _ = await viewModel.handleAction(.rowAppeared("t99"))
+
         #expect(viewModel.phase == .loaded && viewModel.tracks.count == 100)
         #expect(viewModel.loadMoreError != nil)
 
         gateway.error = nil
         _ = await viewModel.handleAction(.retry)
+
         #expect(viewModel.tracks.count == 150 && viewModel.loadMoreError == nil)
     }
 
@@ -102,6 +112,7 @@ struct LibraryViewModelTests {
     @Test func aFailedCoverIsAskedForAgain() async {
         let viewModel = viewModel
         _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c1", pixelSize: 144))
+
         #expect(viewModel.artwork["c1"] == nil)
 
         art.data = UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData()
@@ -114,6 +125,7 @@ struct LibraryViewModelTests {
     @Test func keepsOnlyTheMostRecentCovers() async {
         art.data = UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData()
         let viewModel = viewModel
+
         for index in 0...LibraryViewModel.artworkLimit {
             _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c\(index)", pixelSize: 144))
         }
@@ -123,6 +135,7 @@ struct LibraryViewModelTests {
 
         // The evicted cover is fetched again when its row comes back.
         _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c0", pixelSize: 144))
+
         #expect(viewModel.artwork["c0"] != nil)
     }
 
@@ -134,6 +147,7 @@ struct LibraryViewModelTests {
         let first = Task { await viewModel.handleAction(.lifecycle(.viewDidAppear)) }
         for await _ in hold.entered { break }
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(viewModel.phase == .loading)
         hold.release()
         _ = await first.value
@@ -147,12 +161,14 @@ struct LibraryViewModelTests {
         let viewModel = viewModel
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
         _ = await viewModel.handleAction(.rowAppeared("t99"))
+
         #expect(viewModel.tracks.count == 150)
 
         gateway.all = Track.numbered(4)
         let hold = gateway.holdNextRequest()
         let refresh = Task { await viewModel.handleAction(.refresh) }
         for await _ in hold.entered { break }
+
         #expect(viewModel.phase == .loaded && viewModel.tracks.count == 150)
         hold.release()
         _ = await refresh.value
@@ -167,21 +183,26 @@ struct LibraryViewModelTests {
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
         _ = await viewModel.handleAction(.rowAppeared("t99"))
         _ = await viewModel.handleAction(.rowAppeared("t199"))
+
         #expect(viewModel.tracks.count == 250)
 
         _ = await viewModel.handleAction(.refresh)
+
         #expect(viewModel.tracks.count == 100)
         _ = await viewModel.handleAction(.rowAppeared("t99"))
+
         #expect(viewModel.tracks.count == 200)
     }
 
     @Test func anEmptyLibraryCanBeRefreshed() async {
         let viewModel = viewModel
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(viewModel.phase == .empty)
 
         gateway.all = Track.numbered(2)
         _ = await viewModel.handleAction(.refresh)
+
         #expect(viewModel.phase == .loaded && viewModel.tracks.count == 2)
     }
 
@@ -197,10 +218,12 @@ struct LibraryViewModelTests {
             Issue.record("expected failed, got \(viewModel.phase)")
             return
         }
+
         #expect(message.contains("Couldn't reach the server"))
 
         gateway.error = nil
         _ = await viewModel.handleAction(.retry)
+
         #expect(viewModel.phase == .loaded && viewModel.tracks.count == 3)
     }
 
@@ -232,6 +255,7 @@ struct LibraryViewModelTests {
     // SRV-6
 
     @Test(arguments: [ServerError.wrongCredentials, .failed(code: 41, message: "Token authentication not supported")])
+
     func aRejectedFirstPageGoesBackToSetup(error: ServerError) async {
         gateway.error = error
         let viewModel = viewModel
@@ -258,6 +282,7 @@ struct LibraryViewModelTests {
         gateway.error = .failed(code: 70, message: "Not found")
         let viewModel = viewModel
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(session.rejections == 0 && routing.steps.isEmpty)
     }
 }

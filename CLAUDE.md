@@ -152,6 +152,7 @@ spec/                     the specification
 - Keep the dependency list short. Ask before adding a dependency.
 - Look up the docs or read the source of a library before guessing at its API.
 - Comments only when the reason is not obvious.
+- Spacing: write airy code. A blank line before every comment line (unless it opens a block or follows another comment), between logical blocks (set-up, a `do`/`if`/`for`/`switch`, the `return`), after a multi-line block, after a run of `guard`s, between members and `@Test`s, between `switch` cases with multi-line bodies, and before the first `#expect` in a test. Never two blank lines in a row. Don't add blank lines inside argument lists or literals.
 - Scripts in `scripts/` run on macOS (bash 3.2, BSD tools) as well as Linux: no `mapfile`, no `sed -i`, no GNU-only flags.
 - Commits: `spec: <summary>` for spec changes, a `Spec: ID, ID` trailer on code commits, `BREAKING` in the body for incompatible changes (`scripts/release-check.sh` reads all three). No Claude-Session links in commit messages.
 

@@ -4,6 +4,7 @@ import Foundation
 protocol SettingsGateway {
     func transcoding() -> TranscodingSettings?
     func saveTranscoding(_ settings: TranscodingSettings)
+
     func albumsPerRow() -> Int?
     func saveAlbumsPerRow(_ count: Int)
 }

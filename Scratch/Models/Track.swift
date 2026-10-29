@@ -4,6 +4,7 @@ struct Track: Equatable, Identifiable {
     var title: String
     var artist: String
     var album: String
+
     /// Whole seconds, when the server knows it.
     var duration: Int?
     var coverArtID: String?

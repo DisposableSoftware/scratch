@@ -19,38 +19,48 @@ nonisolated final class StubURLProtocol: URLProtocol {
         Self.requests = []
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [StubURLProtocol.self]
+
         return URLSession(configuration: configuration)
     }
 
     override class func canInit(with request: URLRequest) -> Bool { true }
+
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
         Self.requests.append(request)
+
         switch Self.responder(request) {
         case .http(let status, let body):
             let response = HTTPURLResponse(url: request.url ?? URL(fileURLWithPath: "/"), statusCode: status, httpVersion: nil, headerFields: nil)
+
             if let response {
                 client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
             }
+
             client?.urlProtocol(self, didLoad: Data(body.utf8))
             client?.urlProtocolDidFinishLoading(self)
+
         case .image(let body):
             if let url = request.url,
                let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: ["Content-Type": "image/png"]) {
                 client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
             }
+
             client?.urlProtocol(self, didLoad: Data(body.utf8))
             client?.urlProtocolDidFinishLoading(self)
+
         case .redirect(let location):
             guard let url = request.url, let target = URL(string: location),
                   let response = HTTPURLResponse(url: url, statusCode: 302, httpVersion: nil, headerFields: ["Location": location])
             else { return }
+
             // If the session refuses the redirect, the 302 itself is the answer.
             client?.urlProtocol(self, wasRedirectedTo: URLRequest(url: target), redirectResponse: response)
             client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
             client?.urlProtocol(self, didLoad: Data("<html>Moved</html>".utf8))
             client?.urlProtocolDidFinishLoading(self)
+
         case .failure(let code):
             client?.urlProtocol(self, didFailWithError: URLError(code))
         }

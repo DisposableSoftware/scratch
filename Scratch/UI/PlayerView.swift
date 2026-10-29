@@ -26,6 +26,7 @@ struct NowPlayingBar: View {
                                 .foregroundStyle(viewModel.status == .failed ? .red : .secondary)
                                 .lineLimit(1)
                         }
+
                         Spacer()
                     }
                     .contentShape(Rectangle())
@@ -71,6 +72,7 @@ struct PlayerView: View {
                 Text(viewModel.track?.title ?? "").font(.title2.bold()).lineLimit(2)
                 Text(viewModel.track?.artist ?? "").foregroundStyle(.secondary)
                 Text(viewModel.track?.album ?? "").font(.subheadline).foregroundStyle(.secondary)
+
                 if let quality = viewModel.quality {
                     Text(quality.label)
                         .font(.caption.weight(.medium))
@@ -83,11 +85,13 @@ struct PlayerView: View {
                 }
             }
             .multilineTextAlignment(.center)
+
             if viewModel.status == .failed {
                 Label("Couldn't play this track. Press play to try again.", systemImage: "exclamationmark.triangle")
                     .font(.subheadline)
                     .foregroundStyle(.red)
             }
+
             VStack(spacing: 4) {
                 Slider(
                     value: viewModel.binding(\.position, to: { .scrubbed($0) }),
@@ -99,6 +103,7 @@ struct PlayerView: View {
                 HStack {
                     Text(viewModel.position.clock)
                     Spacer()
+
                     if let duration = viewModel.duration {
                         Text("-" + max(duration - viewModel.position, 0).clock)
                     }
@@ -106,6 +111,7 @@ struct PlayerView: View {
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
             }
+
             HStack(spacing: 48) {
                 Button { viewModel.submitAction(.previous) } label: {
                     Image(systemName: "backward.fill").frame(width: 44, height: 44)
@@ -152,6 +158,7 @@ extension StreamQuality {
     /// As the player shows it (TRANS-6): "MP3 · 192 kbps", "AAC", "Original".
     var label: String {
         guard let maxBitRate else { return format.label }
+
         return "\(format.label) · \(maxBitRate) kbps"
     }
 }

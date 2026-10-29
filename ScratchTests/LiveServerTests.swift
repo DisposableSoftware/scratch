@@ -6,6 +6,7 @@ import Testing
 /// Connects to a real server. Skipped unless scripts/manual/live-connect.sh passes one in, so the
 /// normal test run never touches the network. Credentials come only from the environment.
 @Suite(.serialized, .enabled(if: LiveServer.configured), .timeLimit(.minutes(1)))
+
 struct LiveServerTests {
     /// The app's own storage, so a launch afterwards finds the saved server (SRV-5).
     private let container = AppContainer.build(coordinator: CoordinatorSpy(), networkSession: URLSession.shared, environment: .live, navigationStack: NavigationStackPortStub())
@@ -41,12 +42,14 @@ struct LiveServerTests {
         player.load(track, server: server, quality: TranscodingSettings.defaults.wifi)
         var ready = false
         var played: TimeInterval = 0
+
         for await event in events {
             if case .ready = event { ready = true }
             if case .time(let t) = event { played = t }
             if case .failed = event { break }
             if ready && played > 1 { break }
         }
+
         #expect(ready && played > 1)
 
         var missing = track
@@ -55,11 +58,14 @@ struct LiveServerTests {
         player.onEvent = { failureSink.yield($0) }
         player.load(missing, server: server, quality: TranscodingSettings.defaults.wifi)
         var failed = false
+
         for await event in failures {
             if case .failed = event { failed = true; break }
             if case .ready = event { break }
         }
+
         player.stop()
+
         #expect(failed)
     }
 
@@ -70,6 +76,7 @@ struct LiveServerTests {
         (StreamQuality(format: .aac, maxBitRate: 128), "audio/aac"),
         (StreamQuality(format: .original, maxBitRate: nil), ""),
     ])
+
     func streamsAsAskedPlayAndSeek(quality: StreamQuality, contentType: String) async throws {
         try await container.connectUseCase.connect(address: LiveServer.address, username: LiveServer.username, password: LiveServer.password)
         let server = try #require(KeychainCredentialGateway(environment: .live).load())
@@ -80,6 +87,7 @@ struct LiveServerTests {
             var head = URLRequest(url: url)
             head.setValue("bytes=0-1023", forHTTPHeaderField: "Range")
             let (_, response) = try await URLSession.shared.data(for: head)
+
             #expect((response as? HTTPURLResponse)?.mimeType == contentType)
         }
 
@@ -89,8 +97,10 @@ struct LiveServerTests {
         player.load(track, server: server, quality: quality)
         var played = false
         var sought = false
+
         for await event in events {
             if case .failed = event { break }
+
             if case .time(let t) = event {
                 if !played, t > 1 {
                     played = true
@@ -101,7 +111,9 @@ struct LiveServerTests {
                 }
             }
         }
+
         player.stop()
+
         #expect(played && sought, "\(quality.format): played \(played), sought \(sought)")
     }
 
@@ -113,6 +125,7 @@ struct LiveServerTests {
             account: ServerAccount(baseURL: address, username: LiveServer.username),
             credentials: SubsonicCredentials.derive(username: LiveServer.username, password: LiveServer.password + "-old")
         )
+
         do {
             _ = try await RemoteLibraryGateway(networkSession: URLSession.shared).tracks(offset: 0, count: 1, server: stale)
             Issue.record("the server accepted stale credentials")
@@ -146,6 +159,7 @@ struct LiveServerTests {
         let names = favourites.map { $0.name }
         let ordered = names.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
         let others = Set(container.albumUseCase.albums.map { $0.id })
+
         #expect(favourites.allSatisfy { $0.isStarred })
         #expect(names == ordered)
         #expect(Set(favourites.map { $0.id }).isDisjoint(with: others))
@@ -163,18 +177,23 @@ struct LiveServerTests {
         var singleDisc: AlbumDetail?
         for album in candidates {
             guard let detail = try await container.albumUseCase.album(id: album.id) else { continue }
+
             let order = detail.tracks.map { [$0.disc, $0.number ?? Int.max] }
+
             #expect(order == order.sorted { ($0[0], $0[1]) < ($1[0], $1[1]) }, "\(album.name) isn't in disc and track order")
             #expect(detail.discs.flatMap { $0.tracks }.count == detail.tracks.count)
             if detail.discs.count > 1, multiDisc == nil { multiDisc = detail }
             if detail.discs.count == 1, singleDisc == nil { singleDisc = detail }
             if multiDisc != nil, singleDisc != nil { break }
         }
+
         #expect(multiDisc != nil || singleDisc != nil, "no album with 14 or more tracks in the first page")
 
         guard let directory = LiveServer.snapshotDirectory else { return }
+
         for (name, detail) in [("alb9-album-multi-disc", multiDisc), ("alb9-album-single-disc", singleDisc)] {
             guard let detail else { continue }
+
             let viewModel = AlbumViewModel(album: detail.album, useCases: container)
             _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
             _ = await viewModel.handleAction(.artworkNeeded(pixelSize: 1080))
@@ -195,6 +214,7 @@ struct LiveServerTests {
             account: ServerAccount(baseURL: address, username: LiveServer.username),
             credentials: SubsonicCredentials.derive(username: LiveServer.username, password: LiveServer.password + "-old")
         )
+
         do {
             _ = try await RemoteAlbumGateway(networkSession: URLSession.shared).albums(offset: 0, count: 10, server: stale)
             Issue.record("the server accepted stale credentials")
@@ -207,9 +227,12 @@ struct LiveServerTests {
         try await container.connectUseCase.connect(address: LiveServer.address, username: LiveServer.username, password: LiveServer.password)
 
         let saved = KeychainCredentialGateway(environment: .live).load()
+
         #expect(saved?.account.username == LiveServer.username)
+
         // SRV-4: the password is in neither store.
         let defaults = AppEnvironment.live.defaults.dictionaryRepresentation().values.compactMap { $0 as? String }
+
         #expect(!defaults.contains { $0.contains(LiveServer.password) })
         #expect(saved.map { $0.credentials.token != LiveServer.password && $0.credentials.salt != LiveServer.password } == true)
     }

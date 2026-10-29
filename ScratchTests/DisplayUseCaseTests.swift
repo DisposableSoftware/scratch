@@ -8,6 +8,7 @@ struct DisplayUseCaseTests {
 
     @Test func twoPerRowUntilTheUserSaysOtherwise() {
         _ = useCase
+
         #expect(state.albumsPerRow == 2 && AlbumsPerRow.default == 2)
     }
 
@@ -18,13 +19,16 @@ struct DisplayUseCaseTests {
     @Test func aSavedChoiceComesBackAtStart() {
         gateway.savedAlbumsPerRow = 4
         _ = useCase
+
         #expect(state.albumsPerRow == 4)
     }
 
     @Test(arguments: [(0, 1), (-3, 1), (6, 5), (99, 5)])
+
     func aSavedValueOutOfRangeIsBroughtIn(saved: Int, expected: Int) {
         gateway.savedAlbumsPerRow = saved
         _ = useCase
+
         #expect(state.albumsPerRow == expected)
     }
 
@@ -38,15 +42,18 @@ struct DisplayUseCaseTests {
     }
 
     @Test(arguments: [(0, 1), (7, 5)])
+
     func aChoiceOutOfRangeIsBroughtIn(asked: Int, expected: Int) {
         let useCase = useCase
         useCase.setAlbumsPerRow(asked)
+
         #expect(state.albumsPerRow == expected && gateway.savedAlbumsPerRow == expected)
     }
 
     @Test func nothingReadableSavedMeansTheDefault() {
         gateway.savedAlbumsPerRow = nil
         _ = useCase
+
         #expect(state.albumsPerRow == AlbumsPerRow.default)
     }
 }

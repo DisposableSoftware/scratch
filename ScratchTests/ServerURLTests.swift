@@ -14,6 +14,7 @@ struct ServerURLTests {
         ("[::1]:4533", "https://[::1]:4533"),
         ("http://[fe80::1]:4533/nd", "http://[fe80::1]:4533/nd"),
     ])
+
     func acceptsServerAddresses(input: String, expected: String) throws {
         #expect(try ServerAddress.parse(input).absoluteString == expected)
     }

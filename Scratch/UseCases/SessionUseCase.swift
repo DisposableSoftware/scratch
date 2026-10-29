@@ -3,13 +3,16 @@
 protocol SessionUseCase {
     /// The server signed in to, for settings to show.
     var account: ServerAccount? { get }
+
     /// After the server rejected the saved credentials, the account to fill setup in with.
     var rejectedAccount: ServerAccount? { get }
 
     /// Signs in with the saved server, if there is one. Called once at launch.
     func restoreSavedServer()
+
     /// The server no longer accepts the saved credentials: sign out, remembering the account.
     func credentialsRejected()
+
     func signOut()
 }
 
@@ -44,6 +47,7 @@ final class DefaultSessionUseCase: SessionUseCase {
     func credentialsRejected() {
         // Already signed out (a second rejection, or one after sign out): keep what's remembered.
         guard let account = sessionState.server?.account else { return }
+
         end()
         sessionState.rejectedAccount = account
     }

@@ -4,8 +4,10 @@ import Foundation
 protocol AlbumGateway {
     /// One page of every album, ordered by name.
     func albums(offset: Int, count: Int, server: SavedServer) async throws(ServerError) -> [Album]
+
     /// Every album the user has starred, in the order the server gives.
     func starredAlbums(server: SavedServer) async throws(ServerError) -> [Album]
+
     /// One album and its tracks, in the order the server gives.
     func album(id: Album.ID, server: SavedServer) async throws(ServerError) -> AlbumDetail
 }
@@ -25,6 +27,7 @@ final class RemoteAlbumGateway: AlbumGateway {
             URLQueryItem(name: "offset", value: String(offset)),
         ])
         let payload = try await client.send(request, to: server, as: AlbumListPayload.self)
+
         return (payload.albumList2.album ?? []).map(\.album)
     }
 
@@ -33,9 +36,11 @@ final class RemoteAlbumGateway: AlbumGateway {
         let request = SubsonicRequest(method: "getAlbum", parameters: [URLQueryItem(name: "id", value: id)])
         let payload = try await client.send(request, to: server, as: AlbumDetailPayload.self).album
         var titles: [Int: String] = [:]
+
         for entry in payload.discTitles ?? [] where !(entry.title ?? "").isEmpty {
             titles[entry.disc] = entry.title
         }
+
         return AlbumDetail(
             album: payload.entry.album,
             tracks: (payload.song ?? []).map(\.albumTrack),

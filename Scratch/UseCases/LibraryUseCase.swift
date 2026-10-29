@@ -5,6 +5,7 @@ protocol LibraryUseCase {
 
     /// Loads the first page, replacing whatever was loaded.
     func loadFirstPage() async throws(ServerError)
+
     /// Loads the page after the last one, unless the server has run out or a load is running.
     func loadNextPage() async throws(ServerError)
 }
@@ -17,6 +18,7 @@ final class DefaultLibraryUseCase: LibraryUseCase {
     private let libraryState: LibraryState
     private var loadingNextPage = false
     private var loadingFirstPage = false
+
     /// Bumped by every first-page load, so a page that arrives after a reload is dropped.
     private var generation = 0
 
@@ -31,19 +33,24 @@ final class DefaultLibraryUseCase: LibraryUseCase {
 
     func loadFirstPage() async throws(ServerError) {
         guard let server = sessionState.server else { return }
+
         generation += 1
         let current = generation
         loadingFirstPage = true
         defer { if current == generation { loadingFirstPage = false } }
         let page: [Track]
+
         do {
             page = try await libraryGateway.tracks(offset: 0, count: Self.pageSize, server: server)
         } catch {
             guard current == generation, sessionState.server == server else { return }
+
             throw error
         }
+
         // A page for a server signed out of meanwhile, or from before a reload, is dropped.
         guard current == generation, sessionState.server == server else { return }
+
         var seen = Set<Track.ID>()
         libraryState.tracks = page.filter { seen.insert($0.id).inserted }
         libraryState.hasMoreTracks = page.count == Self.pageSize
@@ -52,18 +59,23 @@ final class DefaultLibraryUseCase: LibraryUseCase {
     func loadNextPage() async throws(ServerError) {
         // While a reload runs, the offset would be the old list's length: wait for the new list.
         guard let server = sessionState.server, libraryState.hasMoreTracks, !loadingNextPage, !loadingFirstPage else { return }
+
         loadingNextPage = true
         defer { loadingNextPage = false }
         let current = generation
         let page: [Track]
+
         do {
             page = try await libraryGateway.tracks(offset: libraryState.tracks.count, count: Self.pageSize, server: server)
         } catch {
             // A page from before a reload or a sign out doesn't matter any more, nor its failure.
             guard current == generation, sessionState.server == server else { return }
+
             throw error
         }
+
         guard current == generation, sessionState.server == server else { return }
+
         // If the server's order shifted between pages, a track can come round again.
         let known = Set(libraryState.tracks.map(\.id))
         libraryState.tracks += page.filter { !known.contains($0.id) }

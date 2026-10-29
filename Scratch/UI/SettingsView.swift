@@ -13,6 +13,7 @@ struct SettingsView: View {
                         Button("Sign Out", role: .destructive) { viewModel.submitAction(.signOut) }
                     }
                 }
+
                 Section("Albums") {
                     Picker("Albums per row", selection: viewModel.binding(\.albumsPerRow, to: { .albumsPerRowChanged($0) })) {
                         ForEach(AlbumsPerRow.range, id: \.self) { count in
@@ -21,6 +22,7 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.segmented)
                 }
+
                 qualitySection(.wifi, title: "On Wi-Fi", quality: viewModel.transcoding.wifi)
                 qualitySection(.cellular, title: "On cellular", quality: viewModel.transcoding.cellular)
                 Section {
@@ -45,12 +47,14 @@ struct SettingsView: View {
                     Text(format.label).tag(format)
                 }
             }
+
             Picker("Maximum bitrate", selection: viewModel.binding(bitRatePath(network), to: { .maxBitRateChanged(network, $0) })) {
                 Text("Unlimited").tag(Int?.none)
                 ForEach(StreamQuality.bitRates, id: \.self) { rate in
                     Text("\(rate) kbps").tag(Int?.some(rate))
                 }
             }
+
             // TRANS-2: the server can't cap the original file.
             .disabled(quality.format == .original)
         }

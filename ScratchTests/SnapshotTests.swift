@@ -8,6 +8,7 @@ import UIKit
 /// directory in. ImageRenderer draws some controls (Slider, Button chrome) as placeholders, and
 /// can't draw a Form at all, so the settings sheet is checked in the simulator instead.
 @Suite(.serialized, .enabled(if: Snapshots.directory != nil))
+
 struct SnapshotTests {
     private struct UseCases: HasPlaybackUseCase, HasCoverArtUseCase, HasCoordinator {
         let playbackUseCase: PlaybackUseCase
@@ -29,6 +30,7 @@ struct SnapshotTests {
         player.send(.time(83))
         _ = await viewModel.handleAction(.artworkNeeded(pixelSize: 120))
         _ = await viewModel.handleAction(.artworkNeeded(pixelSize: 900))
+
         return viewModel
     }
 

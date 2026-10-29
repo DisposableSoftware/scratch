@@ -1,7 +1,9 @@
 /// The transcoding settings (TRANS-1, TRANS-2, TRANS-3, TRANS-5).
 protocol TranscodingUseCase {
     var settings: TranscodingSettings { get }
+
     func update(_ settings: TranscodingSettings)
+
     /// The quality for a track starting now, by the network the device is on.
     func qualityForNextTrack() -> StreamQuality
 }

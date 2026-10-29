@@ -11,6 +11,7 @@ final class AppViewFactory: ViewFactory {
             assertionFailure("AppViewFactory used before AppContainer.build finished")
             return .root(AnyView(ProgressView()))
         }
+
         switch step {
         case .launch:
             return .root(AnyView(ProgressView()))

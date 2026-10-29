@@ -2,9 +2,11 @@ import Testing
 @testable import Scratch
 
 @Suite(.timeLimit(.minutes(1)))
+
 struct LibraryUseCaseTests {
     private let gateway = LibraryGatewayMock()
     private let library = LibraryState()
+
     private func useCase(signedIn: Bool = true) -> DefaultLibraryUseCase {
         DefaultLibraryUseCase(libraryGateway: gateway, sessionState: SessionState(server: signedIn ? .sample : nil), libraryState: library)
     }
@@ -14,10 +16,13 @@ struct LibraryUseCaseTests {
         let useCase = useCase()
 
         try await useCase.loadFirstPage()
+
         #expect(useCase.tracks.count == 100 && useCase.hasMoreTracks)
         try await useCase.loadNextPage()
+
         #expect(useCase.tracks.count == 200 && useCase.hasMoreTracks)
         try await useCase.loadNextPage()
+
         #expect(useCase.tracks.count == 250 && !useCase.hasMoreTracks)
         try await useCase.loadNextPage()
 
@@ -30,8 +35,10 @@ struct LibraryUseCaseTests {
         gateway.all = Track.numbered(100)
         let useCase = useCase()
         try await useCase.loadFirstPage()
+
         #expect(useCase.hasMoreTracks)
         try await useCase.loadNextPage()
+
         #expect(!useCase.hasMoreTracks && useCase.tracks.count == 100)
     }
 
@@ -68,6 +75,7 @@ struct LibraryUseCaseTests {
         gateway.all = Track.numbered(150)
         let useCase = useCase()
         try await useCase.loadFirstPage()
+
         // The server's order shifted by one: the next page starts with a track already shown.
         gateway.all.insert(Track.numbered(1)[0], at: 0)
         try await useCase.loadNextPage()
@@ -88,6 +96,7 @@ struct LibraryUseCaseTests {
 
     @Test func signedOutLoadsNothing() async throws {
         try await useCase(signedIn: false).loadFirstPage()
+
         #expect(gateway.requests.isEmpty)
     }
 
@@ -106,6 +115,7 @@ struct LibraryUseCaseTests {
 
         #expect(gateway.requests.map(\.offset) == [0, 100, 0])
         try await useCase.loadNextPage()
+
         #expect(useCase.tracks.map(\.id) == Track.numbered(150).map(\.id))
     }
 
@@ -122,6 +132,7 @@ struct LibraryUseCaseTests {
         hold.release()
 
         try await next.value
+
         #expect(useCase.tracks.count == 100)
     }
 
@@ -140,6 +151,7 @@ struct LibraryUseCaseTests {
         hold.release()
 
         try await next.value
+
         #expect(library.tracks.isEmpty)
     }
 }

@@ -4,10 +4,12 @@ import Foundation
 enum PlaybackStatus: Equatable {
     /// Nothing loaded.
     case stopped
+
     /// A track is loading and will play when it can.
     case loading
     case playing
     case paused
+
     /// The current track couldn't be loaded or played (PLAY-8).
     case failed
 }
@@ -19,11 +21,14 @@ enum AudioPlayerEvent: Equatable {
     case time(TimeInterval)
     case ended
     case failed
+
     /// Another app or a call took the audio (PLAY-7).
     case interrupted
     case interruptionEnded(shouldResume: Bool)
+
     /// The headphones or Bluetooth output went away (PLAY-7).
     case outputLost
+
     /// Playback is waiting for the stream to catch up, or has caught up.
     case buffering(Bool)
 }

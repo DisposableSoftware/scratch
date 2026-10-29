@@ -5,6 +5,7 @@ struct AlbumRow: Equatable, Identifiable {
     var id: Track.ID
     var number: String
     var title: String
+
     /// Only when the track's artist isn't the album's.
     var artist: String?
     var duration: String?

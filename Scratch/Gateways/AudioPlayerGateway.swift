@@ -9,9 +9,13 @@ protocol AudioPlayerGateway: AnyObject {
 
     /// Starts streaming the track at the given quality; it plays as soon as it can.
     func load(_ track: Track, server: SavedServer, quality: StreamQuality)
+
     func play()
+
     func pause()
+
     func seek(to seconds: TimeInterval)
+
     /// Unloads the track.
     func stop()
 }
@@ -35,6 +39,7 @@ final class AVPlayerAudioGateway: AudioPlayerGateway {
         ) { [weak self] time in
             MainActor.assumeIsolated {
                 guard time.seconds.isFinite else { return }
+
                 self?.onEvent?(.time(time.seconds))
             }
         }
@@ -44,11 +49,13 @@ final class AVPlayerAudioGateway: AudioPlayerGateway {
     /// the use case decides what happens next.
     private func observeSession() {
         let center = NotificationCenter.default
+
         // iOS 27: an interruption is the system deactivating the session, and the system says
         // separately whether playback should come back.
         center.publisher(for: AVAudioSession.didBecomeInactiveNotification)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] note in
+
                 // A lost route arrives as outputLost from the route-change notification instead.
                 guard let context = note.userInfo?[AVAudioSession.deactivationContextKey] as? AVAudioSession.DeactivationContext,
                       context.source == .system,
@@ -96,8 +103,10 @@ final class AVPlayerAudioGateway: AudioPlayerGateway {
         guard let url = try? request.url(baseURL: server.account.baseURL, credentials: server.credentials) else {
             player.replaceCurrentItem(with: nil)
             onEvent?(.failed)
+
             return
         }
+
         let item = AVPlayerItem(url: url)
         item.publisher(for: \.status)
             .receive(on: DispatchQueue.main)
@@ -106,6 +115,7 @@ final class AVPlayerAudioGateway: AudioPlayerGateway {
                 case .readyToPlay:
                     let duration = item?.duration.seconds
                     self?.onEvent?(.ready(duration: duration.flatMap { $0.isFinite && $0 > 0 ? $0 : nil }))
+
                 case .failed:
                     self?.onEvent?(.failed)
                 default:

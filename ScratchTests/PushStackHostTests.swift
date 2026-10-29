@@ -16,6 +16,7 @@ struct PushStackHostTests {
 
     @Test func aPushIsAddedToThePath() {
         let host = PushStackHost()
+
         #expect(host.handle(push("album:a1")))
         #expect(host.handle(push("album:a2")))
         #expect(host.path.map(\.key) == ["album:a1", "album:a2"])
@@ -23,6 +24,7 @@ struct PushStackHostTests {
 
     @Test func theSameScreenIsNotPushedOnTopOfItself() {
         let host = PushStackHost()
+
         #expect(host.handle(push("album:a1")))
         #expect(host.handle(push("album:a1")))
         #expect(host.path.count == 1)
@@ -33,11 +35,13 @@ struct PushStackHostTests {
         _ = host.handle(push("album:a1"))
         _ = host.handle(push("album:a2"))
         _ = host.handle(push("album:a1"))
+
         #expect(host.path.map(\.key) == ["album:a1", "album:a2", "album:a1"])
     }
 
     @Test func otherDestinationsAreLeftToOtherHandlers() {
         let host = PushStackHost()
+
         #expect(!host.handle(.dismissSheet))
         #expect(!host.handle(.alert(AlertContent(title: "", message: ""))))
         #expect(!host.handle(.root(AnyView(Text("")))))

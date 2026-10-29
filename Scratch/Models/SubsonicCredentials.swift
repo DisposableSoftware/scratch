@@ -11,6 +11,7 @@ struct SubsonicCredentials: Equatable {
     static func derive(username: String, password: String, salt: String = randomSalt()) -> SubsonicCredentials {
         let digest = Insecure.MD5.hash(data: Data((password + salt).utf8))
         let token = digest.map { String(format: "%02x", $0) }.joined()
+
         return SubsonicCredentials(username: username, salt: salt, token: token)
     }
 

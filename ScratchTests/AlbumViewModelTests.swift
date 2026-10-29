@@ -12,24 +12,29 @@ private struct AlbumUseCases: HasAlbumUseCase, HasCoverArtUseCase, HasPlaybackUs
 }
 
 @Suite(.timeLimit(.minutes(1)))
+
 struct AlbumViewModelTests {
     private let gateway = AlbumGatewayMock()
     private let art = CoverArtUseCaseMock()
     private let playback = PlaybackUseCaseMock()
     private let session = SessionUseCaseMock()
     private let routing = AppRoutingUseCaseSpy()
+
     private func viewModel(_ detail: AlbumDetail? = nil, album: Album? = nil, signedIn: Bool = true) -> AlbumViewModel {
         if let detail { gateway.details[detail.album.id] = detail }
         let albums = DefaultAlbumUseCase(albumGateway: gateway, sessionState: SessionState(server: signedIn ? .sample : nil), albumsState: AlbumsState())
         let shown = album ?? detail?.album ?? Album.numbered(1)[0]
+
         return AlbumViewModel(album: shown, useCases: AlbumUseCases(albumUseCase: albums, coverArtUseCase: art, playbackUseCase: playback, sessionUseCase: session, appRouting: routing))
     }
+
     private func png() -> Data? { UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData() }
 
     // ALB-9
 
     @Test func theScreenStartsWithTheInfoTheGridHad() {
         let viewModel = viewModel(album: Album(id: "a", name: "Fire", artist: "Electric Six", coverArtID: "c", songCount: 12, duration: 2400, year: 2003, genre: "Rock", isStarred: false))
+
         #expect(viewModel.phase == .loading && viewModel.sections.isEmpty)
         #expect(viewModel.details == "2003 · Rock · 12 songs · 40 min")
         #expect(viewModel.album.name == "Fire")
@@ -41,6 +46,7 @@ struct AlbumViewModelTests {
         (Album(id: "a", name: "A", artist: "", coverArtID: nil, songCount: nil, duration: nil, year: 1999, genre: "", isStarred: false), "1999"),
         (Album(id: "a", name: "A", artist: "", coverArtID: nil, songCount: nil, duration: 0, year: nil, genre: nil, isStarred: false), ""),
     ])
+
     func theInfoShowsOnlyWhatTheServerHas(album: Album, expected: String) {
         #expect(viewModel(album: album).details == expected)
     }
@@ -51,6 +57,7 @@ struct AlbumViewModelTests {
         detail.album.duration = nil
         let viewModel = viewModel(detail)
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(viewModel.details == "2000 · Game · 3 songs")
     }
 
@@ -68,6 +75,7 @@ struct AlbumViewModelTests {
     @Test func severalDiscsGetAHeaderEachWithTheirTitleWhenTheyHaveOne() async {
         let viewModel = viewModel(.numbered(discs: 3, perDisc: 2, titles: [2: "Development"]))
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(viewModel.sections.map(\.header) == ["Disc 1", "Disc 2 · Development", "Disc 3"])
         #expect(viewModel.sections.map { $0.rows.count } == [2, 2, 2])
     }
@@ -76,6 +84,7 @@ struct AlbumViewModelTests {
         let viewModel = viewModel(.numbered(discs: 1, perDisc: 2))
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
         let row = try #require(viewModel.sections.first?.rows.last)
+
         #expect(row == AlbumRow(id: "d1t2", number: "2", title: "Track 2", artist: nil, duration: "3:20"))
     }
 
@@ -98,6 +107,7 @@ struct AlbumViewModelTests {
         let viewModel = viewModel(detail)
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
         let row = try #require(viewModel.sections.first?.rows.first)
+
         #expect(row.number == "" && row.duration == nil)
     }
 
@@ -111,6 +121,7 @@ struct AlbumViewModelTests {
         _ = await viewModel.handleAction(.trackTapped("d1t3"))
 
         let played = try #require(playback.played.first)
+
         #expect(played.tracks.map(\.id) == ["d1t1", "d1t2", "d1t3", "d2t1", "d2t2", "d2t3"])
         #expect(played.index == 2)
     }
@@ -122,6 +133,7 @@ struct AlbumViewModelTests {
         _ = await viewModel.handleAction(.playTapped)
 
         let played = try #require(playback.played.first)
+
         #expect(played.index == 0 && played.tracks.count == 4)
     }
 
@@ -132,6 +144,7 @@ struct AlbumViewModelTests {
         _ = await viewModel.handleAction(.shuffleTapped)
 
         let shuffled = try #require(playback.shuffled.first)
+
         #expect(shuffled.map(\.id) == ["d1t1", "d1t2", "d1t3", "d2t1", "d2t2", "d2t3"])
         #expect(playback.played.isEmpty)
     }
@@ -140,6 +153,7 @@ struct AlbumViewModelTests {
         let viewModel = viewModel(.numbered(discs: 1, perDisc: 2))
         _ = await viewModel.handleAction(.shuffleTapped)
         _ = await viewModel.handleAction(.playTapped)
+
         #expect(playback.shuffled.isEmpty && playback.played.isEmpty)
     }
 
@@ -147,6 +161,7 @@ struct AlbumViewModelTests {
         let viewModel = viewModel(.numbered(discs: 1, perDisc: 2))
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
         _ = await viewModel.handleAction(.trackTapped("nope"))
+
         #expect(playback.played.isEmpty)
     }
 
@@ -159,6 +174,7 @@ struct AlbumViewModelTests {
 
         let load = Task { await viewModel.handleAction(.lifecycle(.viewDidAppear)) }
         for await _ in hold.entered { break }
+
         #expect(viewModel.phase == .loading)
         hold.release()
         _ = await load.value
@@ -175,10 +191,12 @@ struct AlbumViewModelTests {
             Issue.record("expected failed, got \(viewModel.phase)")
             return
         }
+
         #expect(message.contains("Couldn't reach the server"))
 
         gateway.albumError = nil
         _ = await viewModel.handleAction(.retry)
+
         #expect(viewModel.phase == .loaded && viewModel.sections.count == 1)
     }
 
@@ -187,6 +205,7 @@ struct AlbumViewModelTests {
         detail.tracks = []
         let viewModel = viewModel(detail)
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(viewModel.phase == .empty && viewModel.sections.isEmpty)
     }
 
@@ -197,12 +216,14 @@ struct AlbumViewModelTests {
             Issue.record("expected failed, got \(viewModel.phase)")
             return
         }
+
         #expect(message == "The server said: Album not found")
     }
 
     @Test func signedOutThereIsAMessageAndNoRequest() async {
         let viewModel = viewModel(.numbered(discs: 1, perDisc: 1), signedIn: false)
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(viewModel.phase == .failed("Sign in to see this album.") && gateway.albumRequests.isEmpty)
     }
 
@@ -210,12 +231,14 @@ struct AlbumViewModelTests {
         let viewModel = viewModel(.numbered(discs: 1, perDisc: 2))
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(gateway.albumRequests.count == 1)
     }
 
     // ALB-16
 
     @Test(arguments: [ServerError.wrongCredentials, .failed(code: 41, message: "Token authentication not supported")])
+
     func aRejectedAlbumGoesBackToSetup(error: ServerError) async {
         gateway.albumError = error
         let viewModel = viewModel(.numbered(discs: 1, perDisc: 2))
@@ -223,6 +246,7 @@ struct AlbumViewModelTests {
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
 
         #expect(session.rejections == 1 && routing.steps == [.library])
+
         // The screen is being replaced by setup, so it shows no error of its own.
         #expect(viewModel.phase == .loading)
     }
@@ -231,6 +255,7 @@ struct AlbumViewModelTests {
         gateway.albumError = .unreachable
         let viewModel = viewModel(.numbered(discs: 1, perDisc: 2))
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(session.rejections == 0 && routing.steps.isEmpty)
         guard case .failed = viewModel.phase else {
             Issue.record("expected failed, got \(viewModel.phase)")
@@ -245,12 +270,15 @@ struct AlbumViewModelTests {
         let viewModel = viewModel(.numbered(discs: 1, perDisc: 1))
 
         _ = await viewModel.handleAction(.artworkNeeded(pixelSize: 360))
+
         #expect(viewModel.cover != nil && art.requests.map(\.pixelSize) == [360])
         _ = await viewModel.handleAction(.artworkNeeded(pixelSize: 359))
         _ = await viewModel.handleAction(.artworkNeeded(pixelSize: 180))
+
         #expect(art.requests.count == 1)
 
         _ = await viewModel.handleAction(.artworkNeeded(pixelSize: 1080))
+
         #expect(art.requests.map(\.pixelSize) == [360, 1080])
     }
 
@@ -288,16 +316,19 @@ struct AlbumViewModelTests {
         album.coverArtID = nil
         let viewModel = viewModel(album: album)
         _ = await viewModel.handleAction(.artworkNeeded(pixelSize: 360))
+
         #expect(viewModel.cover == nil && art.requests.isEmpty)
     }
 
     @Test func aCoverThatFailsIsAskedForAgain() async {
         let viewModel = viewModel(.numbered(discs: 1, perDisc: 1))
         _ = await viewModel.handleAction(.artworkNeeded(pixelSize: 360))
+
         #expect(viewModel.cover == nil)
 
         art.data = png()
         _ = await viewModel.handleAction(.artworkNeeded(pixelSize: 360))
+
         #expect(viewModel.cover != nil && art.requests.count == 2)
     }
 }

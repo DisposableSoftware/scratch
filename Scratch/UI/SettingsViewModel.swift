@@ -47,9 +47,11 @@ final class SettingsViewModel: ViewModel {
             useCases.sessionUseCase.signOut()
             account = nil
             await useCases.appRouting.navigateToNext(from: .library, with: AppFlowData())
+
         case .done:
             await useCases.coordinator.navigateTo(.dismissSheet)
         }
+
         return .none
     }
 
@@ -58,6 +60,7 @@ final class SettingsViewModel: ViewModel {
         case .wifi: change(&transcoding.wifi)
         case .cellular: change(&transcoding.cellular)
         }
+
         useCases.transcodingUseCase.update(transcoding)
     }
 }

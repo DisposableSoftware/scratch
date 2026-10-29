@@ -6,6 +6,7 @@ struct ConnectUseCaseTests {
     private let server = ServerGatewayMock()
     private let storage = CredentialGatewayMock()
     private let session = SessionState()
+
     private var useCase: DefaultConnectUseCase {
         DefaultConnectUseCase(serverGateway: server, credentialGateway: storage, sessionState: session)
     }
@@ -14,6 +15,7 @@ struct ConnectUseCaseTests {
         try await useCase.connect(address: "music.example.com/nd/", username: "me", password: "secret")
 
         let ping = try #require(server.pings.first)
+
         #expect(ping.baseURL.absoluteString == "https://music.example.com/nd")
         #expect(ping.credentials == SubsonicCredentials.derive(username: "me", password: "secret", salt: ping.credentials.salt))
         #expect(storage.stored == session.server)
@@ -22,12 +24,14 @@ struct ConnectUseCaseTests {
     }
 
     @Test(arguments: [ServerError.unreachable, .wrongCredentials, .notSubsonic, .failed(code: 0, message: "x")])
+
     func aFailedPingSavesNothing(error: ServerError) async {
         server.result = .failure(error)
 
         await #expect(throws: ConnectError.server(error)) {
             try await useCase.connect(address: "music.example.com", username: "me", password: "secret")
         }
+
         #expect(storage.stored == nil)
         #expect(session.server == nil)
     }
@@ -36,12 +40,14 @@ struct ConnectUseCaseTests {
         await #expect(throws: ConnectError.invalidAddress(.unsupportedScheme("ftp"))) {
             try await useCase.connect(address: "ftp://example.com", username: "me", password: "secret")
         }
+
         #expect(server.pings.isEmpty)
     }
 
     @Test func connectingForgetsARejectedAccount() async throws {
         session.rejectedAccount = SavedServer.sample.account
         try await useCase.connect(address: "music.example.com", username: "me", password: "secret")
+
         #expect(session.rejectedAccount == nil)
     }
 
@@ -51,6 +57,7 @@ struct ConnectUseCaseTests {
         await #expect(throws: ConnectError.couldNotSave) {
             try await useCase.connect(address: "music.example.com", username: "me", password: "secret")
         }
+
         #expect(session.server == nil)
     }
 }
@@ -61,18 +68,21 @@ struct SessionUseCaseTests {
     private let session = SessionState()
     private let library = LibraryState()
     private let albums = AlbumsState()
+
     private var useCase: DefaultSessionUseCase {
         DefaultSessionUseCase(credentialGateway: storage, playback: playback, sessionState: session, libraryState: library, albumsState: albums)
     }
 
     @Test func restoresTheSavedServer() {
         useCase.restoreSavedServer()
+
         #expect(session.server == .sample)
     }
 
     @Test func staysSignedOutWithNothingSaved() {
         storage.stored = nil
         useCase.restoreSavedServer()
+
         #expect(session.server == nil)
     }
 

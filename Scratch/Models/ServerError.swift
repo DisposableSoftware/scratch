@@ -2,10 +2,13 @@
 enum ServerError: Error, Equatable {
     /// No answer: no network, wrong host or port, TLS failure, timeout.
     case unreachable
+
     /// Subsonic error 40.
     case wrongCredentials
+
     /// Something answered, but not with a Subsonic response.
     case notSubsonic
+
     /// Any other Subsonic error, with the server's own message.
     case failed(code: Int, message: String)
 }

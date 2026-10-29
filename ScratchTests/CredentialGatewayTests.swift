@@ -11,16 +11,19 @@ struct CredentialGatewayTests {
     @Test func roundTripsWithSaltAndTokenOnlyInTheKeychain() throws {
         let gateway = gateway
         defer { try? gateway.delete(); environment.remove() }
+
         #expect(gateway.load() == nil)
 
         try gateway.save(.sample)
 
         #expect(gateway.load() == .sample)
         let stored = environment.defaults.persistentDomain(forName: environment.keychainService)?.values.compactMap { $0 as? String } ?? []
+
         #expect(Set(stored) == ["https://music.example.com", "me"])
 
         // The secret is in the Keychain: with defaults restored but the item gone, nothing loads.
         let secretQuery: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: environment.keychainService]
+
         #expect(SecItemDelete(secretQuery as CFDictionary) == errSecSuccess)
         #expect(gateway.load() == nil)
     }

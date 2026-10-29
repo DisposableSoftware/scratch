@@ -15,18 +15,22 @@ struct TranscodingSettingsTests {
 
     @Test func originalIsNeverCapped() {
         var quality = StreamQuality(format: .original, maxBitRate: 128)
+
         #expect(quality.maxBitRate == nil)
         quality.maxBitRate = 96
+
         #expect(quality.maxBitRate == nil)
 
         quality = StreamQuality(format: .mp3, maxBitRate: 128)
         quality.format = .original
+
         #expect(quality.maxBitRate == nil)
     }
 
     @Test func savedOriginalWithACapLoadsUncapped() throws {
         let data = Data(#"{"wifi":{"format":"raw","maxBitRate":96},"cellular":{"format":"mp3","maxBitRate":64}}"#.utf8)
         let settings = try JSONDecoder().decode(TranscodingSettings.self, from: data)
+
         #expect(settings.wifi == StreamQuality(format: .original, maxBitRate: nil))
         #expect(settings.cellular == StreamQuality(format: .mp3, maxBitRate: 64))
     }
@@ -34,8 +38,10 @@ struct TranscodingSettingsTests {
     @Test func theNetworkPicksTheQuality() {
         let network = NetworkGatewayStub()
         let useCase = DefaultTranscodingUseCase(settingsGateway: SettingsGatewayMock(), networkGateway: network)
+
         #expect(useCase.qualityForNextTrack() == useCase.settings.wifi)
         network.currentNetwork = .cellular
+
         #expect(useCase.qualityForNextTrack() == useCase.settings.cellular)
     }
 
@@ -44,6 +50,7 @@ struct TranscodingSettingsTests {
         let changed = TranscodingSettings(wifi: StreamQuality(format: .aac, maxBitRate: 256), cellular: StreamQuality(format: .mp3, maxBitRate: 64))
 
         DefaultTranscodingUseCase(settingsGateway: gateway, networkGateway: NetworkGatewayStub()).update(changed)
+
         #expect(gateway.saved == changed)
         #expect(DefaultTranscodingUseCase(settingsGateway: gateway, networkGateway: NetworkGatewayStub()).settings == changed)
     }
@@ -79,6 +86,7 @@ struct SettingsViewModelTests {
         let transcoding = TranscodingUseCaseMock()
         let viewModel = SettingsViewModel(useCases: SettingsUseCases(transcodingUseCase: transcoding, coordinator: CoordinatorSpy()))
         _ = await viewModel.handleAction(.formatChanged(.cellular, .original))
+
         #expect(transcoding.settings.cellular == StreamQuality(format: .original, maxBitRate: nil))
     }
 
@@ -98,6 +106,7 @@ struct SettingsViewModelTests {
         let session = SessionUseCaseMock()
         let routing = AppRoutingUseCaseSpy()
         let viewModel = SettingsViewModel(useCases: SettingsUseCases(transcodingUseCase: TranscodingUseCaseMock(), coordinator: CoordinatorSpy(), sessionUseCase: session, appRouting: routing))
+
         #expect(viewModel.account == SavedServer.sample.account)
 
         _ = await viewModel.handleAction(.signOut)
@@ -111,6 +120,7 @@ struct SettingsViewModelTests {
     @Test func theAlbumsPerRowChoiceReachesTheUseCaseAndComesBack() async {
         let display = DisplayUseCaseMock()
         let viewModel = SettingsViewModel(useCases: SettingsUseCases(transcodingUseCase: TranscodingUseCaseMock(), coordinator: CoordinatorSpy(), displayUseCase: display))
+
         #expect(viewModel.albumsPerRow == 2)
 
         _ = await viewModel.handleAction(.albumsPerRowChanged(4))

@@ -25,20 +25,24 @@ struct AlbumView: View {
                 .aspectRatio(1, contentMode: .fit)
                 .overlay { CoverArt(image: viewModel.cover).accessibilityHidden(true) }
                 .frame(maxWidth: 360)
+
                 // The cover is fetched at the width it is shown at.
                 .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in
                     guard width > 0 else { return }
+
                     viewModel.submitAction(.artworkNeeded(pixelSize: Int((width * displayScale).rounded())))
                 }
             VStack(spacing: 4) {
                 Text(viewModel.album.name)
                     .font(.title2.bold())
                     .multilineTextAlignment(.center)
+
                 if !viewModel.album.artist.isEmpty {
                     Text(viewModel.album.artist)
                         .font(.title3)
                         .foregroundStyle(.secondary)
                 }
+
                 if !viewModel.details.isEmpty {
                     Text(viewModel.details)
                         .font(.subheadline)
@@ -73,11 +77,13 @@ struct AlbumView: View {
             ProgressView()
                 .frame(maxWidth: .infinity)
                 .listRowSeparator(.hidden)
+
         case .empty:
             Text("This album has no tracks.")
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity)
                 .listRowSeparator(.hidden)
+
         case .failed(let message):
             VStack(spacing: 8) {
                 Text(message).foregroundStyle(.secondary)
@@ -85,6 +91,7 @@ struct AlbumView: View {
             }
             .frame(maxWidth: .infinity)
             .listRowSeparator(.hidden)
+
         case .loaded:
             ForEach(viewModel.sections) { section in
                 Section {
@@ -119,6 +126,7 @@ private struct TrackLine: View {
                 .frame(minWidth: 28, alignment: .trailing)
             VStack(alignment: .leading, spacing: 2) {
                 Text(row.title).lineLimit(1)
+
                 if let artist = row.artist {
                     Text(artist)
                         .font(.subheadline)
@@ -126,7 +134,9 @@ private struct TrackLine: View {
                         .lineLimit(1)
                 }
             }
+
             Spacer()
+
             if let duration = row.duration {
                 Text(duration)
                     .font(.subheadline.monospacedDigit())

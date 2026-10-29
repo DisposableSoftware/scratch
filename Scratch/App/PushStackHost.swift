@@ -4,11 +4,13 @@ import SwiftUI
 /// A screen on the navigation stack, told apart by identity, since views can't be compared.
 struct PushedScreen: Hashable, Identifiable {
     let id = UUID()
+
     /// What the screen is, so the same one isn't pushed on top of itself.
     let key: String
     let view: AnyView
 
     static func == (lhs: PushedScreen, rhs: PushedScreen) -> Bool { lhs.id == rhs.id }
+
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
@@ -19,9 +21,11 @@ final class PushStackHost: ObservableObject, DestinationHandler, NavigationStack
 
     func handle(_ destination: NavigationDestination) -> Bool {
         guard case .push(let key, let view) = destination else { return false }
+
         if path.last?.key != key {
             path.append(PushedScreen(key: key, view: view))
         }
+
         return true
     }
 

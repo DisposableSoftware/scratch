@@ -27,6 +27,7 @@ struct ScratchApp: App {
                 .task {
                     // Unit tests run inside the app; it stays on its spinner, signed out and offline.
                     guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
+
                     container.sessionUseCase.restoreSavedServer()
                     await container.appRouting.navigateToNext(from: .launch, with: AppFlowData())
                 }

@@ -2,9 +2,11 @@ import Testing
 @testable import Scratch
 
 @Suite(.timeLimit(.minutes(1)))
+
 struct AlbumUseCaseTests {
     private let gateway = AlbumGatewayMock()
     private let albumsState = AlbumsState()
+
     private func useCase(signedIn: Bool = true) -> DefaultAlbumUseCase {
         DefaultAlbumUseCase(albumGateway: gateway, sessionState: SessionState(server: signedIn ? .sample : nil), albumsState: albumsState)
     }
@@ -14,10 +16,13 @@ struct AlbumUseCaseTests {
         let useCase = useCase()
 
         try await useCase.loadFirstPage()
+
         #expect(useCase.albums.count == 100 && useCase.hasMoreAlbums)
         try await useCase.loadNextPage()
+
         #expect(useCase.albums.count == 200 && useCase.hasMoreAlbums)
         try await useCase.loadNextPage()
+
         #expect(useCase.albums.count == 250 && !useCase.hasMoreAlbums)
         try await useCase.loadNextPage()
 
@@ -30,8 +35,10 @@ struct AlbumUseCaseTests {
         gateway.all = Album.numbered(100)
         let useCase = useCase()
         try await useCase.loadFirstPage()
+
         #expect(useCase.hasMoreAlbums)
         try await useCase.loadNextPage()
+
         #expect(!useCase.hasMoreAlbums && useCase.albums.count == 100)
     }
 
@@ -78,6 +85,7 @@ struct AlbumUseCaseTests {
 
         #expect(gateway.requests.map(\.offset) == [0, 100, 0])
         try await useCase.loadNextPage()
+
         #expect(useCase.albums.map(\.id) == Album.numbered(150).map(\.id))
     }
 
@@ -85,6 +93,7 @@ struct AlbumUseCaseTests {
         gateway.all = Album.numbered(150)
         let useCase = useCase()
         try await useCase.loadFirstPage()
+
         // The server's order shifted by one: the next page starts with an album already shown.
         gateway.all.insert(Album.numbered(1)[0], at: 0)
         try await useCase.loadNextPage()
@@ -118,11 +127,13 @@ struct AlbumUseCaseTests {
         hold.release()
 
         try await next.value
+
         #expect(albumsState.albums.isEmpty)
     }
 
     @Test func signedOutLoadsNothing() async throws {
         try await useCase(signedIn: false).loadFirstPage()
+
         #expect(gateway.requests.isEmpty)
     }
 
@@ -130,6 +141,7 @@ struct AlbumUseCaseTests {
         gateway.all = Album.numbered(250)
         let useCase = useCase()
         try await useCase.loadFirstPage()
+
         // An album the server returned is taken out of the grid, as the favourites will be.
         albumsState.albums.remove(at: 0)
 
@@ -142,6 +154,7 @@ struct AlbumUseCaseTests {
 
     @Test func favouritesComeFirstByNameAndAreNotRepeated() async throws {
         gateway.all = Album.numbered(30)
+
         // The server lists them by when they were starred; the use case orders them by name, numbers as numbers.
         gateway.starred = [gateway.all[12], gateway.all[3], gateway.all[7]]
         let useCase = useCase()
@@ -167,6 +180,7 @@ struct AlbumUseCaseTests {
         gateway.all = Album.numbered(5)
         let useCase = useCase()
         try await useCase.loadFirstPage()
+
         #expect(useCase.favourites.isEmpty && useCase.albums.count == 5)
     }
 
@@ -199,6 +213,7 @@ struct AlbumUseCaseTests {
     @Test func aFirstPageThatFailsFailsTheLoadToo() async throws {
         gateway.all = Album.numbered(5)
         gateway.error = .unreachable
+
         await #expect(throws: ServerError.unreachable) { try await useCase().loadFirstPage() }
     }
 
@@ -276,6 +291,7 @@ struct AlbumUseCaseTests {
         gateway.starred = [gateway.all[1], gateway.all[1]]
         let useCase = useCase()
         try await useCase.loadFirstPage()
+
         #expect(useCase.favourites.map(\.id) == ["a1"])
     }
 
@@ -286,9 +302,11 @@ struct AlbumUseCaseTests {
         let useCase = useCase()
 
         try await useCase.loadFirstPage()
+
         #expect(gateway.requests.count == 1 + DefaultAlbumUseCase.maxGapPages)
 
         try await useCase.loadNextPage()
+
         #expect(gateway.requests.count == 1 + 2 * DefaultAlbumUseCase.maxGapPages)
     }
 
@@ -302,6 +320,7 @@ struct AlbumUseCaseTests {
 
         gateway.failAfterRequests = nil
         try await useCase.loadFirstPage()
+
         #expect(useCase.favourites.count == 150 && useCase.albums.count == 50)
     }
 
@@ -315,10 +334,12 @@ struct AlbumUseCaseTests {
 
         try await useCase.loadFirstPage()
         try await useCase.loadNextPage()
+
         #expect(useCase.albums.count == 200)
 
         hold.release()
         try await stale.value
+
         #expect(useCase.albums.count == 200)
     }
 
@@ -351,11 +372,13 @@ struct AlbumUseCaseTests {
         let useCase = useCase()
         _ = try await useCase.album(id: "al1")
         _ = try await useCase.album(id: "al1")
+
         #expect(gateway.albumRequests.count == 2)
     }
 
     @Test func signedOutThereIsNoAlbum() async throws {
         gateway.details["al1"] = AlbumDetail.numbered(discs: 1, perDisc: 2)
+
         #expect(try await useCase(signedIn: false).album(id: "al1") == nil)
         #expect(gateway.albumRequests.isEmpty)
     }

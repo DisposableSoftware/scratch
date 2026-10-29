@@ -21,6 +21,7 @@ final class MPNowPlayingGateway: NowPlayingGateway {
         center.previousTrackCommand.addTarget { [weak self] _ in self?.send(.previous) ?? .commandFailed }
         center.changePlaybackPositionCommand.addTarget { [weak self] event in
             guard let event = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
+
             return self?.send(.seek(event.positionTime)) ?? .commandFailed
         }
     }
@@ -29,8 +30,10 @@ final class MPNowPlayingGateway: NowPlayingGateway {
         guard let info else {
             MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
             MPNowPlayingInfoCenter.default().playbackState = .stopped
+
             return
         }
+
         var values: [String: Any] = [
             MPMediaItemPropertyTitle: info.title,
             MPMediaItemPropertyArtist: info.artist,
@@ -40,16 +43,20 @@ final class MPNowPlayingGateway: NowPlayingGateway {
             MPNowPlayingInfoPropertyPlaybackRate: info.isPlaying ? 1.0 : 0.0,
             MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.audio.rawValue,
         ]
+
         if let duration = info.duration {
             values[MPMediaItemPropertyPlaybackDuration] = duration
         }
+
         MPNowPlayingInfoCenter.default().nowPlayingInfo = values
         MPNowPlayingInfoCenter.default().playbackState = info.isPlaying ? .playing : .paused
     }
 
     private func send(_ command: RemoteCommand) -> MPRemoteCommandHandlerStatus {
         guard let onCommand else { return .noActionableNowPlayingItem }
+
         onCommand(command)
+
         return .success
     }
 }

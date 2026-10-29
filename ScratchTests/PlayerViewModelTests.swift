@@ -10,6 +10,7 @@ private struct PlayerUseCases: HasPlaybackUseCase, HasCoverArtUseCase, HasCoordi
 }
 
 @Suite(.timeLimit(.minutes(1)))
+
 struct PlayerViewModelTests {
     private let player = AudioPlayerGatewayMock()
     private let art = CoverArtUseCaseMock()
@@ -41,10 +42,13 @@ struct PlayerViewModelTests {
         player.send(.ready(duration: nil))
 
         _ = await viewModel.handleAction(.playPause)
+
         #expect(viewModel.status == .paused)
         _ = await viewModel.handleAction(.next)
+
         #expect(viewModel.track?.id == "t1")
         _ = await viewModel.handleAction(.previous)
+
         #expect(viewModel.track?.id == "t0")
     }
 
@@ -55,10 +59,12 @@ struct PlayerViewModelTests {
 
         _ = await viewModel.handleAction(.scrubbed(120))
         player.send(.time(11))
+
         #expect(viewModel.position == 120)
         #expect(!player.calls.contains(.seek(120)))
 
         _ = await viewModel.handleAction(.scrubEnded)
+
         #expect(player.calls.last == .seek(120))
         #expect(viewModel.position == 120 && !viewModel.isScrubbing)
     }
@@ -66,6 +72,7 @@ struct PlayerViewModelTests {
     @Test func aFailedStreamShows() {
         playback.play(Track.numbered(1), startingAt: 0)
         player.send(.failed)
+
         #expect(viewModel.status == .failed && viewModel.track?.id == "t0")
     }
 
@@ -82,11 +89,14 @@ struct PlayerViewModelTests {
         art.data = UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData()
         playback.play(Track.numbered(2), startingAt: 0)
         _ = await viewModel.handleAction(.artworkNeeded(pixelSize: 120))
+
         #expect(viewModel.artwork[120] != nil && art.requests.last?.id == "c0")
 
         playback.next()
+
         #expect(viewModel.artwork.isEmpty)
         _ = await viewModel.handleAction(.artworkNeeded(pixelSize: 120))
+
         #expect(art.requests.last?.id == "c1")
     }
 
@@ -106,6 +116,7 @@ struct PlayerViewModelTests {
         playback.play(Track.numbered(1), startingAt: 0)
         player.send(.ready(duration: 300))
         _ = await viewModel.handleAction(.scrubEnded)
+
         #expect(!player.calls.contains { if case .seek = $0 { true } else { false } })
     }
 
@@ -123,8 +134,10 @@ struct PlayerViewModelTests {
 
     @Test func showsTheQualityAskedForTheTrack() {
         playback.play(Track.numbered(2), startingAt: 0)
+
         #expect(viewModel.quality == TranscodingSettings.defaults.wifi)
         player.send(.failed)
+
         #expect(viewModel.quality == TranscodingSettings.defaults.wifi)
     }
 
@@ -134,6 +147,7 @@ struct PlayerViewModelTests {
         (StreamQuality(format: .original, maxBitRate: nil), "Original"),
         (StreamQuality(format: .original, maxBitRate: 96), "Original"),
     ])
+
     func qualityLabels(quality: StreamQuality, expected: String) {
         #expect(quality.label == expected)
     }

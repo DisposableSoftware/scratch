@@ -25,6 +25,7 @@ final class AlbumViewModel: ViewModel {
     }
 
     let useCases: UseCases
+
     /// The album as the grid showed it, which fills the screen in until its tracks arrive.
     let album: Album
 
@@ -56,35 +57,43 @@ final class AlbumViewModel: ViewModel {
             if let index = tracks.firstIndex(where: { $0.id == id }) {
                 useCases.playbackUseCase.play(tracks, startingAt: index)
             }
+
         case .playTapped:
             // ALB-13: from the first track.
             if !tracks.isEmpty { useCases.playbackUseCase.play(tracks, startingAt: 0) }
+
         case .shuffleTapped:
             // ALB-14: every track once, in a random order.
             if !tracks.isEmpty { useCases.playbackUseCase.playShuffled(tracks) }
+
         case .artworkNeeded(let pixelSize):
             await loadCover(pixelSize: pixelSize)
         }
+
         return .none
     }
 
     private func load() async {
         // A second appearance while the first load runs waits for it.
         guard !loading else { return }
+
         loading = true
         defer { loading = false }
         phase = .loading
+
         do {
             guard let detail = try await useCases.albumUseCase.album(id: album.id) else {
                 phase = .failed("Sign in to see this album.")
                 return
             }
+
             tracks = detail.tracks.map(\.track)
             details = Self.details(for: detail.album, trackCount: detail.tracks.count)
             sections = Self.sections(for: detail)
             phase = tracks.isEmpty ? .empty : .loaded
         } catch {
             if error.rejectsCredentials { return await reauthenticate() }
+
             phase = .failed(Self.message(for: error))
         }
     }
@@ -100,10 +109,13 @@ final class AlbumViewModel: ViewModel {
     /// it. A cover that fails is asked for again the next time the screen reports its size.
     private func loadCover(pixelSize: Int) async {
         guard let id = album.coverArtID else { return }
+
         wantedCoverSize = max(wantedCoverSize, pixelSize)
         guard !fetchingCover else { return }
+
         fetchingCover = true
         defer { fetchingCover = false }
+
         while Double(heldCoverSize) < Double(wantedCoverSize) * 0.95 {
             let target = wantedCoverSize
             guard let data = await useCases.coverArtUseCase.coverArt(id: id, pixelSize: target),
@@ -126,6 +138,7 @@ final class AlbumViewModel: ViewModel {
             count.map { $0 == 1 ? "1 song" : "\($0) songs" },
             minutes.map { $0 >= 60 ? "\($0 / 60) hr \($0 % 60) min" : "\($0) min" },
         ]
+
         return parts.compactMap { $0 }.joined(separator: " · ")
     }
 

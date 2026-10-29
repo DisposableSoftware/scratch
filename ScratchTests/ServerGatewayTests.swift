@@ -14,6 +14,7 @@ struct ServerGatewayTests {
     @Test func okIsSuccess() async throws {
         try await ping { _ in .http(status: 200, body: SubsonicReply.ok) }
         let url = try #require(StubURLProtocol.requests.first?.url)
+
         #expect(url.path == "/rest/ping")
         #expect(url.query?.contains("t=token") == true)
     }
@@ -35,6 +36,7 @@ struct ServerGatewayTests {
         .http(status: 404, body: "Not found"),
         .http(status: 200, body: #"{"something":"else"}"#),
     ])
+
     func anythingElseIsNotSubsonic(reply: StubURLProtocol.Reply) async {
         await #expect(throws: ServerError.notSubsonic) { try await ping { _ in reply } }
     }
@@ -58,6 +60,7 @@ struct ServerGatewayTests {
                 ? .redirect(to: "https://music.example.com/moved/rest/ping?" + (request.url?.query ?? ""))
                 : .http(status: 200, body: SubsonicReply.ok)
         }
+
         #expect(StubURLProtocol.requests.map { $0.url?.path } == ["/rest/ping", "/moved/rest/ping"])
     }
 
@@ -70,6 +73,7 @@ struct ServerGatewayTests {
                     : .http(status: 200, body: SubsonicReply.ok)
             }
         }
+
         #expect(StubURLProtocol.requests.count == 1)
     }
 

@@ -18,6 +18,7 @@ final class DefaultCoverArtUseCase: CoverArtUseCase {
 
     func coverArt(id: String, pixelSize: Int) async -> Data? {
         guard let server = sessionState.server, pixelSize > 0 else { return nil }
+
         return try? await coverArtGateway.coverArt(id: id, size: pixelSize, server: server)
     }
 }

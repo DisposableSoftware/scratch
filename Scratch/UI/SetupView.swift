@@ -18,6 +18,7 @@ struct SetupView: View {
                 } header: {
                     Text("Server")
                 }
+
                 Section {
                     TextField("Username", text: viewModel.binding(\.username, to: { .usernameChanged($0) }))
                         .textContentType(.username)
@@ -28,12 +29,14 @@ struct SetupView: View {
                 } header: {
                     Text("Account")
                 }
+
                 Section {
                     Button {
                         viewModel.submitAction(.connect)
                     } label: {
                         HStack {
                             Text("Connect")
+
                             if viewModel.isConnecting {
                                 Spacer()
                                 ProgressView()

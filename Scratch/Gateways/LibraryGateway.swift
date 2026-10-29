@@ -23,6 +23,7 @@ final class RemoteLibraryGateway: LibraryGateway {
             URLQueryItem(name: "albumCount", value: "0"),
         ])
         let payload = try await client.send(request, to: server, as: SearchPayload.self)
+
         return (payload.searchResult3.song ?? []).map(\.track)
     }
 }

@@ -20,7 +20,9 @@ struct AlbumGatewayTests {
             Album(id: "b", name: "", artist: "", coverArtID: nil, songCount: nil, duration: nil, year: nil, genre: nil, isStarred: false),
         ])
         let url = try #require(StubURLProtocol.requests.first?.url)
+
         #expect(url.path == "/rest/getAlbumList2")
+
         for part in ["type=alphabeticalByName", "size=100", "offset=200"] {
             #expect(url.query?.contains(part) == true, "missing \(part)")
         }
@@ -29,6 +31,7 @@ struct AlbumGatewayTests {
     @Test func usesTheArtistWhenThereIsNoDisplayArtist() async throws {
         let body = #"{"subsonic-response":{"status":"ok","version":"1.16.1","albumList2":{"album":[{"id":"a","name":"X","artist":"Solo"}]}}}"#
         let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })
+
         #expect(try await gateway.albums(offset: 0, count: 100, server: .sample).first?.artist == "Solo")
     }
 
@@ -43,6 +46,7 @@ struct AlbumGatewayTests {
 
     @Test func aReplyWithoutTheListKeyIsNotSubsonic() async {
         let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: SubsonicReply.ok) })
+
         await #expect(throws: ServerError.notSubsonic) {
             try await gateway.albums(offset: 0, count: 100, server: .sample)
         }
@@ -60,6 +64,7 @@ struct AlbumGatewayTests {
 
     @Test func aStarredReplyWithoutTheKeyIsNotSubsonic() async {
         let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: SubsonicReply.ok) })
+
         await #expect(throws: ServerError.notSubsonic) {
             try await gateway.starredAlbums(server: .sample)
         }
@@ -68,6 +73,7 @@ struct AlbumGatewayTests {
     @Test func nothingStarredIsEmpty() async throws {
         let body = #"{"subsonic-response":{"status":"ok","version":"1.16.1","starred2":{}}}"#
         let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })
+
         #expect(try await gateway.starredAlbums(server: .sample).isEmpty)
     }
 
@@ -95,6 +101,7 @@ struct AlbumGatewayTests {
         #expect(detail.tracks[1].disc == 1 && detail.tracks[1].number == nil)
         #expect(detail.tracks[2].disc == 2 && detail.tracks[2].number == 5 && detail.tracks[2].track.coverArtID == nil)
         let url = try #require(StubURLProtocol.requests.first?.url)
+
         #expect(url.path == "/rest/getAlbum" && url.query?.contains("id=al1") == true)
     }
 
@@ -102,11 +109,13 @@ struct AlbumGatewayTests {
         let body = #"{"subsonic-response":{"status":"ok","version":"1.16.1","album":{"id":"al1","name":"Empty"}}}"#
         let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })
         let detail = try await gateway.album(id: "al1", server: .sample)
+
         #expect(detail.tracks.isEmpty && detail.discTitles.isEmpty)
     }
 
     @Test func anAlbumTheServerDoesntHaveIsAnError() async {
         let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: SubsonicReply.error(70, "Album not found")) })
+
         await #expect(throws: ServerError.failed(code: 70, message: "Album not found")) {
             try await gateway.album(id: "nope", server: .sample)
         }
@@ -114,6 +123,7 @@ struct AlbumGatewayTests {
 
     @Test func aReplyWithoutTheAlbumKeyIsNotSubsonic() async {
         let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: SubsonicReply.ok) })
+
         await #expect(throws: ServerError.notSubsonic) {
             try await gateway.album(id: "al1", server: .sample)
         }
@@ -122,11 +132,13 @@ struct AlbumGatewayTests {
     @Test func aPageWithNoAlbumsIsEmpty() async throws {
         let body = #"{"subsonic-response":{"status":"ok","version":"1.16.1","albumList2":{}}}"#
         let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })
+
         #expect(try await gateway.albums(offset: 0, count: 100, server: .sample).isEmpty)
     }
 
     @Test func aRejectedRequestIsAnError() async {
         let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: SubsonicReply.error(40, "Wrong username or password")) })
+
         await #expect(throws: ServerError.wrongCredentials) {
             try await gateway.albums(offset: 0, count: 100, server: .sample)
         }

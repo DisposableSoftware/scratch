@@ -25,6 +25,7 @@ final class CredentialGatewayMock: CredentialGateway {
 
     func save(_ server: SavedServer) throws(StorageError) {
         if let saveError { throw saveError }
+
         stored = server
     }
 
@@ -104,14 +105,17 @@ final class LibraryGatewayMock: LibraryGateway {
             signalEntered.yield()
             for await _ in held { break }
         }
+
         return (entered, { release.yield(); release.finish() })
     }
+
     private(set) var requests: [(offset: Int, count: Int)] = []
 
     func tracks(offset: Int, count: Int, server: SavedServer) async throws(ServerError) -> [Track] {
         requests.append((offset, count))
         if let gate { await gate() }
         if let error { throw error }
+
         return Array(all.dropFirst(offset).prefix(count))
     }
 }
@@ -131,12 +135,14 @@ final class CoverArtUseCaseMock: CoverArtUseCase {
             signalEntered.yield()
             for await _ in held { break }
         }
+
         return (entered, { release.yield(); release.finish() })
     }
 
     func coverArt(id: String, pixelSize: Int) async -> Data? {
         requests.append((id, pixelSize))
         if let gate { await gate() }
+
         return data
     }
 }
@@ -159,9 +165,13 @@ final class AudioPlayerGatewayMock: AudioPlayerGateway {
     private(set) var calls: [Call] = []
 
     func load(_ track: Track, server: SavedServer, quality: StreamQuality) { calls.append(.load(track.id, quality)) }
+
     func play() { calls.append(.play) }
+
     func pause() { calls.append(.pause) }
+
     func seek(to seconds: TimeInterval) { calls.append(.seek(seconds)) }
+
     func stop() { calls.append(.stop) }
 
     func send(_ event: AudioPlayerEvent) { onEvent?(event) }
@@ -175,12 +185,18 @@ final class PlaybackUseCaseMock: PlaybackUseCase {
     private(set) var shuffled: [[Track]] = []
 
     func play(_ tracks: [Track], startingAt index: Int) { played.append((tracks, index)) }
+
     func playShuffled(_ tracks: [Track]) { shuffled.append(tracks) }
+
     func togglePlayPause() {}
+
     func next() {}
+
     func previous() {}
+
     func seek(to seconds: TimeInterval) {}
     private(set) var stops = 0
+
     func stop() { stops += 1 }
 }
 
@@ -190,6 +206,7 @@ final class NowPlayingGatewayMock: NowPlayingGateway {
     var last: NowPlayingInfo? { updates.last ?? nil }
 
     func update(_ info: NowPlayingInfo?) { updates.append(info) }
+
     func send(_ command: RemoteCommand) { onCommand?(command) }
 }
 
@@ -198,6 +215,7 @@ final class TranscodingUseCaseMock: TranscodingUseCase {
     var network = NetworkKind.wifi
 
     func update(_ settings: TranscodingSettings) { self.settings = settings }
+
     func qualityForNextTrack() -> StreamQuality { settings.quality(on: network) }
 }
 
@@ -210,8 +228,11 @@ final class SettingsGatewayMock: SettingsGateway {
     var savedAlbumsPerRow: Int?
 
     func transcoding() -> TranscodingSettings? { saved }
+
     func saveTranscoding(_ settings: TranscodingSettings) { saved = settings }
+
     func albumsPerRow() -> Int? { savedAlbumsPerRow }
+
     func saveAlbumsPerRow(_ count: Int) { savedAlbumsPerRow = count }
 }
 
@@ -232,9 +253,11 @@ final class SessionUseCaseMock: SessionUseCase {
     private(set) var signOuts = 0
 
     func restoreSavedServer() {}
+
     func credentialsRejected() {
         rejections += 1
         guard let account else { return }
+
         rejectedAccount = account
         self.account = nil
     }
@@ -249,6 +272,7 @@ final class SessionUseCaseMock: SessionUseCase {
 final class AlbumGatewayMock: AlbumGateway {
     /// Pages are cut from this list by offset and count.
     var all: [Album] = []
+
     /// What `starredAlbums` returns, in the order given.
     var starred: [Album] = []
     var error: ServerError?
@@ -258,9 +282,11 @@ final class AlbumGatewayMock: AlbumGateway {
     var albumError: ServerError?
     var albumGate: (() async -> Void)?
     private(set) var albumRequests: [Album.ID] = []
+
     /// Fail every album request after this many have been made, with `failAfterError`.
     var failAfterRequests: Int?
     var failAfterError = ServerError.unreachable
+
     /// Answer every page from the start, as a server that ignores the offset would.
     var ignoresOffset = false
     var gate: (() async -> Void)?
@@ -278,6 +304,7 @@ final class AlbumGatewayMock: AlbumGateway {
             signalEntered.yield()
             for await _ in held { break }
         }
+
         return (entered, { release.yield(); release.finish() })
     }
 
@@ -290,6 +317,7 @@ final class AlbumGatewayMock: AlbumGateway {
             signalEntered.yield()
             for await _ in held { break }
         }
+
         return (entered, { release.yield(); release.finish() })
     }
 
@@ -298,6 +326,7 @@ final class AlbumGatewayMock: AlbumGateway {
         if let gate { await gate() }
         if let error { throw error }
         if let failAfterRequests, requests.count > failAfterRequests { throw failAfterError }
+
         return Array(all.dropFirst(ignoresOffset ? 0 : offset).prefix(count))
     }
 
@@ -310,6 +339,7 @@ final class AlbumGatewayMock: AlbumGateway {
             signalEntered.yield()
             for await _ in held { break }
         }
+
         return (entered, { release.yield(); release.finish() })
     }
 
@@ -318,15 +348,18 @@ final class AlbumGatewayMock: AlbumGateway {
         if let albumGate { await albumGate() }
         if let albumError { throw albumError }
         guard let detail = details[id] else { throw .failed(code: 70, message: "Album not found") }
+
         return detail
     }
 
     func starredAlbums(server: SavedServer) async throws(ServerError) -> [Album] {
         starredRequests += 1
+
         // The answer is what the server held when asked, not when it finishes.
         let answer = starred
         if let starredGate { await starredGate() }
         if let starredError { throw starredError }
+
         return answer
     }
 }
@@ -355,6 +388,7 @@ extension AlbumDetail {
                 )
             }
         }
+
         return AlbumDetail(album: album, tracks: tracks, discTitles: titles)
     }
 }

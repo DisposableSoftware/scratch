@@ -34,6 +34,7 @@ final class LibraryViewModel: RoutingViewModel {
 
     /// Loading the next page starts when a row this close to the end appears.
     static let prefetchDistance = 20
+
     /// Decoded covers kept for the rows; the oldest go first, and come back when their row does.
     static let artworkLimit = 200
 
@@ -67,6 +68,7 @@ final class LibraryViewModel: RoutingViewModel {
                   loadMoreError == nil
             else { break }
             await loadNextPage()
+
         case .artworkNeeded(let coverArtID, let pixelSize):
             await loadArtwork(coverArtID, pixelSize: pixelSize)
         case .refresh:
@@ -79,6 +81,7 @@ final class LibraryViewModel: RoutingViewModel {
                 useCases.playbackUseCase.play(tracks, startingAt: index)
             }
         }
+
         return .none
     }
 
@@ -86,16 +89,19 @@ final class LibraryViewModel: RoutingViewModel {
     /// own spinner at the top.
     private func loadFirstPage(keepingListOnScreen: Bool = false) async {
         guard !loadingFirstPage else { return }
+
         loadingFirstPage = true
         defer { loadingFirstPage = false }
         if !(keepingListOnScreen && (phase == .loaded || phase == .empty)) { phase = .loading }
         loadMoreError = nil
+
         do {
             try await useCases.libraryUseCase.loadFirstPage()
             tracks = useCases.libraryUseCase.tracks
             phase = tracks.isEmpty ? .empty : .loaded
         } catch {
             if error.rejectsCredentials { return await reauthenticate() }
+
             phase = .failed(Self.message(for: error))
         }
     }
@@ -108,21 +114,26 @@ final class LibraryViewModel: RoutingViewModel {
 
     private func loadNextPage() async {
         guard useCases.libraryUseCase.hasMoreTracks, !isLoadingMore else { return }
+
         isLoadingMore = true
         loadMoreError = nil
         defer { isLoadingMore = false }
+
         do {
             try await useCases.libraryUseCase.loadNextPage()
             tracks = useCases.libraryUseCase.tracks
         } catch {
             if error.rejectsCredentials { return await reauthenticate() }
+
             loadMoreError = Self.message(for: error)
         }
     }
 
     private func loadArtwork(_ coverArtID: String, pixelSize: Int) async {
         guard !requestedArtwork.contains(coverArtID) else { return }
+
         requestedArtwork.insert(coverArtID)
+
         // Decoded off the main thread; a failure is forgotten so the row can ask again.
         guard let data = await useCases.coverArtUseCase.coverArt(id: coverArtID, pixelSize: pixelSize),
               let image = await UIImage(data: data)?.byPreparingForDisplay()
@@ -130,8 +141,10 @@ final class LibraryViewModel: RoutingViewModel {
             requestedArtwork.remove(coverArtID)
             return
         }
+
         artwork[coverArtID] = image
         artworkOrder.append(coverArtID)
+
         while artworkOrder.count > Self.artworkLimit {
             let oldest = artworkOrder.removeFirst()
             artwork[oldest] = nil

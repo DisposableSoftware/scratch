@@ -98,6 +98,7 @@ extension AppContainer {
             displayUseCase: displayUseCase
         )
         viewFactory.useCases = container
+
         return container
     }
 }

@@ -19,12 +19,14 @@ struct AlbumDetailTests {
     @Test func noTracksMeansNoDiscs() {
         var detail = AlbumDetail.numbered(discs: 1, perDisc: 1)
         detail.tracks = []
+
         #expect(detail.discs.isEmpty)
     }
 
     @Test func discsKeepTheTracksInTheOrderGiven() {
         var detail = AlbumDetail.numbered(discs: 2, perDisc: 3)
         detail.tracks = detail.tracks.reversed()
+
         #expect(detail.discs.map(\.number) == [1, 2])
         #expect(detail.discs[0].tracks.map(\.id) == ["d1t3", "d1t2", "d1t1"])
     }

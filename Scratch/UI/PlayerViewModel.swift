@@ -7,9 +7,11 @@ enum PlayerAction: Equatable {
     case playPause
     case next
     case previous
+
     /// The scrubber moved; only the shown position follows until it's let go.
     case scrubbed(TimeInterval)
     case scrubEnded
+
     /// The player went away mid-drag: drop the drag without seeking.
     case scrubCancelled
     case artworkNeeded(pixelSize: Int)
@@ -39,6 +41,7 @@ final class PlayerViewModel: RoutingViewModel {
     /// Where the scrubber and the times show, which follows playback except while scrubbing.
     @Published private(set) var position: TimeInterval = 0
     @Published private(set) var isScrubbing = false
+
     /// The current track's cover, by pixel size.
     @Published private(set) var artwork: [Int: UIImage] = [:]
 
@@ -70,6 +73,7 @@ final class PlayerViewModel: RoutingViewModel {
 
     func handleAction(_ action: PlayerAction) async -> SideEffect {
         let playback = useCases.playbackUseCase
+
         switch action {
         case .barTapped:
             await navigateTo(.player)
@@ -82,21 +86,27 @@ final class PlayerViewModel: RoutingViewModel {
         case .scrubbed(let seconds):
             isScrubbing = true
             position = seconds
+
         case .scrubEnded:
             guard isScrubbing else { break }
+
             playback.seek(to: position)
             isScrubbing = false
+
         case .scrubCancelled:
             isScrubbing = false
             position = playback.state.elapsed
+
         case .artworkNeeded(let pixelSize):
             await loadArtwork(pixelSize: pixelSize)
         }
+
         return .none
     }
 
     private func loadArtwork(pixelSize: Int) async {
         guard let id = track?.coverArtID, !requestedArtwork.contains(pixelSize) else { return }
+
         requestedArtwork.insert(pixelSize)
         guard let data = await useCases.coverArtUseCase.coverArt(id: id, pixelSize: pixelSize),
               let image = await UIImage(data: data)?.byPreparingForDisplay(),
@@ -105,6 +115,7 @@ final class PlayerViewModel: RoutingViewModel {
             requestedArtwork.remove(pixelSize)
             return
         }
+
         artwork[pixelSize] = image
     }
 }

@@ -16,23 +16,27 @@ private struct AlbumsUseCases: HasAlbumUseCase, HasCoverArtUseCase, HasPlaybackU
 }
 
 @Suite(.timeLimit(.minutes(1)))
+
 struct AlbumsViewModelTests {
     private let gateway = AlbumGatewayMock()
     private let art = CoverArtUseCaseMock()
     private let coordinator = CoordinatorSpy()
     private let session = SessionUseCaseMock()
     private let routing = AppRoutingUseCaseSpy()
+
     private var viewModel: AlbumsViewModel {
         let albums = DefaultAlbumUseCase(albumGateway: gateway, sessionState: SessionState(server: .sample), albumsState: AlbumsState())
         return AlbumsViewModel(useCases: AlbumsUseCases(
             albumUseCase: albums, coverArtUseCase: art, sessionUseCase: session, appRouting: routing, coordinator: coordinator
         ))
     }
+
     private func png() -> Data? { UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { _ in }.pngData() }
 
     @Test func showsTheFirstPage() async {
         gateway.all = Album.numbered(3)
         let viewModel = viewModel
+
         #expect(viewModel.phase == .loading)
 
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
@@ -75,9 +79,11 @@ struct AlbumsViewModelTests {
             Issue.record("expected failed, got \(viewModel.phase)")
             return
         }
+
         #expect(message.contains("Couldn't reach the server"))
         gateway.starredError = nil
         _ = await viewModel.handleAction(.retry)
+
         #expect(viewModel.phase == .loaded)
     }
 
@@ -89,6 +95,7 @@ struct AlbumsViewModelTests {
         let viewModel = viewModel
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
         _ = await viewModel.handleAction(.albumAppeared("a99"))
+
         #expect(viewModel.albums.count == 149 && viewModel.favourites.count == 1)
 
         gateway.all = Album.numbered(6)
@@ -96,6 +103,7 @@ struct AlbumsViewModelTests {
         let hold = gateway.holdNextRequest()
         let refresh = Task { await viewModel.handleAction(.refresh) }
         for await _ in hold.entered { break }
+
         #expect(viewModel.phase == .loaded && viewModel.albums.count == 149)
         hold.release()
         _ = await refresh.value
@@ -111,11 +119,14 @@ struct AlbumsViewModelTests {
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
         _ = await viewModel.handleAction(.albumAppeared("a99"))
         _ = await viewModel.handleAction(.albumAppeared("a199"))
+
         #expect(viewModel.albums.count == 250)
 
         _ = await viewModel.handleAction(.refresh)
+
         #expect(viewModel.albums.count == 100)
         _ = await viewModel.handleAction(.albumAppeared("a99"))
+
         #expect(viewModel.albums.count == 200)
     }
 
@@ -126,25 +137,31 @@ struct AlbumsViewModelTests {
         let hold = gateway.holdNextRequest()
         let next = Task { await viewModel.handleAction(.albumAppeared("a99")) }
         for await _ in hold.entered { break }
+
         #expect(viewModel.isLoadingMore)
 
         _ = await viewModel.handleAction(.refresh)
+
         #expect(!viewModel.isLoadingMore && viewModel.loadMoreError == nil && viewModel.albums.count == 100)
         _ = await viewModel.handleAction(.albumAppeared("a99"))
+
         #expect(viewModel.albums.count == 200)
 
         hold.release()
         _ = await next.value
+
         #expect(viewModel.albums.count == 200 && viewModel.loadMoreError == nil && !viewModel.isLoadingMore)
     }
 
     @Test func anEmptyServerCanBeRefreshed() async {
         let viewModel = viewModel
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(viewModel.phase == .empty)
 
         gateway.all = Album.numbered(2)
         _ = await viewModel.handleAction(.refresh)
+
         #expect(viewModel.phase == .loaded && viewModel.albums.count == 2)
     }
 
@@ -160,9 +177,11 @@ struct AlbumsViewModelTests {
             Issue.record("expected failed, got \(viewModel.phase)")
             return
         }
+
         #expect(message.contains("Couldn't reach the server"))
         gateway.error = nil
         _ = await viewModel.handleAction(.retry)
+
         #expect(viewModel.phase == .loaded && viewModel.albums.count == 3)
     }
 
@@ -186,11 +205,14 @@ struct AlbumsViewModelTests {
         let display = DisplayUseCaseMock()
         let albums = DefaultAlbumUseCase(albumGateway: gateway, sessionState: SessionState(server: .sample), albumsState: AlbumsState())
         let viewModel = AlbumsViewModel(useCases: AlbumsUseCases(albumUseCase: albums, coverArtUseCase: art, displayUseCase: display, coordinator: coordinator))
+
         #expect(viewModel.columns == 2)
 
         display.setAlbumsPerRow(5)
+
         #expect(viewModel.columns == 5)
         display.setAlbumsPerRow(1)
+
         #expect(viewModel.columns == 1)
     }
 
@@ -218,13 +240,16 @@ struct AlbumsViewModelTests {
         let useCases = AlbumsUseCases(albumUseCase: albums, coverArtUseCase: art, displayUseCase: display, coordinator: coordinator)
         let grid = AlbumsViewModel(useCases: useCases)
         let sheet = SettingsViewModel(useCases: useCases)
+
         #expect(grid.columns == 2 && sheet.albumsPerRow == 2)
 
         _ = await sheet.handleAction(.albumsPerRowChanged(5))
 
         #expect(grid.columns == 5 && sheet.albumsPerRow == 5 && settings.savedAlbumsPerRow == 5)
+
         // A restart: a new state and use case over the same saved settings.
         let restarted = DefaultDisplayUseCase(settingsGateway: settings, displayState: DisplayState())
+
         #expect(restarted.state.albumsPerRow == 5)
     }
 
@@ -241,25 +266,30 @@ struct AlbumsViewModelTests {
 
         #expect(coordinator.destinations.count == 2)
         var keys: [String] = []
+
         for destination in coordinator.destinations {
             guard case .push(let key, _) = destination else {
                 Issue.record("expected a push, got \(destination)")
                 return
             }
+
             keys.append(key)
         }
+
         #expect(keys == ["album:a1", "album:a2"])
     }
 
     @Test func tappingAnAlbumThatIsntThereDoesNothing() async {
         let viewModel = viewModel
         _ = await viewModel.handleAction(.albumTapped("nope"))
+
         #expect(coordinator.destinations.isEmpty)
     }
 
     // ALB-16
 
     @Test(arguments: [ServerError.wrongCredentials, .failed(code: 41, message: "Token authentication not supported")])
+
     func aRejectedFirstLoadGoesBackToSetup(error: ServerError) async {
         gateway.error = error
         let viewModel = viewModel
@@ -274,6 +304,7 @@ struct AlbumsViewModelTests {
         gateway.all = Album.numbered(3)
         gateway.starredError = .wrongCredentials
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(session.rejections == 1 && routing.steps == [.library])
     }
 
@@ -315,12 +346,14 @@ struct AlbumsViewModelTests {
     @Test func otherErrorsDontSignOut() async {
         gateway.error = .failed(code: 70, message: "Not found")
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(session.rejections == 0 && routing.steps.isEmpty)
     }
 
     @Test func anEmptyServerSaysSo() async {
         let viewModel = viewModel
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(viewModel.phase == .empty)
     }
 
@@ -332,11 +365,13 @@ struct AlbumsViewModelTests {
             Issue.record("expected failed, got \(viewModel.phase)")
             return
         }
+
         #expect(message.contains("Couldn't reach the server"))
 
         gateway.error = nil
         gateway.all = Album.numbered(2)
         _ = await viewModel.handleAction(.retry)
+
         #expect(viewModel.phase == .loaded && viewModel.albums.count == 2)
     }
 
@@ -346,8 +381,10 @@ struct AlbumsViewModelTests {
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
 
         _ = await viewModel.handleAction(.albumAppeared("a10"))
+
         #expect(viewModel.albums.count == 100)
         _ = await viewModel.handleAction(.albumAppeared("a85"))
+
         #expect(viewModel.albums.count == 150)
         #expect(gateway.requests.map(\.offset) == [0, 100])
     }
@@ -359,11 +396,13 @@ struct AlbumsViewModelTests {
         gateway.error = .unreachable
 
         _ = await viewModel.handleAction(.albumAppeared("a99"))
+
         #expect(viewModel.phase == .loaded && viewModel.albums.count == 100)
         #expect(viewModel.loadMoreError != nil)
 
         gateway.error = nil
         _ = await viewModel.handleAction(.retry)
+
         #expect(viewModel.albums.count == 150 && viewModel.loadMoreError == nil)
     }
 
@@ -375,6 +414,7 @@ struct AlbumsViewModelTests {
         let first = Task { await viewModel.handleAction(.lifecycle(.viewDidAppear)) }
         for await _ in hold.entered { break }
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
         #expect(viewModel.phase == .loading)
         hold.release()
         _ = await first.value
@@ -451,6 +491,7 @@ struct AlbumsViewModelTests {
     @Test func aFailedCoverIsAskedForAgain() async {
         let viewModel = viewModel
         _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c1", pixelSize: 360))
+
         #expect(viewModel.artwork["c1"] == nil)
 
         art.data = png()
@@ -462,12 +503,14 @@ struct AlbumsViewModelTests {
     @Test func keepsOnlyTheMostRecentCovers() async {
         art.data = png()
         let viewModel = viewModel
+
         for index in 0...AlbumsViewModel.artworkLimit {
             _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c\(index)", pixelSize: 360))
         }
 
         #expect(viewModel.artwork.count == AlbumsViewModel.artworkLimit && viewModel.artwork["c0"] == nil)
         _ = await viewModel.handleAction(.artworkNeeded(coverArtID: "c0", pixelSize: 360))
+
         #expect(viewModel.artwork["c0"] != nil)
         #expect(viewModel.artwork.count == AlbumsViewModel.artworkLimit)
     }

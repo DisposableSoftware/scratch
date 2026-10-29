@@ -5,6 +5,7 @@ import Security
 protocol CredentialGateway {
     func load() -> SavedServer?
     func save(_ server: SavedServer) throws(StorageError)
+
     func delete() throws(StorageError)
 }
 
@@ -74,20 +75,24 @@ final class KeychainCredentialGateway: CredentialGateway {
         guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
               let data = result as? Data
         else { return nil }
+
         return try? JSONDecoder().decode(Secret.self, from: data)
     }
 
     private func writeSecret(_ secret: Secret) throws(StorageError) {
         guard let data = try? JSONEncoder().encode(secret) else { throw .keychain(status: errSecParam) }
+
         let attributes: [String: Any] = [
             kSecValueData as String: data,
             // Playback carries on in the background with the screen locked.
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
         ]
         var status = SecItemUpdate(query() as CFDictionary, attributes as CFDictionary)
+
         if status == errSecItemNotFound {
             status = SecItemAdd(query().merging(attributes) { $1 } as CFDictionary, nil)
         }
+
         guard status == errSecSuccess else { throw .keychain(status: status) }
     }
 }

@@ -2,7 +2,18 @@
 
 The order of approved work: `planned` requirements, and `partial` ones with a known bug from `/bug`. Change it here when priorities change. `/implement` works through this file: the verification backlog first, then the requirements in the order listed.
 
-None.
+1. `ALB-1`: the tab bar gains Playlists.
+2. `PLST-1`: the Playlists grid, by name with cover, name and track count.
+3. `PLST-2`: its columns follow Albums per row.
+4. `PLST-3`: progress, error with Retry, empty.
+5. `PLST-4`: pull to refresh.
+6. `PLST-5`: covers.
+7. `PLST-6`: tap to push the playlist, back returns.
+8. `PLST-7`: the playlist screen.
+9. `PLST-8`: tap a track, Play, Shuffle.
+10. `PLST-9`: hearts, margins, Play's label.
+11. `PLST-10`: the playlist screen's progress, error and empty states.
+12. `PLST-11`: unauthorised returns to setup.
 
 ## Verification backlog
 

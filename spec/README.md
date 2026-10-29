@@ -11,6 +11,7 @@ This folder is the source of truth for what Scratch does. The code implements th
 | [server.md](server.md) | `SRV` | Connecting to a server, authentication, saved credentials, sign out |
 | [library.md](library.md) | `LIB` | The track list and cover art |
 | [albums.md](albums.md) | `ALB` | The tab bar, the Albums grid and the album screen |
+| [playlists.md](playlists.md) | `PLST` | The Playlists tab and the playlist screen |
 | [appearance.md](appearance.md) | `LOOK` | Colours, flavours, the accent and the app icon, following the style guide |
 | [playback.md](playback.md) | `PLAY` | The queue, the player, background audio and interruptions |
 | [transcoding.md](transcoding.md) | `TRANS` | Stream format and bitrate settings |

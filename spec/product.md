@@ -1,6 +1,6 @@
 # Product
 
-_What Template Project is, who it is for, and the problem it solves, in a short paragraph._
+_What Scratch is, who it is for, and the problem it solves, in a short paragraph._
 
 ## Requirements
 
@@ -12,7 +12,7 @@ Add the project's goals here as further `PROD` rows.
 
 ## Non-goals
 
-- _What Template Project deliberately won't do, so requests can be checked against it._
+- _What Scratch deliberately won't do, so requests can be checked against it._
 
 ## Stack constraints
 

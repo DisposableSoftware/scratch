@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Bumps the version, runs the checks, commits "Template Project X.Y.Z" and tags vX.Y.Z (TOOL-7).
+# Bumps the version, runs the checks, commits "Scratch X.Y.Z" and tags vX.Y.Z (TOOL-7).
 # Does not push. Writes draft release notes to NOTES_FILE for `gh release create -F`.
 # Usage: scripts/release.sh patch|minor|major|X.Y.Z NOTES_FILE
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-NAME="Template Project"
+NAME="Scratch"
 
 # Writes the new version everywhere the project keeps it. Add lines here when the stack keeps
 # it in its own manifest too (package.json, Cargo.toml, pyproject.toml).

@@ -1,6 +1,6 @@
 ---
 name: bug
-description: Turn a bug report for Template Project into a reproduction, a root cause, and the spec change that makes the expected behaviour explicit, then ask the user to approve it and either implement the fix through /implement or leave it planned. Use when the user runs /bug.
+description: Turn a bug report for Scratch into a reproduction, a root cause, and the spec change that makes the expected behaviour explicit, then ask the user to approve it and either implement the fix through /implement or leave it planned. Use when the user runs /bug.
 argument-hint: <what went wrong, and what you expected>
 disable-model-invocation: true
 ---

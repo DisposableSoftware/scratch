@@ -1,6 +1,6 @@
 ---
 name: implement
-description: Work through the outstanding items in Template Project's spec/roadmap.md, the verification backlog first and then the planned requirements in roadmap order, implementing and verifying each one against the spec and committing it. Use when the user runs /implement.
+description: Work through the outstanding items in Scratch's spec/roadmap.md, the verification backlog first and then the planned requirements in roadmap order, implementing and verifying each one against the spec and committing it. Use when the user runs /implement.
 argument-hint: [IDs to limit the run to, e.g. AREA-3 AREA-7]
 disable-model-invocation: true
 ---

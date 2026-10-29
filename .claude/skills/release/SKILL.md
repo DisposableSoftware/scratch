@@ -1,6 +1,6 @@
 ---
 name: release
-description: Push Template Project's main branch and act on scripts/release-check.sh's recommendation, releasing a patch or minor version automatically (bump, tag, notes, push, GitHub release) and asking first only for a major one. Use when the user runs /release.
+description: Push Scratch's main branch and act on scripts/release-check.sh's recommendation, releasing a patch or minor version automatically (bump, tag, notes, push, GitHub release) and asking first only for a major one. Use when the user runs /release.
 argument-hint: [none|patch|minor|major|X.Y.Z to override the recommendation]
 disable-model-invocation: true
 ---
@@ -47,7 +47,7 @@ Also note anything the user should know before a release, without stopping for i
    - Drop lines for work only developers see: skills, agents, `CLAUDE.md`, spec-only edits, tooling and manual test scripts, `Reproduce …` commits.
    - If nothing is left, write one line that says what the release fixes or changes.
 3. `NO_RELEASE_CHECK=1 git push origin main vX.Y.Z`.
-4. `gh release create vX.Y.Z --title "Template Project X.Y.Z" -F NOTES`.
+4. `gh release create vX.Y.Z --title "Scratch X.Y.Z" -F NOTES`.
 
 If the push fails, the release commit and tag stay local: report that and the commands to finish, and don't force anything. If `gh release create` fails after the push, show its error and the command to retry. Never delete or move a tag that was pushed.
 

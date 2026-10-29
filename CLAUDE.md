@@ -1,6 +1,6 @@
-# Template Project
+# Scratch
 
-_One line on what Template Project is. Say it properly in [`spec/product.md`](spec/product.md)._
+_One line on what Scratch is. Say it properly in [`spec/product.md`](spec/product.md)._
 
 **What the project does is defined in [`spec/`](spec/README.md).** This file covers how to work on it.
 
@@ -59,8 +59,7 @@ scripts/spec-lint.sh      spec format and roadmap consistency                   
 scripts/lib/spec-rows.awk parses requirement rows (shared by lint and release check)
 scripts/test-tooling.sh   tests for the scripts, in throwaway git repos
 scripts/release-check.sh  recommended version bump since the last v* tag (spec delta)  TOOL-6
-scripts/release.sh        bump VERSION, commit "Template Project X.Y.Z", tag, notes      TOOL-7
-scripts/init.sh           names a project made from the template, then removes itself  TOOL-9
+scripts/release.sh        bump VERSION, commit "Scratch X.Y.Z", tag, notes      TOOL-7
 scripts/manual/           manual checks, one script per area, each naming its IDs
 .githooks/pre-push        on a push of main, offers to release                         TOOL-8
 .claude/skills/           /feature, /bug, /implement, /release

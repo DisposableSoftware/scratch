@@ -20,7 +20,7 @@ The palette is [Catppuccin](https://catppuccin.com), made by the Catppuccin comm
 
 | ID | Requirement | Status | Verified by |
 |----|-------------|--------|-------------|
-| `LOOK-8` | The app icon is flat and in Catppuccin Mocha: a dark vinyl record with a Mauve label and one light scratch across it. It has no gradient, no text and no fine detail, fills the whole square, and stays readable at small sizes. It doesn't change with the flavour. | planned | `manual:` install on the simulator and check the Home Screen icon and its small sizes (Spotlight, Settings); the build shows no asset catalog warning |
+| `LOOK-8` | The app icon is flat and in Catppuccin Mocha: a dark vinyl record with a Mauve label and one light scratch across it. It has no gradient, no text and no fine detail, fills the whole square, and stays readable at small sizes. It doesn't change with the flavour. | done | `manual:` `design/render-icon.sh` renders `design/AppIcon.svg` to the 1024×1024 icon without an alpha channel; installed on the simulator it shows on the Home Screen at its real size with the label and the scratch readable, and the build shows no asset catalog warning |
 
 ## Implementation notes
 

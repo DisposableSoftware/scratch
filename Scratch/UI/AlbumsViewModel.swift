@@ -7,6 +7,7 @@ enum AlbumsAction: Equatable {
     case albumAppeared(Album.ID)
     case artworkNeeded(coverArtID: String, pixelSize: Int)
     case retry
+    case refresh
     case settingsTapped
 }
 
@@ -66,6 +67,8 @@ final class AlbumsViewModel: RoutingViewModel {
             if albums.isEmpty && favourites.isEmpty { await loadFirstPage() }
         case .retry:
             if phase == .loaded { await loadNextPage() } else { await loadFirstPage() }
+        case .refresh:
+            await loadFirstPage(keepingGridOnScreen: true)
         case .albumAppeared(let id):
             guard albums.suffix(Self.prefetchDistance).contains(where: { $0.id == id }), loadMoreError == nil else { break }
             await loadNextPage()
@@ -77,11 +80,15 @@ final class AlbumsViewModel: RoutingViewModel {
         return .none
     }
 
-    private func loadFirstPage() async {
+    /// A pull to refresh keeps the grid on screen while it reloads (ALB-5); the system shows its
+    /// own spinner at the top.
+    private func loadFirstPage(keepingGridOnScreen: Bool = false) async {
         guard !loadingFirstPage else { return }
         loadingFirstPage = true
         defer { loadingFirstPage = false }
-        phase = .loading
+        if !(keepingGridOnScreen && (phase == .loaded || phase == .empty)) { phase = .loading }
+        // A next page still out from before is dropped when it lands, so its footer goes now.
+        isLoadingMore = false
         loadMoreError = nil
         do {
             try await useCases.albumUseCase.loadFirstPage()

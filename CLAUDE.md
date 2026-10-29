@@ -93,7 +93,7 @@ Scratch/Routing/          AppStep + AppFlowData, AppRouter (pure)               
 Scratch/UI/               ViewModel, Coordinator + NavigationDestination, NavigationRoute + RoutingViewModel   ARCH-8, ARCH-10, ARCH-12, ARCH-13
 Scratch/UI/               AppRoutingUseCase + ViewFactory, AppViewFactory, SetupView(Model), LibraryView     ARCH-11, SRV-1, SRV-3
 Scratch/UI/               MainView (Albums + Songs tabs, now-playing bar as bottom accessory)   ALB-1, PLAY-2, LIB-6
-Scratch/UI/               AlbumsView(Model): the grid, favourites, paging, states, covers   ALB-2…4, ALB-6, ALB-7
+Scratch/UI/               AlbumsView(Model): the grid, favourites, paging, states, covers   ALB-2…7
 Scratch/Models/           Album                                                          ALB-2
 Scratch/State/            AlbumsState (albums shown, next offset)                       ALB-4
 Scratch/Gateways/         RemoteAlbumGateway (getAlbumList2 by name, getStarred2)        ALB-2, ALB-3, ALB-4

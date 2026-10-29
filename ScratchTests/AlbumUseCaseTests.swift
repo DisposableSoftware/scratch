@@ -304,4 +304,21 @@ struct AlbumUseCaseTests {
         try await useCase.loadFirstPage()
         #expect(useCase.favourites.count == 150 && useCase.albums.count == 50)
     }
+
+    @Test func aNextPageCanStartWhileAStaleOneIsStillOut() async throws {
+        gateway.all = Album.numbered(250)
+        let useCase = useCase()
+        try await useCase.loadFirstPage()
+        let hold = gateway.holdNextRequest()
+        let stale = Task { try await useCase.loadNextPage() }
+        for await _ in hold.entered { break }
+
+        try await useCase.loadFirstPage()
+        try await useCase.loadNextPage()
+        #expect(useCase.albums.count == 200)
+
+        hold.release()
+        try await stale.value
+        #expect(useCase.albums.count == 200)
+    }
 }

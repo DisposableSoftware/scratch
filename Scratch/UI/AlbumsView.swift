@@ -29,7 +29,11 @@ struct AlbumsView: View {
         case .loading:
             ProgressView()
         case .empty:
-            ContentUnavailableView("No albums", systemImage: "square.grid.2x2", description: Text("The server has no albums yet."))
+            List {}
+                .overlay {
+                    ContentUnavailableView("No albums", systemImage: "square.grid.2x2", description: Text("The server has no albums yet."))
+                }
+                .refreshable { _ = await viewModel.handleAction(.refresh) }
         case .failed(let message):
             ContentUnavailableView {
                 Label("Couldn't load the albums", systemImage: "exclamationmark.triangle")
@@ -76,6 +80,7 @@ struct AlbumsView: View {
                     .padding()
                 }
             }
+            .refreshable { _ = await viewModel.handleAction(.refresh) }
         }
     }
 }

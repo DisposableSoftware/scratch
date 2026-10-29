@@ -23,7 +23,9 @@ final class DefaultAlbumUseCase: AlbumUseCase {
     private let albumGateway: AlbumGateway
     private let sessionState: SessionState
     private let albumsState: AlbumsState
-    private var loadingNextPage = false
+    /// The generation a next-page load belongs to, while one is out. A page left over from before
+    /// a reload doesn't stop the new list loading its own.
+    private var loadingNextPageFor: Int?
     private var loadingFirstPage = false
     /// Bumped by every first-page load, so a page that arrives after a reload is dropped.
     private var generation = 0
@@ -85,10 +87,10 @@ final class DefaultAlbumUseCase: AlbumUseCase {
 
     func loadNextPage() async throws(ServerError) {
         // While a reload runs, the offset would be the old list's: wait for the new one.
-        guard let server = sessionState.server, albumsState.hasMoreAlbums, !loadingNextPage, !loadingFirstPage else { return }
-        loadingNextPage = true
-        defer { loadingNextPage = false }
+        guard let server = sessionState.server, albumsState.hasMoreAlbums, loadingNextPageFor != generation, !loadingFirstPage else { return }
         let current = generation
+        loadingNextPageFor = current
+        defer { if loadingNextPageFor == current { loadingNextPageFor = nil } }
         for _ in 0..<Self.maxGapPages {
             guard let added = try await appendNextPage(server: server, generation: current) else { return }
             // A page of nothing but favourites adds nothing to scroll to, so take the next too.

@@ -75,6 +75,105 @@ struct AlbumsViewModelTests {
         #expect(viewModel.phase == .loaded)
     }
 
+    // ALB-5
+
+    @Test func pullToRefreshReloadsTheFavouritesAndTheFirstPageWithTheGridStillShown() async {
+        gateway.all = Album.numbered(150)
+        gateway.starred = [gateway.all[1]]
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        _ = await viewModel.handleAction(.albumAppeared("a99"))
+        #expect(viewModel.albums.count == 149 && viewModel.favourites.count == 1)
+
+        gateway.all = Album.numbered(6)
+        gateway.starred = [gateway.all[5], gateway.all[4]]
+        let hold = gateway.holdNextRequest()
+        let refresh = Task { await viewModel.handleAction(.refresh) }
+        for await _ in hold.entered { break }
+        #expect(viewModel.phase == .loaded && viewModel.albums.count == 149)
+        hold.release()
+        _ = await refresh.value
+
+        #expect(viewModel.favourites.map(\.id) == ["a4", "a5"])
+        #expect(viewModel.albums.map(\.id) == ["a0", "a1", "a2", "a3"])
+        #expect(gateway.requests.last?.offset == 0 && gateway.starredRequests == 2)
+    }
+
+    @Test func pagingStartsOverAfterARefresh() async {
+        gateway.all = Album.numbered(250)
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        _ = await viewModel.handleAction(.albumAppeared("a99"))
+        _ = await viewModel.handleAction(.albumAppeared("a199"))
+        #expect(viewModel.albums.count == 250)
+
+        _ = await viewModel.handleAction(.refresh)
+        #expect(viewModel.albums.count == 100)
+        _ = await viewModel.handleAction(.albumAppeared("a99"))
+        #expect(viewModel.albums.count == 200)
+    }
+
+    @Test func aRefreshWhileANextPageIsInFlightEndsCleanAndPagingWorks() async {
+        gateway.all = Album.numbered(250)
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        let hold = gateway.holdNextRequest()
+        let next = Task { await viewModel.handleAction(.albumAppeared("a99")) }
+        for await _ in hold.entered { break }
+        #expect(viewModel.isLoadingMore)
+
+        _ = await viewModel.handleAction(.refresh)
+        #expect(!viewModel.isLoadingMore && viewModel.loadMoreError == nil && viewModel.albums.count == 100)
+        _ = await viewModel.handleAction(.albumAppeared("a99"))
+        #expect(viewModel.albums.count == 200)
+
+        hold.release()
+        _ = await next.value
+        #expect(viewModel.albums.count == 200 && viewModel.loadMoreError == nil && !viewModel.isLoadingMore)
+    }
+
+    @Test func anEmptyServerCanBeRefreshed() async {
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        #expect(viewModel.phase == .empty)
+
+        gateway.all = Album.numbered(2)
+        _ = await viewModel.handleAction(.refresh)
+        #expect(viewModel.phase == .loaded && viewModel.albums.count == 2)
+    }
+
+    @Test func aFailedRefreshSaysWhyWithRetry() async {
+        gateway.all = Album.numbered(3)
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        gateway.error = .unreachable
+
+        _ = await viewModel.handleAction(.refresh)
+
+        guard case .failed(let message) = viewModel.phase else {
+            Issue.record("expected failed, got \(viewModel.phase)")
+            return
+        }
+        #expect(message.contains("Couldn't reach the server"))
+        gateway.error = nil
+        _ = await viewModel.handleAction(.retry)
+        #expect(viewModel.phase == .loaded && viewModel.albums.count == 3)
+    }
+
+    @Test func aRefreshWhileTheFirstLoadRunsDoesNothingMore() async {
+        gateway.all = Album.numbered(3)
+        let hold = gateway.holdNextRequest()
+        let viewModel = viewModel
+        let first = Task { await viewModel.handleAction(.lifecycle(.viewDidAppear)) }
+        for await _ in hold.entered { break }
+
+        _ = await viewModel.handleAction(.refresh)
+        hold.release()
+        _ = await first.value
+
+        #expect(gateway.requests.count == 1 && viewModel.phase == .loaded)
+    }
+
     @Test func anEmptyServerSaysSo() async {
         let viewModel = viewModel
         _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))

@@ -2,7 +2,8 @@
 
 The order of approved work: `planned` requirements, and `partial` ones with a known bug from `/bug`. Change it here when priorities change. `/implement` works through this file: the verification backlog first, then the requirements in the order listed.
 
-None.
+1. `LIB-7`: a heart left of the duration for starred tracks on the Songs tab.
+2. `ALB-20`: the same heart on the album screen, without moving the duration off its margin.
 
 ## Verification backlog
 

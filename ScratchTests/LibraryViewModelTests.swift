@@ -255,7 +255,6 @@ struct LibraryViewModelTests {
     // SRV-6
 
     @Test(arguments: [ServerError.wrongCredentials, .failed(code: 41, message: "Token authentication not supported")])
-
     func aRejectedFirstPageGoesBackToSetup(error: ServerError) async {
         gateway.error = error
         let viewModel = viewModel

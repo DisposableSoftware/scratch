@@ -20,7 +20,6 @@ struct StreamURLTests {
     }
 
     @Test(arguments: [(StreamQuality.Format.mp3, "mp3"), (.aac, "aac")])
-
     func formatAndCapAreSent(format: StreamQuality.Format, expected: String) throws {
         let q = try query(StreamQuality(format: format, maxBitRate: 128))
 

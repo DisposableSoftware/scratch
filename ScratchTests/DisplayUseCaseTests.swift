@@ -24,7 +24,6 @@ struct DisplayUseCaseTests {
     }
 
     @Test(arguments: [(0, 1), (-3, 1), (6, 5), (99, 5)])
-
     func aSavedValueOutOfRangeIsBroughtIn(saved: Int, expected: Int) {
         gateway.savedAlbumsPerRow = saved
         _ = useCase
@@ -42,7 +41,6 @@ struct DisplayUseCaseTests {
     }
 
     @Test(arguments: [(0, 1), (7, 5)])
-
     func aChoiceOutOfRangeIsBroughtIn(asked: Int, expected: Int) {
         let useCase = useCase
         useCase.setAlbumsPerRow(asked)

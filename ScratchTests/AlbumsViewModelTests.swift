@@ -289,7 +289,6 @@ struct AlbumsViewModelTests {
     // ALB-16
 
     @Test(arguments: [ServerError.wrongCredentials, .failed(code: 41, message: "Token authentication not supported")])
-
     func aRejectedFirstLoadGoesBackToSetup(error: ServerError) async {
         gateway.error = error
         let viewModel = viewModel

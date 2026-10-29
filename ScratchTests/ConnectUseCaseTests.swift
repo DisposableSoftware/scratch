@@ -24,7 +24,6 @@ struct ConnectUseCaseTests {
     }
 
     @Test(arguments: [ServerError.unreachable, .wrongCredentials, .notSubsonic, .failed(code: 0, message: "x")])
-
     func aFailedPingSavesNothing(error: ServerError) async {
         server.result = .failure(error)
 

@@ -75,9 +75,7 @@ struct AlbumLayoutTests {
         let buttons = try edges(of: image, rows: 600..<620)
         let tracks = try edges(of: image, rows: 650..<1260)
 
-        withKnownIssue("ALB-19: fails until fixed") {
-            #expect(abs(tracks.leading - buttons.leading) < 1, "tracks start \(tracks.leading) pt from the left, the buttons \(buttons.leading)")
-            #expect(abs(tracks.trailing - buttons.trailing) < 1, "tracks end \(tracks.trailing) pt from the right, the buttons \(buttons.trailing)")
-        }
+        #expect(abs(tracks.leading - buttons.leading) < 1, "tracks start \(tracks.leading) pt from the left, the buttons \(buttons.leading)")
+        #expect(abs(tracks.trailing - buttons.trailing) < 1, "tracks end \(tracks.trailing) pt from the right, the buttons \(buttons.trailing)")
     }
 }

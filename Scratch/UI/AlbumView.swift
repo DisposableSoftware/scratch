@@ -123,7 +123,7 @@ private struct TrackLine: View {
             Text(row.number)
                 .font(.subheadline.monospacedDigit())
                 .foregroundStyle(.secondary)
-                .frame(minWidth: 28, alignment: .trailing)
+                .frame(minWidth: 28, alignment: .leading)
             VStack(alignment: .leading, spacing: 2) {
                 Text(row.title).lineLimit(1)
 

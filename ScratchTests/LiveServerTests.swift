@@ -104,6 +104,22 @@ struct LiveServerTests {
         #expect(played && sought, "\(quality.format): played \(played), sought \(sought)")
     }
 
+    /// SRV-6 against the real server: a library request with credentials it no longer accepts
+    /// fails as rejected credentials, which sends the app back to setup.
+    @Test func staleCredentialsAreRejected() async throws {
+        let address = try ServerAddress.parse(LiveServer.address)
+        let stale = SavedServer(
+            account: ServerAccount(baseURL: address, username: LiveServer.username),
+            credentials: SubsonicCredentials.derive(username: LiveServer.username, password: LiveServer.password + "-old")
+        )
+        do {
+            _ = try await RemoteLibraryGateway(networkSession: URLSession.shared).tracks(offset: 0, count: 1, server: stale)
+            Issue.record("the server accepted stale credentials")
+        } catch {
+            #expect(error.rejectsCredentials, "got \(error)")
+        }
+    }
+
     @Test func connectsAndSavesTheServer() async throws {
         try await container.connectUseCase.connect(address: LiveServer.address, username: LiveServer.username, password: LiveServer.password)
 

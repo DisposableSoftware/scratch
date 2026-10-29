@@ -1,4 +1,5 @@
 import Combine
+import Foundation
 
 enum SetupAction: Equatable {
     case serverURLChanged(String)
@@ -10,7 +11,7 @@ enum SetupAction: Equatable {
 /// The setup screen: which server to use and who the user is (SRV-1), and connecting to it
 /// (SRV-3).
 final class SetupViewModel: ViewModel {
-    typealias UseCases = HasConnectUseCase & HasAppRoutingUseCase
+    typealias UseCases = HasConnectUseCase & HasAppRoutingUseCase & HasSessionUseCase
 
     let useCases: UseCases
 
@@ -22,6 +23,12 @@ final class SetupViewModel: ViewModel {
 
     init(useCases: UseCases) {
         self.useCases = useCases
+        // SRV-6: back here because the server stopped accepting the saved credentials.
+        if let account = useCases.sessionUseCase.rejectedAccount {
+            serverURL = account.baseURL.absoluteString
+            username = account.username
+            errorMessage = "The server stopped accepting the saved sign-in. Sign in again."
+        }
     }
 
     func handleAction(_ action: SetupAction) async -> SideEffect {

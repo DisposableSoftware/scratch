@@ -39,10 +39,11 @@ final class DefaultLibraryUseCase: LibraryUseCase {
         do {
             page = try await libraryGateway.tracks(offset: 0, count: Self.pageSize, server: server)
         } catch {
-            guard current == generation else { return }
+            guard current == generation, sessionState.server == server else { return }
             throw error
         }
-        guard current == generation else { return }
+        // A page for a server signed out of meanwhile, or from before a reload, is dropped.
+        guard current == generation, sessionState.server == server else { return }
         var seen = Set<Track.ID>()
         libraryState.tracks = page.filter { seen.insert($0.id).inserted }
         libraryState.hasMoreTracks = page.count == Self.pageSize
@@ -58,11 +59,11 @@ final class DefaultLibraryUseCase: LibraryUseCase {
         do {
             page = try await libraryGateway.tracks(offset: libraryState.tracks.count, count: Self.pageSize, server: server)
         } catch {
-            // A page from before a reload doesn't matter any more, and neither does its failure.
-            guard current == generation else { return }
+            // A page from before a reload or a sign out doesn't matter any more, nor its failure.
+            guard current == generation, sessionState.server == server else { return }
             throw error
         }
-        guard current == generation else { return }
+        guard current == generation, sessionState.server == server else { return }
         // If the server's order shifted between pages, a track can come round again.
         let known = Set(libraryState.tracks.map(\.id))
         libraryState.tracks += page.filter { !known.contains($0.id) }

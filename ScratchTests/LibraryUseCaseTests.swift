@@ -124,4 +124,22 @@ struct LibraryUseCaseTests {
         try await next.value
         #expect(useCase.tracks.count == 100)
     }
+
+    @Test func aPageForAServerSignedOutOfIsDropped() async throws {
+        gateway.all = Track.numbered(150)
+        let session = SessionState(server: .sample)
+        let useCase = DefaultLibraryUseCase(libraryGateway: gateway, sessionState: session, libraryState: library)
+        try await useCase.loadFirstPage()
+
+        let hold = gateway.holdNextRequest()
+        let next = Task { try await useCase.loadNextPage() }
+        for await _ in hold.entered { break }
+        session.server = nil
+        library.tracks = []
+        gateway.error = .wrongCredentials
+        hold.release()
+
+        try await next.value
+        #expect(library.tracks.isEmpty)
+    }
 }

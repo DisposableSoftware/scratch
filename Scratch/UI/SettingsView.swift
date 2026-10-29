@@ -6,6 +6,13 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                if let account = viewModel.account {
+                    Section("Server") {
+                        LabeledContent("Address", value: account.baseURL.absoluteString)
+                        LabeledContent("Username", value: account.username)
+                        Button("Sign Out", role: .destructive) { viewModel.submitAction(.signOut) }
+                    }
+                }
                 qualitySection(.wifi, title: "On Wi-Fi", quality: viewModel.transcoding.wifi)
                 qualitySection(.cellular, title: "On cellular", quality: viewModel.transcoding.cellular)
                 Section {

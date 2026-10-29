@@ -39,6 +39,12 @@ struct ConnectUseCaseTests {
         #expect(server.pings.isEmpty)
     }
 
+    @Test func connectingForgetsARejectedAccount() async throws {
+        session.rejectedAccount = SavedServer.sample.account
+        try await useCase.connect(address: "music.example.com", username: "me", password: "secret")
+        #expect(session.rejectedAccount == nil)
+    }
+
     @Test func aStorageFailureLeavesTheUserSignedOut() async {
         storage.saveError = .keychain(status: -1)
 
@@ -50,15 +56,77 @@ struct ConnectUseCaseTests {
 }
 
 struct SessionUseCaseTests {
+    private let storage = CredentialGatewayMock(stored: .sample)
+    private let playback = PlaybackUseCaseMock()
+    private let session = SessionState()
+    private let library = LibraryState()
+    private var useCase: DefaultSessionUseCase {
+        DefaultSessionUseCase(credentialGateway: storage, playback: playback, sessionState: session, libraryState: library)
+    }
+
     @Test func restoresTheSavedServer() {
-        let session = SessionState()
-        DefaultSessionUseCase(credentialGateway: CredentialGatewayMock(stored: .sample), sessionState: session).restoreSavedServer()
+        useCase.restoreSavedServer()
         #expect(session.server == .sample)
     }
 
     @Test func staysSignedOutWithNothingSaved() {
-        let session = SessionState()
-        DefaultSessionUseCase(credentialGateway: CredentialGatewayMock(), sessionState: session).restoreSavedServer()
+        storage.stored = nil
+        useCase.restoreSavedServer()
         #expect(session.server == nil)
+    }
+
+    @Test func signingOutStopsPlaybackAndForgetsEverything() {
+        let useCase = useCase
+        useCase.restoreSavedServer()
+        library.tracks = Track.numbered(3)
+        library.hasMoreTracks = false
+
+        useCase.signOut()
+
+        #expect(playback.stops == 1)
+        #expect(storage.stored == nil && session.server == nil && useCase.account == nil)
+        #expect(library.tracks.isEmpty && library.hasMoreTracks)
+        #expect(useCase.rejectedAccount == nil)
+    }
+
+    @Test func aSignOutHoldsEvenIfTheKeychainRefuses() {
+        storage.deleteError = .keychain(status: -1)
+        let useCase = useCase
+        useCase.restoreSavedServer()
+
+        useCase.signOut()
+
+        #expect(session.server == nil && playback.stops == 1)
+    }
+
+    @Test func aSecondRejectionKeepsTheRememberedAccount() {
+        let useCase = useCase
+        useCase.restoreSavedServer()
+        useCase.credentialsRejected()
+
+        useCase.credentialsRejected()
+
+        #expect(useCase.rejectedAccount == SavedServer.sample.account)
+        #expect(playback.stops == 1)
+    }
+
+    @Test func aRejectionSignsOutButRemembersTheAccount() {
+        let useCase = useCase
+        useCase.restoreSavedServer()
+
+        useCase.credentialsRejected()
+
+        #expect(playback.stops == 1 && storage.stored == nil && session.server == nil)
+        #expect(useCase.rejectedAccount == SavedServer.sample.account)
+    }
+}
+
+struct ServerErrorTests {
+    @Test func onlyErrors40And41RejectTheCredentials() {
+        #expect(ServerError.wrongCredentials.rejectsCredentials)
+        #expect(ServerError.failed(code: 41, message: "").rejectsCredentials)
+        #expect(!ServerError.failed(code: 50, message: "").rejectsCredentials)
+        #expect(!ServerError.unreachable.rejectsCredentials)
+        #expect(!ServerError.notSubsonic.rejectsCredentials)
     }
 }

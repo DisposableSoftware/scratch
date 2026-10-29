@@ -43,12 +43,14 @@ final class KeychainCredentialGateway: CredentialGateway {
         defaults.set(server.account.username, forKey: Key.username)
     }
 
-    /// Removes the token first, so a failure leaves the server saved rather than half-forgotten.
+    /// Forgets the URL and username even if the Keychain refuses to delete the token, so a sign
+    /// out always holds: without them, `load()` finds nothing, and a leftover salt and token are
+    /// no use on their own.
     func delete() throws(StorageError) {
-        let status = SecItemDelete(query() as CFDictionary)
-        guard status == errSecSuccess || status == errSecItemNotFound else { throw .keychain(status: status) }
         defaults.removeObject(forKey: Key.baseURL)
         defaults.removeObject(forKey: Key.username)
+        let status = SecItemDelete(query() as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else { throw .keychain(status: status) }
     }
 
     private struct Secret: Codable {

@@ -14,6 +14,7 @@ final class ServerGatewayMock: ServerGateway {
 final class CredentialGatewayMock: CredentialGateway {
     var stored: SavedServer?
     var saveError: StorageError?
+    var deleteError: StorageError?
 
     init(stored: SavedServer? = nil) {
         self.stored = stored
@@ -28,6 +29,7 @@ final class CredentialGatewayMock: CredentialGateway {
 
     func delete() throws(StorageError) {
         stored = nil
+        if let deleteError { throw deleteError }
     }
 }
 
@@ -160,6 +162,8 @@ final class PlaybackUseCaseMock: PlaybackUseCase {
     func next() {}
     func previous() {}
     func seek(to seconds: TimeInterval) {}
+    private(set) var stops = 0
+    func stop() { stops += 1 }
 }
 
 final class NowPlayingGatewayMock: NowPlayingGateway {
@@ -188,4 +192,25 @@ final class SettingsGatewayMock: SettingsGateway {
 
     func transcoding() -> TranscodingSettings? { saved }
     func saveTranscoding(_ settings: TranscodingSettings) { saved = settings }
+}
+
+final class SessionUseCaseMock: SessionUseCase {
+    var account: ServerAccount? = SavedServer.sample.account
+    var rejectedAccount: ServerAccount?
+    private(set) var rejections = 0
+    private(set) var signOuts = 0
+
+    func restoreSavedServer() {}
+    func credentialsRejected() {
+        rejections += 1
+        guard let account else { return }
+        rejectedAccount = account
+        self.account = nil
+    }
+
+    func signOut() {
+        signOuts += 1
+        account = nil
+        rejectedAccount = nil
+    }
 }

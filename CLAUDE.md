@@ -97,7 +97,7 @@ Scratch/Models/           ServerAddress (URL parsing), SubsonicCredentials (salt
 Scratch/Gateways/         SubsonicRequest: every server URL, signed                      PROD-3, SRV-4
 Scratch/Gateways/         NetworkSession (+ same-origin redirects), SubsonicClient (envelope → ServerError)  SRV-3
 Scratch/Gateways/         RemoteServerGateway (ping), KeychainCredentialGateway          SRV-3, SRV-5
-Scratch/UseCases/         ConnectUseCase, SessionUseCase (restore at launch)             SRV-3, SRV-5
+Scratch/UseCases/         ConnectUseCase, SessionUseCase (restore, rejection, sign out) SRV-3, SRV-5, SRV-6, SRV-7
 Scratch/Models/           AppEnvironment (.live storage), ServerError/ConnectError/StorageError
 Scratch/Models/           Track                                                          LIB-1
 Scratch/State/            LibraryState (tracks loaded so far)                           LIB-2
@@ -113,7 +113,7 @@ Scratch/UseCases/         PlaybackUseCase (queue, end, failure, interruption, lo
 Scratch/Models/           StreamQuality, TranscodingSettings, NetworkKind               TRANS-1…3
 Scratch/Gateways/         UserDefaultsSettingsGateway, PathMonitorNetworkGateway, SubsonicRequest.stream   TRANS-3…5
 Scratch/UseCases/         TranscodingUseCase (settings, quality for the next track)     TRANS-1…5
-Scratch/UI/               SettingsView(Model): transcoding per network                   LIB-6, TRANS-1, TRANS-2
+Scratch/UI/               SettingsView(Model): server and sign out, transcoding per network   LIB-6, SRV-7, TRANS-1, TRANS-2
 Scratch/UI/               PlayerViewModel (mirrors PlaybackState), NowPlayingBar, PlayerView   PLAY-2, PLAY-3, PLAY-8, TRANS-6
 ScratchTests/SnapshotTests  skipped unless snapshots.sh passes a directory in
 scripts/manual/snapshots.sh  renders the bar and player (playing, failed) to PNGs

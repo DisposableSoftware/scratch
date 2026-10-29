@@ -387,4 +387,17 @@ struct PlaybackUseCaseTests {
 
         #expect(player.qualities.last == aac)
     }
+
+    @Test func stoppingUnloadsEverything() {
+        let useCase = useCase()
+        useCase.play(tracks, startingAt: 1)
+        player.send(.ready(duration: 200))
+
+        useCase.stop()
+
+        #expect(state.queue.isEmpty && state.currentTrack == nil && state.status == .stopped)
+        #expect(state.quality == nil && state.duration == nil && state.elapsed == 0)
+        #expect(player.calls.last == .stop)
+        #expect(lockScreen.updates.last == .some(nil))
+    }
 }

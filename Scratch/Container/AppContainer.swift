@@ -41,7 +41,6 @@ extension AppContainer {
             credentialGateway: credentialGateway,
             sessionState: sessionState
         )
-        let sessionUseCase = DefaultSessionUseCase(credentialGateway: credentialGateway, sessionState: sessionState)
         let libraryUseCase = DefaultLibraryUseCase(
             libraryGateway: libraryGateway,
             sessionState: sessionState,
@@ -55,6 +54,12 @@ extension AppContainer {
             transcoding: transcodingUseCase,
             sessionState: sessionState,
             playbackState: playbackState
+        )
+        let sessionUseCase = DefaultSessionUseCase(
+            credentialGateway: credentialGateway,
+            playback: playbackUseCase,
+            sessionState: sessionState,
+            libraryState: libraryState
         )
 
         // 4. Routers

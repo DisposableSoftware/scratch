@@ -1,9 +1,10 @@
 import Testing
 @testable import Scratch
 
-private struct SetupUseCases: HasConnectUseCase, HasAppRoutingUseCase {
+private struct SetupUseCases: HasConnectUseCase, HasAppRoutingUseCase, HasSessionUseCase {
     let connectUseCase: ConnectUseCase
     let appRouting: AppRoutingUseCase
+    var sessionUseCase: SessionUseCase = SessionUseCaseMock()
 }
 
 struct SetupViewModelTests {
@@ -57,5 +58,21 @@ struct SetupViewModelTests {
         #expect(routing.steps.isEmpty)
         #expect(viewModel.errorMessage?.contains(expected) == true)
         #expect(!viewModel.isConnecting)
+    }
+
+    @Test func afterARejectionTheAccountIsFilledIn() {
+        let session = SessionUseCaseMock()
+        session.rejectedAccount = SavedServer.sample.account
+        let viewModel = SetupViewModel(useCases: SetupUseCases(connectUseCase: connect, appRouting: routing, sessionUseCase: session))
+
+        #expect(viewModel.serverURL == "https://music.example.com" && viewModel.username == "me")
+        #expect(viewModel.password.isEmpty)
+        #expect(viewModel.errorMessage?.contains("stopped accepting") == true)
+    }
+
+    @Test func aFirstSetupStartsEmpty() {
+        let session = SessionUseCaseMock()
+        let viewModel = SetupViewModel(useCases: SetupUseCases(connectUseCase: connect, appRouting: routing, sessionUseCase: session))
+        #expect(viewModel.serverURL.isEmpty && viewModel.errorMessage == nil)
     }
 }

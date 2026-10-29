@@ -99,9 +99,11 @@ struct StreamURLTests {
     }
 }
 
-private struct SettingsUseCases: HasTranscodingUseCase, HasCoordinator {
+private struct SettingsUseCases: HasTranscodingUseCase, HasSessionUseCase, HasAppRoutingUseCase, HasCoordinator {
     let transcodingUseCase: TranscodingUseCase
     let coordinator: Coordinator
+    var sessionUseCase: SessionUseCase = SessionUseCaseMock()
+    var appRouting: AppRoutingUseCase = AppRoutingUseCaseSpy()
 }
 
 struct SettingsViewModelTests {
@@ -133,5 +135,19 @@ struct SettingsViewModelTests {
             Issue.record("expected dismissSheet, got \(coordinator.destinations)")
             return
         }
+    }
+
+    // SRV-7
+
+    @Test func showsTheServerAndSignsOut() async {
+        let session = SessionUseCaseMock()
+        let routing = AppRoutingUseCaseSpy()
+        let viewModel = SettingsViewModel(useCases: SettingsUseCases(transcodingUseCase: TranscodingUseCaseMock(), coordinator: CoordinatorSpy(), sessionUseCase: session, appRouting: routing))
+        #expect(viewModel.account == SavedServer.sample.account)
+
+        _ = await viewModel.handleAction(.signOut)
+
+        #expect(session.signOuts == 1 && viewModel.account == nil)
+        #expect(routing.steps == [.library])
     }
 }

@@ -14,7 +14,8 @@ enum LibraryAction: Equatable {
 
 /// The library screen: the server's tracks, loaded a page at a time (LIB-1, LIB-2, LIB-4).
 final class LibraryViewModel: RoutingViewModel {
-    typealias UseCases = HasLibraryUseCase & HasCoverArtUseCase & HasPlaybackUseCase & HasTranscodingUseCase & HasCoordinator
+    typealias UseCases = HasLibraryUseCase & HasCoverArtUseCase & HasPlaybackUseCase & HasTranscodingUseCase
+        & HasSessionUseCase & HasAppRoutingUseCase & HasCoordinator
 
     enum Route: NavigationRoute {
         case settings
@@ -94,8 +95,15 @@ final class LibraryViewModel: RoutingViewModel {
             tracks = useCases.libraryUseCase.tracks
             phase = tracks.isEmpty ? .empty : .loaded
         } catch {
+            if error.rejectsCredentials { return await reauthenticate() }
             phase = .failed(Self.message(for: error))
         }
+    }
+
+    /// SRV-6: the server stopped accepting the saved credentials; back to setup to sign in again.
+    private func reauthenticate() async {
+        useCases.sessionUseCase.credentialsRejected()
+        await useCases.appRouting.navigateToNext(from: .library, with: AppFlowData())
     }
 
     private func loadNextPage() async {
@@ -107,6 +115,7 @@ final class LibraryViewModel: RoutingViewModel {
             try await useCases.libraryUseCase.loadNextPage()
             tracks = useCases.libraryUseCase.tracks
         } catch {
+            if error.rejectsCredentials { return await reauthenticate() }
             loadMoreError = Self.message(for: error)
         }
     }

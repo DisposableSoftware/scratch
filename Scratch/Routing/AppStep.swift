@@ -6,5 +6,5 @@ enum AppStep: Equatable {
 }
 
 /// What the caller knows when it asks for the next step. Nothing yet: the session decides
-/// everything so far. Re-authentication (SRV-6) will add to it.
+/// everything, including re-authentication (SRV-6), which signs out and lets setup follow.
 struct AppFlowData: Equatable {}

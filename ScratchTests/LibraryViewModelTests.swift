@@ -3,11 +3,14 @@ import Testing
 import UIKit
 @testable import Scratch
 
-private struct LibraryUseCases: HasLibraryUseCase, HasCoverArtUseCase, HasPlaybackUseCase, HasTranscodingUseCase, HasCoordinator {
+private struct LibraryUseCases: HasLibraryUseCase, HasCoverArtUseCase, HasPlaybackUseCase, HasTranscodingUseCase,
+    HasSessionUseCase, HasAppRoutingUseCase, HasCoordinator {
     let libraryUseCase: LibraryUseCase
     let coverArtUseCase: CoverArtUseCase
     let playbackUseCase: PlaybackUseCase
     var transcodingUseCase: TranscodingUseCase = TranscodingUseCaseMock()
+    var sessionUseCase: SessionUseCase = SessionUseCaseMock()
+    var appRouting: AppRoutingUseCase = AppRoutingUseCaseSpy()
     var coordinator: Coordinator = CoordinatorSpy()
 }
 
@@ -16,9 +19,11 @@ struct LibraryViewModelTests {
     private let gateway = LibraryGatewayMock()
     private let art = CoverArtUseCaseMock()
     private let playback = PlaybackUseCaseMock()
+    private let session = SessionUseCaseMock()
+    private let routing = AppRoutingUseCaseSpy()
     private var viewModel: LibraryViewModel {
         let library = DefaultLibraryUseCase(libraryGateway: gateway, sessionState: SessionState(server: .sample), libraryState: LibraryState())
-        return LibraryViewModel(useCases: LibraryUseCases(libraryUseCase: library, coverArtUseCase: art, playbackUseCase: playback))
+        return LibraryViewModel(useCases: LibraryUseCases(libraryUseCase: library, coverArtUseCase: art, playbackUseCase: playback, sessionUseCase: session, appRouting: routing))
     }
 
     @Test func showsTheFirstPageWithItsDetails() async {
@@ -221,5 +226,37 @@ struct LibraryViewModelTests {
             Issue.record("expected a sheet, got \(coordinator.destinations)")
             return
         }
+    }
+
+    // SRV-6
+
+    @Test(arguments: [ServerError.wrongCredentials, .failed(code: 41, message: "Token authentication not supported")])
+    func aRejectedFirstPageGoesBackToSetup(error: ServerError) async {
+        gateway.error = error
+        let viewModel = viewModel
+
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+
+        #expect(session.rejections == 1)
+        #expect(routing.steps == [.library])
+    }
+
+    @Test func aRejectedNextPageGoesBackToSetup() async {
+        gateway.all = Track.numbered(150)
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        gateway.error = .wrongCredentials
+
+        _ = await viewModel.handleAction(.rowAppeared("t99"))
+
+        #expect(session.rejections == 1 && routing.steps == [.library])
+        #expect(viewModel.loadMoreError == nil)
+    }
+
+    @Test func otherErrorsDontSignOut() async {
+        gateway.error = .failed(code: 70, message: "Not found")
+        let viewModel = viewModel
+        _ = await viewModel.handleAction(.lifecycle(.viewDidAppear))
+        #expect(session.rejections == 0 && routing.steps.isEmpty)
     }
 }

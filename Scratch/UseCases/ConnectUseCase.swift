@@ -36,6 +36,7 @@ final class DefaultConnectUseCase: ConnectUseCase {
         } catch {
             throw .couldNotSave
         }
+        sessionState.rejectedAccount = nil
         sessionState.server = server
     }
 }

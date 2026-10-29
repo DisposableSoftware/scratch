@@ -12,6 +12,8 @@ protocol PlaybackUseCase {
     func next()
     func previous()
     func seek(to seconds: TimeInterval)
+    /// Unloads everything: the queue, the player and the lock screen.
+    func stop()
 }
 
 final class DefaultPlaybackUseCase: PlaybackUseCase {
@@ -92,6 +94,19 @@ final class DefaultPlaybackUseCase: PlaybackUseCase {
         audioPlayer.seek(to: seconds)
         playbackState.elapsed = seconds
         publishNowPlaying()
+    }
+
+    func stop() {
+        resumeAfterInterruption = false
+        buffering = false
+        audioPlayer.stop()
+        playbackState.queue = []
+        playbackState.currentIndex = nil
+        playbackState.status = .stopped
+        playbackState.elapsed = 0
+        playbackState.duration = nil
+        playbackState.quality = nil
+        nowPlaying.update(nil)
     }
 
     private func pause() {

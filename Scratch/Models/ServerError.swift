@@ -10,6 +10,18 @@ enum ServerError: Error, Equatable {
     case failed(code: Int, message: String)
 }
 
+extension ServerError {
+    /// Subsonic errors 40 (wrong username or password) and 41 (token authentication not
+    /// supported): the saved credentials won't work again (SRV-6).
+    var rejectsCredentials: Bool {
+        switch self {
+        case .wrongCredentials: true
+        case .failed(let code, _): code == 41
+        default: false
+        }
+    }
+}
+
 /// Why connecting to a server failed (SRV-3).
 enum ConnectError: Error, Equatable {
     case invalidAddress(ServerAddressError)

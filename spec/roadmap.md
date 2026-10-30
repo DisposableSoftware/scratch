@@ -2,14 +2,13 @@
 
 The order of approved work: `planned` requirements, and `partial` ones with a known bug from `/bug`. Change it here when priorities change. `/implement` works through this file: the verification backlog first, then the requirements in the order listed.
 
-1. `MIX-13`: the Me tab's heart icon.
-2. `MIX-14`, `MIX-15`, `MIX-2`, `MIX-8`: the Genre and Discover mixes (and the card order and fallback names that list them), so four mixes appear on a server without release dates.
+None.
 
 ## Verification backlog
 
 Built requirements that are not fully verified. Clear these before starting new planned work.
 
-- `MIX-1`, `MIX-11`: in the simulator with Apple Intelligence available, check the Me tab is the fourth tab and makes its mixes, that tapping a mix pushes its screen only on the Me tab, that Play starts the first track, a track starts there and Shuffle plays the mix once; then, with the model unavailable (turn Apple Intelligence off in the simulator's Settings), check the tab is gone and comes back when it is on again.
+- `MIX-1`, `MIX-11`, `MIX-13`: in the simulator with Apple Intelligence available, check the Me tab is the fourth tab, shows a heart icon, and makes its mixes, that tapping a mix pushes its screen only on the Me tab, that Play starts the first track, a track starts there and Shuffle plays the mix once; then, with the model unavailable (turn Apple Intelligence off in the simulator's Settings), check the tab is gone and comes back when it is on again.
 - `PLST-6`, `PLST-8`: in the simulator, tap Playlists, tap a playlist and check its screen is pushed once even on a double tap and only on the Playlists tab, that the back swipe returns to the grid at the same place, that an album pushed on the Albums tab is still there when you come back to it, that tapping a track plays it and the next tracks follow, that Play starts the first track, and that Shuffle plays the playlist through once in a random order.
 - `LIB-7`: in the simulator, on a server with a starred song, open Songs and check the heart shows left of that song's duration, in the accent colour, and not on unstarred songs.
 - `ALB-1`, `PLAY-2`, `LIB-6`: in the simulator, launch signed in and check Albums is first and tapping Songs loads the track list and Playlists its grid; start a track and check the now-playing bar shows above the tab bar on both tabs, that tapping it opens the player and that its buttons are reachable with VoiceOver; sign out and check the bar goes; open settings from both tabs.

@@ -188,6 +188,20 @@ struct MixSourceGatewayTests {
         #expect(query.contains("type=frequent") && query.contains("size=10"))
     }
 
+    @Test func albumsOfAGenreAndRandomAlbumsAreAskedForByType() async throws {
+        let body = #"{"subsonic-response":{"status":"ok","version":"1.16.1","albumList2":{"album":[{"id":"a","name":"Fairytale"}]}}}"#
+        let gateway = RemoteAlbumGateway(networkSession: StubURLProtocol.session { _ in .http(status: 200, body: body) })
+
+        let ofGenre = try await gateway.albums(genre: "Trip Hop", count: 10, server: .sample)
+        let genreQuery = try #require(StubURLProtocol.requests.last?.url?.query)
+        let random = try await gateway.randomAlbums(count: 10, server: .sample)
+        let randomQuery = try #require(StubURLProtocol.requests.last?.url?.query)
+
+        #expect(ofGenre.map(\.id) == ["a"] && random.map(\.id) == ["a"])
+        #expect(genreQuery.contains("type=byGenre") && genreQuery.contains("genre=Trip%20Hop") && genreQuery.contains("size=10"))
+        #expect(randomQuery.contains("type=random") && randomQuery.contains("size=10"))
+    }
+
     @Test func anAlbumsReleaseDateIsItsMonthAndDayWhenTheServerHasThem() async throws {
         let body = #"""
         {"subsonic-response":{"status":"ok","version":"1.16.1","albumList2":{"album":[

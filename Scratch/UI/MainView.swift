@@ -23,7 +23,7 @@ struct MainView: View {
             Tab("Songs", systemImage: "music.note.list") { songs }
 
             if viewModel.showsMe {
-                Tab("Me", systemImage: "person.crop.circle") { me }
+                Tab("Me", systemImage: "heart") { me }
             }
         }
         .tabViewBottomAccessory(isEnabled: viewModel.hasTrack) {

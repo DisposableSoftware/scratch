@@ -123,19 +123,84 @@ struct MixUseCaseTests {
 
     // The mixes
 
-    @Test func mixesComeInTheOrderHeartsMostPlayedOnThisDay() async throws {
+    // MIX-14: Genre
+
+    @Test func genreTakesTheMostCommonGenreOfHeartsAndPlaysAndTheTracksOfItsAlbums() async throws {
+        var starred = Track.numbered(3)
+        starred[0].genre = "Jazz"
+        starred[1].genre = "Rock"
+        starred[2].genre = "Rock"
+        gateway.starredTrackList = starred
+        gateway.genreAlbums["Rock"] = Album.numbered(2)
+        gateway.details["a0"] = played([0, 0], prefix: "g")
+        gateway.details["a1"] = played([0], prefix: "h")
+
+        try await useCase().makeMixes()
+
+        let asked = try #require(model.asked.first { $0.kind == .genre })
+
+        #expect(gateway.genreRequests == ["Rock"])
+        #expect(asked.shortlist.map(\.id) == ["g0", "g1", "h0"])
+    }
+
+    @Test func genreTiesGoToTheGenreMetFirst() async throws {
+        var starred = Track.numbered(2)
+        starred[0].genre = "Jazz"
+        starred[1].genre = "Rock"
+        gateway.starredTrackList = starred
+
+        try await useCase().makeMixes()
+
+        #expect(gateway.genreRequests == ["Jazz"])
+    }
+
+    @Test func genreHasNoCardWhenNoTrackHasAGenre() async throws {
         gateway.starredTrackList = Track.numbered(2)
+
+        try await useCase().makeMixes()
+
+        #expect(gateway.genreRequests.isEmpty)
+        #expect(mixes.mixes.map(\.kind) == [.hearts])
+    }
+
+    // MIX-15: Discover
+
+    @Test func discoverTakesTheTracksOfRandomAlbumsLeastPlayedFirst() async throws {
+        gateway.randomList = Album.numbered(2)
+        gateway.details["a0"] = played([4, 0, 2], prefix: "d")
+        gateway.details["a1"] = played([0, 9], prefix: "e")
+
+        try await useCase().makeMixes()
+
+        let asked = try #require(model.asked.first { $0.kind == .discover })
+
+        #expect(mixes.mixes.map(\.kind) == [.discover])
+        #expect(asked.shortlist.map(\.id) == ["d1", "e0", "d2", "d0", "e1"])
+    }
+
+    @Test func discoverHasNoCardWithoutRandomAlbums() async throws {
+        try await useCase().makeMixes()
+
+        #expect(mixes.mixes.isEmpty)
+    }
+
+    @Test func mixesComeInTheOrderHeartsMostPlayedGenreDiscoverOnThisDay() async throws {
+        var starred = Track.numbered(2)
+        starred[0].genre = "Rock"
+        gateway.starredTrackList = starred
+        gateway.genreAlbums["Rock"] = Album.numbered(1)
+        gateway.randomList = Album.numbered(1)
         gateway.frequent = Album.numbered(1)
-        gateway.details["a0"] = played([3])
+        gateway.details["a0"] = played([0])
         var albums = Album.numbered(1)
         albums[0].releaseMonth = 10
         albums[0].releaseDay = 29
         gateway.all = albums
-        gateway.details["a0"] = played([3])
+        gateway.details["a0"] = played([0, 3])
 
         try await useCase().makeMixes()
 
-        #expect(mixes.mixes.map(\.kind) == [.hearts, .mostPlayed, .onThisDay])
+        #expect(mixes.mixes.map(\.kind) == [.hearts, .mostPlayed, .genre, .discover, .onThisDay])
     }
 
     @Test func aMixWithNoShortlistHasNoCard() async throws {

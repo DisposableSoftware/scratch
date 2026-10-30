@@ -16,6 +16,12 @@ protocol AlbumGateway {
 
     /// The albums played most, up to `count` (MIX-5).
     func frequentAlbums(count: Int, server: SavedServer) async throws(ServerError) -> [Album]
+
+    /// The first `count` albums the server lists for `genre` (MIX-14).
+    func albums(genre: String, count: Int, server: SavedServer) async throws(ServerError) -> [Album]
+
+    /// `count` albums the server picks at random (MIX-15).
+    func randomAlbums(count: Int, server: SavedServer) async throws(ServerError) -> [Album]
 }
 
 final class RemoteAlbumGateway: AlbumGateway {
@@ -65,6 +71,29 @@ final class RemoteAlbumGateway: AlbumGateway {
     func frequentAlbums(count: Int, server: SavedServer) async throws(ServerError) -> [Album] {
         let request = SubsonicRequest(method: "getAlbumList2", parameters: [
             URLQueryItem(name: "type", value: "frequent"),
+            URLQueryItem(name: "size", value: String(count)),
+        ])
+        let payload = try await client.send(request, to: server, as: AlbumListPayload.self)
+
+        return (payload.albumList2.album ?? []).map(\.album)
+    }
+
+    /// `getAlbumList2` by genre.
+    func albums(genre: String, count: Int, server: SavedServer) async throws(ServerError) -> [Album] {
+        let request = SubsonicRequest(method: "getAlbumList2", parameters: [
+            URLQueryItem(name: "type", value: "byGenre"),
+            URLQueryItem(name: "genre", value: genre),
+            URLQueryItem(name: "size", value: String(count)),
+        ])
+        let payload = try await client.send(request, to: server, as: AlbumListPayload.self)
+
+        return (payload.albumList2.album ?? []).map(\.album)
+    }
+
+    /// `getAlbumList2` at random.
+    func randomAlbums(count: Int, server: SavedServer) async throws(ServerError) -> [Album] {
+        let request = SubsonicRequest(method: "getAlbumList2", parameters: [
+            URLQueryItem(name: "type", value: "random"),
             URLQueryItem(name: "size", value: String(count)),
         ])
         let payload = try await client.send(request, to: server, as: AlbumListPayload.self)

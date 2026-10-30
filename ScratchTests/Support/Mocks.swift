@@ -396,6 +396,23 @@ final class AlbumGatewayMock: AlbumGateway {
         return Array(frequent.prefix(count))
     }
 
+    /// What `albums(genre:)` returns for each genre, and the genres asked for (MIX-14).
+    var genreAlbums: [String: [Album]] = [:]
+    private(set) var genreRequests: [String] = []
+
+    /// What `randomAlbums` returns (MIX-15).
+    var randomList: [Album] = []
+
+    func albums(genre: String, count: Int, server: SavedServer) async throws(ServerError) -> [Album] {
+        genreRequests.append(genre)
+
+        return Array((genreAlbums[genre] ?? []).prefix(count))
+    }
+
+    func randomAlbums(count: Int, server: SavedServer) async throws(ServerError) -> [Album] {
+        Array(randomList.prefix(count))
+    }
+
     func starredAlbums(server: SavedServer) async throws(ServerError) -> [Album] {
         starredRequests += 1
 

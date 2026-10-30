@@ -2,6 +2,8 @@
 nonisolated enum MixKind: String, CaseIterable, Identifiable {
     case hearts
     case mostPlayed
+    case genre
+    case discover
     case onThisDay
 
     var id: String { rawValue }
@@ -11,6 +13,8 @@ nonisolated enum MixKind: String, CaseIterable, Identifiable {
         switch self {
         case .hearts: "Hearts"
         case .mostPlayed: "Most played"
+        case .genre: "Genre"
+        case .discover: "Discover"
         case .onThisDay: "On this day"
         }
     }
@@ -20,6 +24,8 @@ nonisolated enum MixKind: String, CaseIterable, Identifiable {
         switch self {
         case .hearts: "Songs you've hearted."
         case .mostPlayed: "The songs you play the most."
+        case .genre: "More of the genre you listen to."
+        case .discover: "Songs you play the least, to find again."
         case .onThisDay: "Albums released on this day."
         }
     }

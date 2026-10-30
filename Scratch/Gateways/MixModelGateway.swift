@@ -33,6 +33,8 @@ final class OnDeviceMixModelGateway: MixModelGateway {
         let theme = switch kind {
         case .hearts: "songs the listener has hearted"
         case .mostPlayed: "the songs the listener plays the most"
+        case .genre: "songs of the genre the listener plays and hearts the most"
+        case .discover: "songs the listener has not played yet"
         case .onThisDay: "songs from albums released on this day of the year"
         }
 

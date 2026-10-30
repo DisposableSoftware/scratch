@@ -5,7 +5,7 @@ import Testing
 
 /// Connects to a real server. Skipped unless scripts/manual/live-connect.sh passes one in, so the
 /// normal test run never touches the network. Credentials come only from the environment.
-@Suite(.serialized, .enabled(if: LiveServer.configured), .timeLimit(.minutes(1)))
+@Suite(.serialized, .enabled(if: LiveServer.configured), .timeLimit(.minutes(5)))
 struct LiveServerTests {
     /// The app's own storage, so a launch afterwards finds the saved server (SRV-5).
     private let container = AppContainer.build(coordinator: CoordinatorSpy(), networkSession: URLSession.shared, environment: .live, navigationStack: NavigationStackPortStub())
@@ -254,7 +254,7 @@ struct LiveServerTests {
 
         for mix in mixes { print("mix \(mix.kind): \(mix.name) | \(mix.description) | \(mix.tracks.count) tracks") }
 
-        #expect(mixes.map(\.kind).contains(.hearts) || mixes.map(\.kind).contains(.mostPlayed), "the server has no hearts or plays to mix")
+        #expect(mixes.count >= 4, "fewer than four mixes: \(mixes.map(\.kind))")
         #expect(mixes.allSatisfy { !$0.tracks.isEmpty && $0.tracks.count <= 25 && Set($0.tracks.map(\.id)).count == $0.tracks.count })
 
         guard let directory = LiveServer.snapshotDirectory, let first = mixes.first else { return }

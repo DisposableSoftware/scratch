@@ -55,12 +55,14 @@ final class DefaultMixUseCase: MixUseCase {
 
         let showEachAsMade = mixesState.mixes.isEmpty
         var made: [Mix] = []
+        var shortlists: [MixKind: [Track]] = [:]
 
         for kind in MixKind.allCases {
             let shortlist: [Track]
 
             do {
-                shortlist = try await self.shortlist(for: kind, server: server)
+                shortlist = try await self.shortlist(for: kind, earlier: shortlists, server: server)
+                shortlists[kind] = shortlist
             } catch {
                 // A failure for a server signed out of meanwhile doesn't matter any more, and
                 // mustn't sign out whoever signed in since.
@@ -89,7 +91,8 @@ final class DefaultMixUseCase: MixUseCase {
 
     // MARK: Shortlists (MIX-5)
 
-    private func shortlist(for kind: MixKind, server: SavedServer) async throws(ServerError) -> [Track] {
+    /// `earlier` holds the shortlists already made, which Genre reads its genre from.
+    private func shortlist(for kind: MixKind, earlier: [MixKind: [Track]], server: SavedServer) async throws(ServerError) -> [Track] {
         let tracks: [Track]
 
         switch kind {
@@ -102,11 +105,37 @@ final class DefaultMixUseCase: MixUseCase {
             tracks = played.enumerated()
                 .sorted { ($1.element.playCount ?? 0, $0.offset) < ($0.element.playCount ?? 0, $1.offset) }
                 .map(\.element)
+        case .genre:
+            guard let genre = Self.commonGenre(in: (earlier[.hearts] ?? []) + (earlier[.mostPlayed] ?? [])) else { return [] }
+
+            tracks = try await loadTracks(of: try await albumGateway.albums(genre: genre, count: Self.albumsRead, server: server), server: server)
+        case .discover:
+            let albums = try await albumGateway.randomAlbums(count: Self.albumsRead, server: server)
+
+            let loaded = try await loadTracks(of: albums, server: server)
+
+            // The least played first, the unplayed ahead of all; ties keep the album order.
+            tracks = loaded.enumerated()
+                .sorted { ($0.element.playCount ?? 0, $0.offset) < ($1.element.playCount ?? 0, $1.offset) }
+                .map(\.element)
         case .onThisDay:
             tracks = try await loadTracks(of: try await albumsReleasedToday(server: server), server: server)
         }
 
         return Array(tracks.prefix(Self.shortlistSize))
+    }
+
+    /// The genre most of `tracks` share; a tie goes to the one met first (MIX-14).
+    private static func commonGenre(in tracks: [Track]) -> String? {
+        var counts: [String: Int] = [:]
+        var order: [String] = []
+
+        for genre in tracks.compactMap(\.genre) where !genre.isEmpty {
+            if counts[genre] == nil { order.append(genre) }
+            counts[genre, default: 0] += 1
+        }
+
+        return order.max { counts[$0]! < counts[$1]! }
     }
 
     private func loadTracks(of albums: [Album], server: SavedServer) async throws(ServerError) -> [Track] {

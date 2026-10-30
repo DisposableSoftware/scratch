@@ -2,7 +2,8 @@
 
 The order of approved work: `planned` requirements, and `partial` ones with a known bug from `/bug`. Change it here when priorities change. `/implement` works through this file: the verification backlog first, then the requirements in the order listed.
 
-None.
+1. `MIX-13`: the Me tab's heart icon.
+2. `MIX-14`, `MIX-15`, `MIX-2`, `MIX-8`: the Genre and Discover mixes (and the card order and fallback names that list them), so four mixes appear on a server without release dates.
 
 ## Verification backlog
 
